@@ -28,6 +28,7 @@ import {
 // Define Categories Configuration
 const CATEGORIES: CategoryItem[] = [
   { id: 'all', label: 'Все', icon: LayoutGrid },
+  { id: 'christmas', label: 'Новый Год', icon: Sparkles, badge: 'NEW' },
   { id: 'tet', label: 'Лунный НГ', icon: Flower, badge: 'NEW' },
   { id: 'wedding', label: 'Свадьба', icon: Gem, badge: 'NEW' },
   { id: 'business_print', label: 'Полиграфия', icon: Printer, badge: 'BIZ' },
@@ -38,7 +39,6 @@ const CATEGORIES: CategoryItem[] = [
   { id: 'marketplaces', label: 'Маркетплейсы', icon: Store, badge: 'HOT' },
   { id: 'restaurants', label: 'Рестораны', icon: Utensils, badge: 'NEW' },
   { id: 'sports', label: 'Спорт', icon: Dumbbell, badge: 'NEW' },
-  { id: 'christmas', label: 'Рождество', icon: Sparkles },
   { id: 'documents', label: 'Документы', icon: FileText },
   { id: 'kids', label: 'Дети', icon: Baby },
   { id: 'family', label: 'Семья', icon: Users },
@@ -71,6 +71,14 @@ type MobileTab = 'canvas' | 'settings';
 // Featured templates for the Hero Slider
 const FEATURED_SLIDES = [
   {
+    id: 'new-year-blue-magic',
+    title: 'Синий Иней',
+    subtitle: 'Ваши фото в ледяной сказке Новый Год 2025',
+    bg: 'from-blue-900 to-indigo-700',
+    accent: 'text-blue-200',
+    image: 'https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=800&q=80'
+  },
+  {
     id: 'tet-traditional-yellow',
     title: 'Лунный Новый Год',
     subtitle: 'Создайте волшебную атмосферу праздника',
@@ -85,14 +93,6 @@ const FEATURED_SLIDES = [
     bg: 'from-orange-600 to-yellow-600',
     accent: 'text-white',
     image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'fashion-editorial',
-    title: 'Fashion Обложка',
-    subtitle: 'Станьте звездой глянцевого журнала',
-    bg: 'from-purple-900 to-indigo-900',
-    accent: 'text-purple-300',
-    image: 'https://images.unsplash.com/photo-1509631179647-b849389274e9?auto=format&fit=crop&w=800&q=80'
   }
 ];
 

@@ -1,87 +1,99 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+
+// Инициализация Admin SDK (без параметров использует конфиг окружения Firebase)
 admin.initializeApp();
 
 const db = admin.firestore();
 
-// ТОКЕН ИЗ ВАШЕЙ ПАНЕЛИ АЛЬФА-БАНКА (сгенерируйте и вставьте сюда)
-const ALFA_CALLBACK_TOKEN = "ВАШ_СЕКРЕТНЫЙ_CALLBACK_TOKEN";
-
 /**
- * Вебхук для приема уведомлений от Альфа-Банка
- * URL: https://[ВАШ_РЕГИОН]-[ВАШ_ПРОЕКТ].cloudfunctions.net/alfaWebhook
+ * Вебхук для приема уведомлений об оплате от Альфа-Банка.
+ * Настраивается в Личном Кабинете Мерчанта Альфа-Банка.
  */
 exports.alfaWebhook = functions.https.onRequest(async (req, res) => {
-    // 1. Проверяем метод
+    // 1. Проверка метода (банк отправляет POST)
     if (req.method !== 'POST') {
+        functions.logger.warn(`Method ${req.method} not allowed for webhook`);
         return res.status(405).send('Method Not Allowed');
     }
 
-    // 2. Логируем входящий запрос для отладки (в консоли Firebase)
-    console.log('Incoming Alfa Webhook:', JSON.stringify(req.body));
+    // 2. Логирование входящих данных для отладки
+    functions.logger.info('Alfa Webhook Received', { body: req.body });
 
-    const { status, jsonParams, checksum, orderNumber } = req.body;
+    const { status, jsonParams, orderNumber, checksum } = req.body;
 
-    // 3. Базовая проверка безопасности (если банк присылает контрольную сумму)
-    // В простейшем случае проверяем наличие обязательных параметров
-    if (!jsonParams || status != "1") { 
-        console.log('Payment not successful or missing params');
-        return res.status(200).send('OK'); // Возвращаем 200, чтобы банк не повторял запрос
+    // 3. Базовая валидация: статус "1" означает успешный платеж
+    if (status !== "1" && status !== 1) {
+        functions.logger.info(`Payment status is not successful: ${status}. Order: ${orderNumber}`);
+        return res.status(200).send('OK'); 
+    }
+
+    if (!jsonParams) {
+        functions.logger.error('Missing jsonParams in request');
+        return res.status(400).send('Bad Request: Missing metadata');
     }
 
     try {
-        // 4. Парсим метаданные, которые мы отправили при создании платежа
+        // 4. Парсим метаданные (Email, кредиты)
         const params = JSON.parse(jsonParams);
         const userEmail = params.email;
-        const planId = params.plan;
         const creditsToAdd = parseInt(params.credits) || 0;
+        const planId = params.plan || 'creator';
 
-        if (!userEmail) throw new Error('Email not found in jsonParams');
-
-        // 5. Ищем пользователя в Firestore по Email
-        const usersRef = db.collection('users');
-        const snapshot = await usersRef.where('email', '==', userEmail).limit(1).get();
-
-        if (snapshot.empty) {
-            console.error(`User with email ${userEmail} not found in database`);
-            return res.status(200).send('User not found but acknowledged');
+        if (!userEmail) {
+            throw new Error('User email not found in jsonParams');
         }
 
-        const userDoc = snapshot.docs[0];
+        // 5. Поиск пользователя по Email в Firestore
+        const usersRef = db.collection('users');
+        const userQuery = await usersRef.where('email', '==', userEmail).limit(1).get();
+
+        if (userQuery.empty) {
+            functions.logger.error(`User ${userEmail} not found. Manual intervention required for order ${orderNumber}`);
+            // Возвращаем 200, чтобы банк не слал повторы, но логируем критическую ошибку
+            return res.status(200).send('User not found');
+        }
+
+        const userDoc = userQuery.docs[0];
         const userId = userDoc.id;
 
-        // 6. Атомарно начисляем кредиты и обновляем тариф
+        // 6. Атомарное обновление данных через Batch
         const batch = db.batch();
         const userRef = usersRef.doc(userId);
 
+        // Начисляем кредиты и меняем тариф
         batch.update(userRef, {
             credits: admin.firestore.FieldValue.increment(creditsToAdd),
             subscriptionTier: planId,
             subscriptionStatus: 'active',
             lastPaymentDate: admin.firestore.Timestamp.now(),
-            lastOrderNumber: orderNumber
+            updatedAt: admin.firestore.Timestamp.now()
         });
 
-        // Сохраняем лог транзакции
-        const transRef = db.collection('transactions').doc();
-        batch.set(transRef, {
+        // Создаем запись в истории транзакций
+        const transactionRef = db.collection('transactions').doc();
+        batch.set(transactionRef, {
             userId: userId,
             email: userEmail,
-            amount: creditsToAdd,
+            credits: creditsToAdd,
             plan: planId,
             orderNumber: orderNumber,
+            bank: 'Alfa-Bank',
             timestamp: admin.firestore.Timestamp.now(),
-            status: 'completed'
+            status: 'success'
         });
 
         await batch.commit();
 
-        console.log(`Successfully credited ${creditsToAdd} credits to ${userEmail}`);
+        functions.logger.info(`Successfully added ${creditsToAdd} credits to ${userEmail} (Order: ${orderNumber})`);
+        
+        // 7. Ответ банку (обязательно 200 OK)
         return res.status(200).send('OK');
 
     } catch (error) {
-        console.error('Webhook processing error:', error);
+        functions.logger.error('Webhook processing failed', { error: error.message, stack: error.stack });
+        // В случае ошибки парсинга или БД возвращаем 500, чтобы банк мог попробовать позже
         return res.status(500).send('Internal Server Error');
     }
 });
