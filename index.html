@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Smart - AI Фоторедактор</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                bg: '#0B0E14', // Main background (very dark)
+                sidebar: '#151921', // Sidebar background
+                card: '#1E232E', // Card background
+                accent: '#3B82F6', // Primary Blue
+                hover: '#2563EB',
+                text: '#E2E8F0',
+                muted: '#94A3B8',
+                border: '#2D3748'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0B0E14;
+        color: #E2E8F0;
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #151921; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155; 
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569; 
+      }
+
+      /* Festive Sparkle Animation */
+      .festive-sparkle {
+        position: fixed;
+        top: -10px;
+        z-index: 9999;
+        user-select: none;
+        cursor: default;
+        animation-name: sparkles-fall, sparkles-shake;
+        animation-duration: 12s, 4s;
+        animation-timing-function: linear, ease-in-out;
+        animation-iteration-count: infinite, infinite;
+        animation-play-state: running, running;
+        pointer-events: none;
+        font-size: 1.5rem;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Glow effect */
+      }
+      
+      /* Cool White (Snow) */
+      .festive-sparkle:nth-child(3n) { color: rgba(255, 255, 255, 0.8); }
+      /* Cyan/Light Blue (Ice) */
+      .festive-sparkle:nth-child(3n+1) { color: rgba(173, 216, 230, 0.7); }
+      /* Silver */
+      .festive-sparkle:nth-child(3n+2) { color: rgba(211, 211, 211, 0.6); }
+
+      @keyframes sparkles-fall {
+        0% { top: -10% }
+        100% { top: 100% }
+      }
+      @keyframes sparkles-shake {
+        0% { transform: translateX(0px) rotate(0deg) }
+        50% { transform: translateX(80px) rotate(180deg) }
+        100% { transform: translateX(0px) rotate(360deg) }
+      }
+      
+      .festive-sparkle:nth-of-type(0) { left: 1%; animation-duration: 15s, 5s; animation-delay: 0s, 0s }
+      .festive-sparkle:nth-of-type(1) { left: 10%; animation-duration: 18s, 6s; animation-delay: 1s, 1s }
+      .festive-sparkle:nth-of-type(2) { left: 20%; animation-duration: 12s, 4s; animation-delay: 6s, 0.5s }
+      .festive-sparkle:nth-of-type(3) { left: 30%; animation-duration: 16s, 5s; animation-delay: 4s, 2s }
+      .festive-sparkle:nth-of-type(4) { left: 40%; animation-duration: 14s, 4s; animation-delay: 2s, 2s }
+      .festive-sparkle:nth-of-type(5) { left: 50%; animation-duration: 19s, 6s; animation-delay: 8s, 3s }
+      .festive-sparkle:nth-of-type(6) { left: 60%; animation-duration: 13s, 4s; animation-delay: 6s, 2s }
+      .festive-sparkle:nth-of-type(7) { left: 70%; animation-duration: 17s, 5s; animation-delay: 2.5s, 1s }
+      .festive-sparkle:nth-of-type(8) { left: 80%; animation-duration: 15s, 6s; animation-delay: 1s, 0s }
+      .festive-sparkle:nth-of-type(9) { left: 90%; animation-duration: 20s, 5s; animation-delay: 3s, 1.5s }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "firebase/app": "https://esm.sh/firebase@10.12.0/compat/app",
+    "firebase/auth": "https://esm.sh/firebase@10.12.0/compat/auth",
+    "firebase/firestore": "https://esm.sh/firebase@10.12.0/compat/firestore",
+    "firebase/storage": "https://esm.sh/firebase@10.12.0/compat/storage",
+    "firebase/analytics": "https://esm.sh/firebase@10.12.0/compat/analytics",
+    "firebase/functions": "https://esm.sh/firebase@10.12.0/compat/functions",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "@firebase/firestore": "https://aistudiocdn.com/@firebase/firestore@^4.9.2",
+    "@firebase/storage": "https://aistudiocdn.com/@firebase/storage@^0.14.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <div aria-hidden="true">
+      <div class="festive-sparkle">❄</div>
+      <div class="festive-sparkle">❅</div>
+      <div class="festive-sparkle">❆</div>
+      <div class="festive-sparkle">❄</div>
+      <div class="festive-sparkle">❅</div>
+      <div class="festive-sparkle">❆</div>
+      <div class="festive-sparkle">❄</div>
+      <div class="festive-sparkle">❅</div>
+      <div class="festive-sparkle">❆</div>
+      <div class="festive-sparkle">❄</div>
+    </div>
+  </body>
+</html>
