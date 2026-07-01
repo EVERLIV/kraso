@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Sparkles, ArrowRight, Loader2, X, Cpu, Zap, ChevronUp } from 'lucide-react';
+import { Plus, Loader2, X, Cpu, Zap, ChevronUp } from 'lucide-react';
 import { AspectRatio, GenModelId, Preset } from '../types';
 
 interface GenerationBarProps {
@@ -45,7 +45,7 @@ function GenerationBar({
     const activeModel = MODEL_OPTIONS.find(m => m.id === selectedModel) || MODEL_OPTIONS[0];
 
     return (
-        <div className="z-30 flex justify-center px-2 sm:px-4 md:px-6 pb-[22px] pointer-events-none">
+        <div className="z-30 flex justify-center px-2 sm:px-4 md:px-6 pb-[calc(22px+env(safe-area-inset-bottom))] pointer-events-none">
             <div className="pointer-events-auto w-full max-w-genbar">
                 {error && (
                     <div className="mb-2 mx-auto w-fit max-w-full text-red-500 text-xs font-medium bg-card-light border border-red-200 px-3 py-1.5 rounded-full shadow-sm">
@@ -113,8 +113,9 @@ function GenerationBar({
                         />
                     </div>
 
-                    {/* Bottom: controls (wrap on mobile) */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* Bottom: controls (wrap on mobile); Generate stays pinned to the bottom-right */}
+                    <div className="flex items-end gap-2">
+                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                         {/* Model chip */}
                         <div className="relative shrink-0">
                             <button
@@ -162,21 +163,20 @@ function GenerationBar({
                                 </button>
                             ))}
                         </div>
+                    </div>
 
-                        {/* Generate (pushes right) */}
+                        {/* Generate */}
                         <button
                             onClick={onGenerate}
                             disabled={isGenerating}
-                            className="ml-auto flex items-center gap-2 shrink-0 text-on-primary text-[15px] font-bold px-5 md:px-6 py-2.5 rounded-full shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                            className="shrink-0 inline-flex items-center justify-center gap-1.5 text-on-primary text-[13px] font-bold px-4 py-2 rounded-lg shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                         >
                             {isGenerating ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                                 <>
-                                    <Sparkles className="w-4 h-4" />
                                     <span>Создать</span>
-                                    <span className="hidden sm:inline opacity-80 font-semibold">· {cost}</span>
-                                    <ArrowRight className="w-4 h-4 hidden sm:inline" />
+                                    <span className="opacity-80 font-semibold">· {cost}</span>
                                 </>
                             )}
                         </button>

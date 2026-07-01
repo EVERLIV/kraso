@@ -20,12 +20,14 @@ import { isDocumentPresetId, documentAspectRatio } from './lib/documentSpecs';
 import Footer from './components/Footer';
 import TermsPage from './components/pages/TermsPage';
 import PrivacyPage from './components/pages/PrivacyPage';
+import CreditsPage, { CreditPack } from './components/pages/CreditsPage';
 import SEO from './components/SEO';
 import { CookieConsent } from './components/CookieConsent';
 import { useAuth } from './contexts/AuthContext';
 import { generateImageWithGemini, cleanBase64, getMimeType, ReferenceImage } from './services/geminiService';
 import { uploadImageToStorage, saveGenerationToHistory, getUserHistory, syncUserProfile, deductCredits, purchaseSubscription, toggleSavedStatus } from './services/firebaseService';
-import { AppState, CategoryId, AspectRatio, Preset, ImageResolution, GenModelId, GeneratedImage, ViewMode, SubscriptionTier } from './types';
+import { createPaymentSession } from './services/paymentService';
+import { AppState, CategoryId, AspectRatio, Preset, ImageResolution, GenModelId, GeneratedImage, ViewMode, SubscriptionTier, SubscriptionPlan } from './types';
 import {
     Loader2, Zap, Download, Square, RectangleHorizontal, RectangleVertical,
     LayoutGrid, Users, FileText, Baby, ShoppingBag, Shirt,
@@ -127,7 +129,6 @@ const App: React.FC = () => {
     const [accountTab, setAccountTab] = useState<'profile' | 'subscription' | 'usage' | 'promocode'>('profile');
     const [templateSort, setTemplateSort] = useState<'popular' | 'new' | 'az'>('popular');
     const [isSortOpen, setIsSortOpen] = useState(false);
-    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // Mobile specific state
@@ -179,6 +180,47 @@ const App: React.FC = () => {
         const p = (window.location.pathname || '/').replace(/\/$/, '') || '/';
         return (p === '/terms' || p === '/privacy') ? p : null;
     });
+
+    // Credits / upgrade page URL: /credits (?tab=topup for the top-up tab)
+    const [creditsTab, setCreditsTab] = useState<'upgrade' | 'topup' | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const p = (window.location.pathname || '/').replace(/\/$/, '') || '/';
+        if (p !== '/credits') return null;
+        return new URLSearchParams(window.location.search).get('tab') === 'topup' ? 'topup' : 'upgrade';
+    });
+    const [creditsProcessingId, setCreditsProcessingId] = useState<string | null>(null);
+
+    const openCreditsPage = (tab: 'upgrade' | 'topup') => {
+        setCreditsTab(tab);
+        window.history.pushState({}, '', `/credits${tab === 'topup' ? '?tab=topup' : ''}`);
+    };
+
+    const handleUpgradePlan = async (plan: SubscriptionPlan) => {
+        if (!user) return;
+        if (plan.id === 'free') return;
+        setCreditsProcessingId(plan.id);
+        try {
+            const checkoutUrl = await createPaymentSession(user.uid, user.email || 'guest@photosmart.ru', plan.id, plan.price);
+            window.location.href = checkoutUrl;
+        } catch (error) {
+            console.error(error);
+            alert('Ошибка оплаты. Пожалуйста, попробуйте снова.');
+            setCreditsProcessingId(null);
+        }
+    };
+
+    const handleBuyCreditPack = async (pack: CreditPack) => {
+        if (!user) return;
+        setCreditsProcessingId(pack.id);
+        try {
+            const checkoutUrl = await createPaymentSession(user.uid, user.email || 'guest@photosmart.ru', pack.id, pack.price);
+            window.location.href = checkoutUrl;
+        } catch (error) {
+            console.error(error);
+            alert('Ошибка оплаты. Пожалуйста, попробуйте снова.');
+            setCreditsProcessingId(null);
+        }
+    };
 
     // Context Settings State (Lifted from Children)
     const [chatQuality, setChatQuality] = useState<'low' | 'medium' | 'high'>('high');
@@ -1127,6 +1169,40 @@ const App: React.FC = () => {
         );
     }
 
+    // Logged-in: show /credits when URL is /credits (tariff upgrade + credit top-up)
+    if (creditsTab) {
+        const goBack = () => {
+            setCreditsTab(null);
+            window.history.replaceState({}, '', '/');
+        };
+        return (
+            <div className="min-h-screen bg-background-light text-ink">
+                <SEO
+                    title="Тарифы и пополнение кредитов | КрасоМир"
+                    description="Выберите тариф КрасоМир или пополните баланс кредитов разовым пакетом. Прозрачные цены в рублях."
+                    path="/credits"
+                />
+                <header className="sticky top-0 z-50 flex items-center gap-4 px-6 py-4 bg-background-light/90 border-b border-[var(--border-strong)] backdrop-blur-md">
+                    <button
+                        type="button"
+                        onClick={goBack}
+                        className="flex items-center gap-2 text-ink-muted hover:text-ink transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        <span>Назад</span>
+                    </button>
+                </header>
+                <CreditsPage
+                    userTier={userTier}
+                    initialTab={creditsTab}
+                    onUpgrade={handleUpgradePlan}
+                    onBuyCredits={handleBuyCreditPack}
+                    processingId={creditsProcessingId}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="h-screen bg-brand-bg text-brand-text font-sans flex flex-col overflow-hidden selection:bg-brand-accent selection:text-white">
             <SEO
@@ -1165,12 +1241,12 @@ const App: React.FC = () => {
             )}
 
             <Header
-                toggleSidebar={() => setIsMobileSidebarOpen(true)}
                 credits={credits || 0}
-                onOpenProfile={() => setView('profile')}
+                onOpenAccountTab={(tab) => { setAccountTab(tab); setView('profile'); }}
+                onOpenCredits={openCreditsPage}
                 userTier={userTier}
-                showBackOnMobile={view === 'chat' || view === 'video'}
-                onBack={() => { setView('dashboard'); setIsMobileSidebarOpen(false); }}
+                showBackOnMobile={view === 'chat' || view === 'video' || view === 'templates'}
+                onBack={() => setView('dashboard')}
                 currentView={view}
                 onChangeView={setView}
             />
@@ -1774,7 +1850,7 @@ const App: React.FC = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div ref={scrollViewportRef} className="w-full h-full overflow-y-auto custom-scrollbar">
+                                    <div ref={scrollViewportRef} className={`w-full h-full overflow-y-auto custom-scrollbar ${selectedTemplate ? 'hidden lg:block' : ''}`}>
 
                                         {/* Sticky category pills */}
                                         <div className="sticky top-0 z-20 bg-background-light border-b border-[var(--border-strong)]">
@@ -1797,7 +1873,7 @@ const App: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="w-full max-w-shell mx-auto pt-6 pb-28 lg:pb-[150px] px-4 md:px-6">
+                                        <div className="w-full max-w-shell mx-auto pt-6 pb-40 lg:pb-[150px] px-4 md:px-6">
 
                                             {activeCategory === 'all' && (
                                                 <div className="relative w-full h-[280px] md:h-[340px] rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl group shrink-0">
@@ -1907,17 +1983,20 @@ const App: React.FC = () => {
                                             <div className="h-12 w-full"></div>
                                         </div>
 
-                                        {/* Site footer at the end of the gallery scroll */}
-                                        <Footer onNavigate={handleFooterNavigate} onProductClick={handleFooterProductClick} />
-                                        {/* Clearance for the fixed mobile nav */}
-                                        <div className="h-[72px] lg:hidden" />
+                                        {/* Site footer at the end of the gallery scroll — desktop only, keeps the mobile view focused on the generation flow */}
+                                        <div className="hidden lg:block">
+                                            <Footer onNavigate={handleFooterNavigate} onProductClick={handleFooterProductClick} />
+                                        </div>
+                                        {/* Clearance for the generation bar, which floats over the bottom of the panel on mobile too */}
+                                        <div className="h-28 lg:hidden" />
                                     </div>
                                 )}
                             </div>
 
-                            {/* Generation bar — pinned to the bottom of the studio panel (desktop only) */}
+                            {/* Generation bar — pinned to the bottom of the studio panel. Replaces the bottom tab bar
+                                while browsing templates: picking a style collapses the grid and shows it here instead. */}
                             {activeCategory !== 'saved' && (
-                              <div className="hidden lg:block absolute bottom-0 inset-x-0 pointer-events-none">
+                              <div className="absolute bottom-0 inset-x-0 pointer-events-none">
                                 <GenerationBar
                                     prompt={promptInput}
                                     onPromptChange={setPromptInput}
@@ -2001,7 +2080,7 @@ const App: React.FC = () => {
             <input type="file" ref={videoFileInputRef} className="hidden" accept="image/*" onChange={handleVideoFileUpload} />
 
             {/* Mobile Navigation (Higgsfield-style) — Главная · Библиотека · Создать · Pro · Профиль */}
-            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-card-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video') ? 'hidden' : ''}`}>
+            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-card-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video' || view === 'templates') ? 'hidden' : ''}`}>
                 <button
                     onClick={() => setView('dashboard')}
                     className={`flex flex-col items-center gap-1 py-1 transition-colors ${view === 'dashboard' ? 'text-ink' : 'text-ink-faint'}`}

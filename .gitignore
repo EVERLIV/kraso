@@ -26,6 +26,9 @@ serviceAccountKey.json
 firebase-debug.log
 *.firebase.log
 
+# Claude Code local tooling
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

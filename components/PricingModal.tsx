@@ -12,7 +12,7 @@ interface PricingModalProps {
   currentTier?: SubscriptionTier;
 }
 
-const PLANS: SubscriptionPlan[] = [
+export const PLANS: SubscriptionPlan[] = [
   {
     id: 'free',
     name: 'Free',

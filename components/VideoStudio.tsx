@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, ArrowRight, Loader2, X, ChevronUp, Check, Video as VideoIcon, Play } from 'lucide-react';
+import { Plus, Loader2, X, ChevronUp, Check, Video as VideoIcon, Play } from 'lucide-react';
 import { GeneratedImage } from '../types';
 
 type VideoRatio = '16:9' | '9:16' | '1:1';
@@ -115,8 +115,9 @@ function VideoStudio(props: VideoStudioProps) {
                         />
                     </div>
 
-                    {/* Controls row */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* Controls row — the option chips wrap among themselves; Generate stays pinned to the bottom-right */}
+                    <div className="flex items-end gap-2">
+                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                         {/* Duration */}
                         <div className="relative shrink-0">
                             <button onClick={() => { setDurOpen(v => !v); setRatioOpen(false); }} className="flex items-center gap-1.5 text-xs font-semibold text-ink-body bg-surface-muted px-2.5 py-1.5 rounded-full hover:bg-[var(--border-soft)]">
@@ -157,10 +158,11 @@ function VideoStudio(props: VideoStudioProps) {
                                 </>
                             )}
                         </div>
+                    </div>
 
                         {/* Generate */}
-                        <button onClick={onGenerate} disabled={isGenerating} className="ml-auto flex items-center gap-2 shrink-0 text-on-primary text-[15px] font-bold px-5 md:px-6 py-2.5 rounded-full shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 transition-all active:scale-[0.98]">
-                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><VideoIcon className="w-4 h-4" /> Создать <ArrowRight className="w-4 h-4 hidden sm:inline" /></>}
+                        <button onClick={onGenerate} disabled={isGenerating} className="shrink-0 inline-flex items-center justify-center gap-1.5 text-on-primary text-[13px] font-bold px-4 py-2 rounded-lg shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 transition-all active:scale-[0.98]">
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Создать'}
                         </button>
                     </div>
                 </div>
