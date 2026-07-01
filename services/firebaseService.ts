@@ -12,38 +12,118 @@ const USERS_COLLECTION = "users";
 export const uploadImageToStorage = async (userId: string, base64Data: string, type: 'original' | 'generated'): Promise<string> => {
   if (!storage) {
     console.warn("Storage not initialized. Returning mock URL.");
-    return base64Data; // Return original data in demo mode
+    return base64Data;
   }
 
   try {
-    // Check if it's already a URL (e.g. from history)
-    if (base64Data.startsWith('http')) return base64Data;
-
-    // Create a unique filename based on timestamp
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
-    const path = `users/${userId}/${type}_${timestamp}_${random}.jpg`;
-    
+    const filename = `${type}_${timestamp}_${random}.jpg`;
+    const path = `users/${userId}/${filename}`;
     const storageRef = storage.ref().child(path);
-    
-    // Determine format
-    const format = base64Data.startsWith('data:') ? 'data_url' : 'base64';
-    const metadata = { contentType: 'image/jpeg' };
+    console.log(`[Storage] Uploading to path: ${path} for user: ${userId}, type: ${type}`);
 
-    // Upload
-    await storageRef.putString(base64Data, format, metadata);
-    
-    // Get URL
-    const url = await storageRef.getDownloadURL();
-    return url;
-  } catch (error: any) {
-    // If permission denied (e.g. demo user trying to write to real bucket), return raw base64
-    if (error.code === 'storage/unauthorized' || error.code === 'permission-denied') {
-        console.warn("Storage permission denied. Using local data.");
-        return base64Data;
+    // 1. Handle External URLs (Persistence)
+    if (base64Data.startsWith('http')) {
+      if (base64Data.includes('firebasestorage.googleapis.com') || base64Data.includes('smartphotos.ru')) return base64Data;
+
+      try {
+        console.log("Fetching external image for persistence:", base64Data);
+        // Try fetch with cors mode explicit
+        const response = await fetch(base64Data);
+        if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+
+        const blob = await response.blob();
+
+        if (blob.size < 100) {
+          throw new Error("Fetched image is too small (invalid).");
+        }
+
+        // Upload Blob
+        const metadata = {
+          contentType: blob.type || 'image/jpeg',
+          cacheControl: 'public,max-age=31536000',
+        };
+
+        await storageRef.put(blob, metadata);
+        const firebaseUrl = await storageRef.getDownloadURL();
+        console.log(`[Storage] External image persisted! Path: ${path}, URL: ${firebaseUrl}`);
+        
+        // Verify URL contains our bucket
+        if (!firebaseUrl.includes('smartphotos.ru') && !firebaseUrl.includes('firebasestorage')) {
+          console.warn(`[Storage] Warning: Persisted URL doesn't contain expected bucket domain: ${firebaseUrl}`);
+        }
+        
+        return firebaseUrl;
+      } catch (e: any) {
+        console.warn("Client-side fetch failed (likely CORS). Trying Server-Side Proxy...", e);
+
+        // Fallback: Use Cloud Function Proxy
+        try {
+          // Determine API URL based on environment (local vs prod)
+          // Hardcode likely URL pattern or use relative
+          const functionUrl = "https://us-central1-project-1285666415996898989.cloudfunctions.net/saveImageToHistory";
+
+          const proxyResp = await fetch(functionUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, imageUrl: base64Data, type })
+          });
+
+          if (!proxyResp.ok) throw new Error(`Proxy failed: ${await proxyResp.text()}`);
+
+          const data = await proxyResp.json();
+          console.log("Server-side persistence success:", data.url);
+          return data.url;
+
+        } catch (proxyError) {
+          console.error("Server-side proxy also failed:", proxyError);
+          throw e; // Throw original error if both fail
+        }
+      }
     }
-    console.error("Error uploading image:", error);
-    return base64Data; // Fallback to base64 so app doesn't crash
+
+    // 2. Handle Base64 Data (Original & Watermarked)
+    // We use putString which is robust in the compat SDK
+    const metadata = {
+      contentType: 'image/jpeg',
+      cacheControl: 'public,max-age=31536000',
+    };
+
+    let uploadTask;
+
+    if (base64Data.startsWith('data:')) {
+      // Upload as Data URL
+      uploadTask = storageRef.putString(base64Data, 'data_url', metadata);
+    } else {
+      // Upload as Base64 string (assume JPEG if raw)
+      uploadTask = storageRef.putString(base64Data, 'base64', metadata);
+    }
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        // Progress monitoring if needed
+      },
+      (error) => {
+        console.error("Upload error:", error);
+      }
+    );
+
+    await uploadTask;
+    const url = await storageRef.getDownloadURL();
+    console.log(`[Storage] Upload successful! Path: ${path}, URL: ${url}`);
+    
+    // Verify URL contains our bucket
+    if (!url.includes('smartphotos.ru') && !url.includes('firebasestorage')) {
+      console.warn(`[Storage] Warning: Uploaded URL doesn't contain expected bucket domain: ${url}`);
+    }
+    
+    return url;
+
+  } catch (error: any) {
+    console.error("Firebase Storage Error:", error);
+    // Throw error so caller knows upload failed
+    throw error;
   }
 };
 
@@ -63,25 +143,32 @@ export const saveGenerationToHistory = async (userId: string, item: GeneratedIma
   const isTooLarge = (str: string | null) => str && str.length > 200000; // Limit to ~200KB characters to be safe
 
   if (isTooLarge(item.generated) || isTooLarge(item.original)) {
-      console.warn("Image data is too large for database (Base64). Skipping server save to prevent crash.");
-      // Return a temporary local ID so the UI still works for this session
-      return `local_heavy_${Date.now()}`;
+    console.warn("Image data is too large for database (Base64). Skipping server save to prevent crash.");
+    // Return a temporary local ID so the UI still works for this session
+    return `local_heavy_${Date.now()}`;
   }
 
   try {
+    // Log what we're saving
+    console.log(`[Firestore] Saving generation for user: ${userId}, prompt: ${item.prompt?.substring(0, 50)}...`);
+    console.log(`[Firestore] Generated URL: ${item.generated?.substring(0, 100)}...`);
+    
     const docRef = await db.collection(HISTORY_COLLECTION).add({
       userId,
       original: item.original,
       generated: item.generated,
       prompt: item.prompt,
-      isSaved: false, // Default not saved/bookmarked
+      source: item.source || 'studio',
+      isSaved: true, // Auto-save all generations by default
       createdAt: firebase.firestore.Timestamp.now()
     });
+    
+    console.log(`[Firestore] Generation saved successfully! Doc ID: ${docRef.id}`);
     return docRef.id;
   } catch (error: any) {
     if (error.code === 'permission-denied') {
-       console.warn("Firestore permission denied. Returning temp ID.");
-       return `temp_perm_${Date.now()}`;
+      console.warn("Firestore permission denied. Returning temp ID.");
+      return `temp_perm_${Date.now()}`;
     }
     console.error("Error saving history:", error);
     return `temp_err_${Date.now()}`;
@@ -92,20 +179,20 @@ export const saveGenerationToHistory = async (userId: string, item: GeneratedIma
  * Toggles the 'isSaved' status of a generation
  */
 export const toggleSavedStatus = async (docId: string, isSaved: boolean): Promise<boolean> => {
-    if (!db || !docId) return false;
-    
-    // Don't try to update temporary local IDs in the database
-    if (docId.startsWith('temp_') || docId.startsWith('local_')) return true;
+  if (!db || !docId) return false;
 
-    try {
-        await db.collection(HISTORY_COLLECTION).doc(docId).update({
-            isSaved: isSaved
-        });
-        return true;
-    } catch (error) {
-        console.error("Error toggling saved status:", error);
-        return false;
-    }
+  // Don't try to update temporary local IDs in the database
+  if (docId.startsWith('temp_') || docId.startsWith('local_')) return true;
+
+  try {
+    await db.collection(HISTORY_COLLECTION).doc(docId).update({
+      isSaved: isSaved
+    });
+    return true;
+  } catch (error) {
+    console.error("Error toggling saved status:", error);
+    return false;
+  }
 };
 
 /**
@@ -122,31 +209,57 @@ export const getUserHistory = async (userId: string): Promise<GeneratedImage[]> 
       .get();
 
     const history: GeneratedImage[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+
+      // Validate generated image URL/data
+      const generated = data.generated;
+      const isValidGenerated = generated && (
+        typeof generated === 'string' && (
+          generated.startsWith('http') ||
+          generated.startsWith('data:image') ||
+          generated.startsWith('blob:') ||
+          // Allow Firebase Storage URLs even if they don't start with http (shouldn't happen, but safety check)
+          generated.includes('firebasestorage') ||
+          generated.includes('smartphotos.ru')
+        )
+      );
+
+      // Skip entries with invalid or missing generated image
+      if (!isValidGenerated) {
+        console.warn(`[Firestore] Skipping history entry ${doc.id}: invalid generated image format`, {
+          generated: typeof generated === 'string' ? generated.substring(0, 100) : generated,
+          hasGenerated: !!generated
+        });
+        return;
+      }
+
       history.push({
         id: doc.id,
-        original: data.original,
-        generated: data.generated,
-        prompt: data.prompt,
+        original: data.original || null,
+        generated: generated,
+        prompt: data.prompt || 'Без описания',
+        source: data.source || 'studio',
         isSaved: data.isSaved || false,
         createdAt: data.createdAt
       });
     });
+    
+    console.log(`[Firestore] Loaded ${history.length} history entries for user: ${userId}`);
 
     // Sort in memory (Newest first)
     return history.sort((a, b) => {
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
+      const timeA = a.createdAt?.seconds || 0;
+      const timeB = b.createdAt?.seconds || 0;
+      return timeB - timeA;
     });
 
   } catch (error: any) {
     // Gracefully handle permission errors
     if (error.code === 'permission-denied' || error.code === 'firestore/permission-denied') {
-        console.warn("Firestore permission denied. Switching to local/empty history.");
-        return [];
+      console.warn("Firestore permission denied. Switching to local/empty history.");
+      return [];
     }
     console.error("Error fetching history:", error);
     return [];
@@ -158,20 +271,20 @@ export const getUserHistory = async (userId: string): Promise<GeneratedImage[]> 
  */
 export const syncUserProfile = async (user: any): Promise<UserProfile> => {
   // Default values
-  const defaultCredits = 5;
-  
+  const defaultCredits = 45;
+
   // Mock profile fallback
   const mockProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      credits: defaultCredits,
-      subscriptionTier: 'free',
-      subscriptionStatus: 'active',
-      subscriptionEndDate: null,
-      createdAt: new Date(),
-      lastLogin: new Date()
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    credits: defaultCredits,
+    subscriptionTier: 'free',
+    subscriptionStatus: 'active',
+    subscriptionEndDate: null,
+    createdAt: new Date(),
+    lastLogin: new Date()
   };
 
   if (!db) return mockProfile;
@@ -182,7 +295,7 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
 
     if (userSnap.exists) {
       const data = userSnap.data();
-      
+
       // Update last login
       await userRef.update({
         lastLogin: firebase.firestore.Timestamp.now()
@@ -190,9 +303,9 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
 
       // Safely merge existing data with defaults to avoid undefined/NaN
       return {
-          ...mockProfile, // Start with safe defaults
-          ...data,        // Overwrite with DB data
-          credits: typeof data?.credits === 'number' ? data.credits : defaultCredits // Ensure credits is a number
+        ...mockProfile, // Start with safe defaults
+        ...data,        // Overwrite with DB data
+        credits: typeof data?.credits === 'number' ? data.credits : defaultCredits // Ensure credits is a number
       } as UserProfile;
 
     } else {
@@ -208,7 +321,7 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
     }
   } catch (error: any) {
     if (error.code === 'permission-denied') {
-        return mockProfile;
+      return mockProfile;
     }
     console.error("Error syncing profile:", error);
     return mockProfile;
@@ -227,7 +340,7 @@ export const deductCredits = async (userId: string, amount: number): Promise<boo
     if (userSnap.exists) {
       const data = userSnap.data();
       const currentCredits = typeof data?.credits === 'number' ? data.credits : 0;
-      
+
       if (currentCredits >= amount) {
         await userRef.update({
           credits: firebase.firestore.FieldValue.increment(-amount)
@@ -243,25 +356,24 @@ export const deductCredits = async (userId: string, amount: number): Promise<boo
   }
 };
 
-/**
- * Simulates subscription purchase and updates DB
- */
 export const purchaseSubscription = async (userId: string, tier: SubscriptionTier, creditsToAdd: number): Promise<void> => {
   if (!db) return;
-  
+
   try {
     const userRef = db.collection(USERS_COLLECTION).doc(userId);
-    
+
     // Calculate expiry (30 days from now)
     const now = new Date();
     now.setDate(now.getDate() + 30);
     const expiryDate = firebase.firestore.Timestamp.fromDate(now);
 
     await userRef.update({
+      credits: firebase.firestore.FieldValue.increment(creditsToAdd),
       subscriptionTier: tier,
       subscriptionStatus: 'active',
       subscriptionEndDate: expiryDate,
-      credits: firebase.firestore.FieldValue.increment(creditsToAdd)
+      lastPaymentDate: firebase.firestore.FieldValue.serverTimestamp(),
+      lastPaymentPlan: tier
     });
   } catch (e: any) {
     if (e.code === 'permission-denied') return;

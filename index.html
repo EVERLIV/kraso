@@ -1,136 +1,180 @@
-
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Photo Smart - AI Фоторедактор</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-              brand: {
-                bg: '#0B0E14', // Main background (very dark)
-                sidebar: '#151921', // Sidebar background
-                card: '#1E232E', // Card background
-                accent: '#3B82F6', // Primary Blue
-                hover: '#2563EB',
-                text: '#E2E8F0',
-                muted: '#94A3B8',
-                border: '#2D3748'
-              }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>1 фото → 150+ стилей за минуту. Генерация картинок ИИ | КрасоМир</title>
+  <meta name="description" content="Загрузите одно фото — получите ретро, свадьбу, маркетплейс, портрет. Нейросеть сохраняет лицо. Оживление фото в видео. Бесплатный старт. Генерация картинок ИИ онлайн." />
+  <meta name="keywords" content="генерация картинок ИИ, нейросеть для фото, стилизация фотографий, AI фоторедактор, оживление фото, ретро стиль, свадебные фото, карточки товаров, фото в стиле" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://smartphotos.ru/" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://smartphotos.ru/" />
+  <meta property="og:title" content="1 фото → 150+ стилей. Генерация картинок ИИ за минуту | КрасоМир" />
+  <meta property="og:description" content="Одно фото — ретро, свадьба, маркетплейс. Нейросеть сохраняет лицо. Оживите фото в видео. Попробуйте бесплатно." />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:site_name" content="КрасоМир" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    /* ============================================================
+       Photo Smart — Design System (Studio reference, light theme)
+       Tokens live as CSS variables in :root below; Tailwind maps to them.
+       Dark mode kept working via .dark overrides.
+    ============================================================ */
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Manrope', 'Inter', '-apple-system', 'sans-serif'],
+            display: ['Manrope', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            // --- Design System Core ---
+            primary: 'var(--primary)',
+            'primary-hover': 'var(--primary-hover)',
+            'primary-soft': 'var(--primary-soft)',
+            'on-primary': 'var(--on-primary)',
+            'background-light': 'var(--bg-light)',
+            'background-dark': 'var(--bg-dark)',
+            'card-light': 'var(--card-light)',
+            'card-dark': 'var(--card-dark)',
+            'surface-muted': 'var(--surface-muted)',
+            'accent-purple': 'var(--accent-purple)',
+            'accent-pink': 'var(--accent-pink)',
+            'accent-pink-soft': 'var(--accent-pink-soft)',
+            ink: 'var(--ink)',
+            'ink-strong': 'var(--ink-strong)',
+            'ink-body': 'var(--ink-body)',
+            'ink-muted': 'var(--ink-muted)',
+            'ink-faint': 'var(--ink-faint)',
+
+            // --- Legacy Brand Mapping (compatibility with existing screens) ---
+            brand: {
+              bg: 'var(--bg-light)',
+              sidebar: 'var(--bg-light)',
+              card: 'var(--card-light)',
+              accent: 'var(--primary)',
+              hover: 'var(--primary-hover)',
+              text: 'var(--ink)',
+              muted: 'var(--ink-muted)',
+              border: 'var(--border-color)'
             }
+          },
+          borderRadius: {
+            DEFAULT: 'var(--radius-default)',  // 12px
+            'btn': 'var(--radius-btn)',         // 14px
+            'lg': 'var(--radius-lg)',           // 16px
+            'tile': 'var(--radius-tile)',       // 18px
+            'xl': 'var(--radius-xl)',           // 24px
+          },
+          boxShadow: {
+            'tile-hover': '0 26px 50px -20px rgba(0,0,0,.6)',
+            'gen-bar': '0 24px 60px -18px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4)',
+            'toast': '0 18px 40px -12px rgba(0,0,0,.7)',
+            'pill-active': '0 8px 18px -7px var(--primary)',
+            'cta': '0 8px 20px -8px var(--primary)',
+            'cta-lg': '0 12px 28px -10px var(--primary)',
+          },
+          backgroundImage: {
+            'brand-grad': 'linear-gradient(135deg,#C6F806,#9bdd04 60%,#7ab800)',
+            'brand-grad-text': 'linear-gradient(105deg,#C6F806,#9bdd04 50%,#d4ff3a)',
+            'ai-badge': 'linear-gradient(135deg,#C6F806,#9bdd04)',
+          },
+          maxWidth: {
+            'shell': '1320px',  // gallery / header / footer
+            'hero': '920px',    // hero block
+            'genbar': '880px',  // sticky generation bar
+          },
+          animation: {
+            marquee: 'spmarq 46s linear infinite',
+            'ping-slow': 'spping 1.8s ease-out infinite',
+            'toast-in': 'sptoast .25s ease both',
+          },
+          keyframes: {
+            spmarq: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
+            spping: { '0%': { transform: 'scale(1)', opacity: '.7' }, '70%,100%': { transform: 'scale(2.4)', opacity: '0' } },
+            sptoast: { from: { opacity: '0', transform: 'translateY(12px)' }, to: { opacity: '1', transform: 'none' } },
+            spup: { from: { opacity: '0', transform: 'translateY(16px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
           }
         }
       }
-    </script>
-    <style>
-      body {
-        background-color: #0B0E14;
-        color: #E2E8F0;
-        font-family: 'Inter', sans-serif;
-      }
-      /* Custom scrollbar */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #151921; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155; 
-        border-radius: 3px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
-      }
+    }
+  </script>
+  <style>
+    :root {
+      /* === Accent — Higgsfield lime === */
+      --primary: #C6F806;             /* acid lime accent */
+      --primary-hover: #b4e205;
+      --primary-soft: #1c2a05;        /* dim lime glow on black */
+      --on-primary: #0A0A0A;          /* text/icon color on accent surfaces */
+      --accent-purple: #C6F806;
+      --accent-pink: #C6F806;
+      --accent-pink-soft: #1c2a05;
 
-      /* Festive Sparkle Animation */
-      .festive-sparkle {
-        position: fixed;
-        top: -10px;
-        z-index: 9999;
-        user-select: none;
-        cursor: default;
-        animation-name: sparkles-fall, sparkles-shake;
-        animation-duration: 12s, 4s;
-        animation-timing-function: linear, ease-in-out;
-        animation-iteration-count: infinite, infinite;
-        animation-play-state: running, running;
-        pointer-events: none;
-        font-size: 1.5rem;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Glow effect */
-      }
-      
-      /* Cool White (Snow) */
-      .festive-sparkle:nth-child(3n) { color: rgba(255, 255, 255, 0.8); }
-      /* Cyan/Light Blue (Ice) */
-      .festive-sparkle:nth-child(3n+1) { color: rgba(173, 216, 230, 0.7); }
-      /* Silver */
-      .festive-sparkle:nth-child(3n+2) { color: rgba(211, 211, 211, 0.6); }
+      /* === Surfaces (dark) === */
+      --bg-light: #0A0A0A;            /* page background (near-black) */
+      --bg-dark: #000000;
+      --card-light: #161616;          /* cards / surfaces */
+      --card-dark: #0F0F0F;
+      --surface-muted: #1F1F1F;       /* segment / chip backgrounds */
 
-      @keyframes sparkles-fall {
-        0% { top: -10% }
-        100% { top: 100% }
-      }
-      @keyframes sparkles-shake {
-        0% { transform: translateX(0px) rotate(0deg) }
-        50% { transform: translateX(80px) rotate(180deg) }
-        100% { transform: translateX(0px) rotate(360deg) }
-      }
-      
-      .festive-sparkle:nth-of-type(0) { left: 1%; animation-duration: 15s, 5s; animation-delay: 0s, 0s }
-      .festive-sparkle:nth-of-type(1) { left: 10%; animation-duration: 18s, 6s; animation-delay: 1s, 1s }
-      .festive-sparkle:nth-of-type(2) { left: 20%; animation-duration: 12s, 4s; animation-delay: 6s, 0.5s }
-      .festive-sparkle:nth-of-type(3) { left: 30%; animation-duration: 16s, 5s; animation-delay: 4s, 2s }
-      .festive-sparkle:nth-of-type(4) { left: 40%; animation-duration: 14s, 4s; animation-delay: 2s, 2s }
-      .festive-sparkle:nth-of-type(5) { left: 50%; animation-duration: 19s, 6s; animation-delay: 8s, 3s }
-      .festive-sparkle:nth-of-type(6) { left: 60%; animation-duration: 13s, 4s; animation-delay: 6s, 2s }
-      .festive-sparkle:nth-of-type(7) { left: 70%; animation-duration: 17s, 5s; animation-delay: 2.5s, 1s }
-      .festive-sparkle:nth-of-type(8) { left: 80%; animation-duration: 15s, 6s; animation-delay: 1s, 0s }
-      .festive-sparkle:nth-of-type(9) { left: 90%; animation-duration: 20s, 5s; animation-delay: 3s, 1.5s }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "firebase/app": "https://esm.sh/firebase@10.12.0/compat/app",
-    "firebase/auth": "https://esm.sh/firebase@10.12.0/compat/auth",
-    "firebase/firestore": "https://esm.sh/firebase@10.12.0/compat/firestore",
-    "firebase/storage": "https://esm.sh/firebase@10.12.0/compat/storage",
-    "firebase/analytics": "https://esm.sh/firebase@10.12.0/compat/analytics",
-    "firebase/functions": "https://esm.sh/firebase@10.12.0/compat/functions",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "@firebase/firestore": "https://aistudiocdn.com/@firebase/firestore@^4.9.2",
-    "@firebase/storage": "https://aistudiocdn.com/@firebase/storage@^0.14.0"
-  }
-}
-</script>
+      /* === Borders === */
+      --border-color: #2A2A2A;
+      --border-strong: #1E1E1E;       /* section dividers */
+      --border-soft: #242424;
+
+      /* === Ink (text scale, light on dark) === */
+      --ink: #F5F5F5;                 /* primary text */
+      --ink-strong: #E5E5E5;          /* strong secondary */
+      --ink-body: #C9C9C9;            /* body */
+      --ink-muted: #8A8A8A;           /* muted */
+      --ink-faint: #5C5C5C;           /* faint */
+
+      /* === Radii === */
+      --radius-default: 12px;
+      --radius-btn: 14px;
+      --radius-lg: 16px;
+      --radius-tile: 18px;
+      --radius-xl: 24px;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--ink);
+      font-family: 'Manrope', 'Inter', sans-serif;
+      font-size: 14px;
+      letter-spacing: -0.006em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* .dark kept as alias — theme is already dark by default */
+    .dark { color-scheme: dark; }
+
+    /* === Design System keyframes (also available as Tailwind animate-*) === */
+    @keyframes spmarq { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+    @keyframes spping { 0% { transform: scale(1); opacity: .7 } 70%, 100% { transform: scale(2.4); opacity: 0 } }
+    @keyframes sptoast { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+    @keyframes spup { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+
+    /* Custom scrollbar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
+  </style>
 </head>
-  <body>
-    <div id="root"></div>
-    <div aria-hidden="true">
-      <div class="festive-sparkle">❄</div>
-      <div class="festive-sparkle">❅</div>
-      <div class="festive-sparkle">❆</div>
-      <div class="festive-sparkle">❄</div>
-      <div class="festive-sparkle">❅</div>
-      <div class="festive-sparkle">❆</div>
-      <div class="festive-sparkle">❄</div>
-      <div class="festive-sparkle">❅</div>
-      <div class="festive-sparkle">❆</div>
-      <div class="festive-sparkle">❄</div>
-    </div>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

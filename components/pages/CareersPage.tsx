@@ -35,7 +35,7 @@ const CareersPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-16">
           <span className="text-purple-400 font-bold tracking-wider text-sm uppercase mb-2 block">Вакансии</span>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">Карьера в Photo Smart</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">Карьера в КрасоМир</h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             Мы строим будущее креативных технологий. Ищем талантливых людей, готовых решать сложные задачи.
           </p>

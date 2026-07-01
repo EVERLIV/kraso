@@ -1,99 +1,145 @@
 
 import React, { useState } from 'react';
-import { Search, Bell, Zap, Menu, ChevronDown, MessageSquare, Sparkles, Glasses } from 'lucide-react';
+import { Bell, Zap, Menu, Sparkles, Glasses, ArrowLeft, LayoutGrid, Image as ImageIcon, Video, Home } from 'lucide-react';
 import PricingModal from './PricingModal'; // Import pricing
+import { SubscriptionTier, ViewMode } from '../types';
 
 interface HeaderProps {
   toggleSidebar: () => void;
   credits: number;
   onOpenProfile: () => void;
+  userTier: SubscriptionTier;
+  /** На мобильном в режиме чата/оживления показывать «Назад» вместо меню */
+  showBackOnMobile?: boolean;
+  onBack?: () => void;
+  currentView?: ViewMode;
+  onChangeView?: (view: ViewMode) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ toggleSidebar, credits, onOpenProfile }) => {
+const Header: React.FC<HeaderProps> = ({ toggleSidebar, credits, onOpenProfile, userTier, showBackOnMobile, onBack, currentView, onChangeView }) => {
   const [showPricing, setShowPricing] = useState(false);
+
+  // Tier display names
+  const TIER_LABELS: Record<SubscriptionTier, string> = {
+    'free': 'Free',
+    'creator': 'Creator',
+    'pro': 'Pro',
+    'business': 'Business'
+  };
 
   return (
     <>
-    <PricingModal isOpen={showPricing} onClose={() => setShowPricing(false)} onSuccess={() => {}} />
-    
-    <header className="h-16 bg-[#0B0E14] border-b border-white/5 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40 text-brand-text shrink-0 relative overflow-hidden">
-      
-      {/* Festive Glow */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
-      
-      <div className="flex items-center gap-4 relative z-10">
-        <button 
-          onClick={toggleSidebar}
-          className="lg:hidden p-2 text-brand-muted hover:text-white transition-colors"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        
-        {/* Logo Area - Photo Smart Style */}
-        <div className="flex items-center gap-3 select-none cursor-pointer group">
-           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20 ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-300 relative overflow-hidden">
+      <PricingModal isOpen={showPricing} onClose={() => setShowPricing(false)} onSuccess={() => { }} currentTier={userTier} />
+
+      <header className="h-14 bg-background-light border-b border-[var(--border-strong)] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40 text-ink shrink-0">
+
+        <div className="flex items-center gap-4">
+          {showBackOnMobile ? (
+            <button
+              onClick={onBack}
+              className="lg:hidden p-2 text-ink hover:bg-surface-muted rounded-lg transition-colors"
+              aria-label="Назад"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden p-2 text-ink-muted hover:text-ink transition-colors"
+              aria-label="Меню"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Logo Area - Studio Style */}
+          <div className="flex items-center gap-3 select-none cursor-pointer group">
+            <div className="w-[38px] h-[38px] bg-brand-grad rounded-[11px] flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(168,85,247,.5)] group-hover:scale-105 transition-transform duration-300 relative overflow-hidden">
               {/* Glossy Effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-50"></div>
-              <Glasses className="w-6 h-6 text-white relative z-10 drop-shadow-md" />
-           </div>
-           <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2">
-                 <span className="font-bold text-white text-lg leading-none tracking-tight font-sans drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] group-hover:text-purple-200 transition-colors duration-300">Photo Smart</span>
-                 <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-gradient-to-r from-blue-500 to-purple-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                   AI
-                 </span>
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/35 to-transparent"></div>
+              <Glasses className="w-5 h-5 text-white relative z-10 drop-shadow-md" />
+            </div>
+            <div className="flex flex-col justify-center leading-none">
+              <div className="flex items-center gap-[7px]">
+                <span className="font-extrabold text-ink text-lg leading-none tracking-[-0.02em] font-sans">КрасоМир</span>
+                <span className="hidden sm:inline-flex items-center px-[5px] py-0.5 rounded-[5px] bg-ai-badge text-on-primary text-[9px] font-extrabold uppercase tracking-[0.08em] shadow-sm">
+                  AI
+                </span>
               </div>
-              <span className="text-[10px] text-brand-muted font-medium tracking-wide">
-                 Умный редактор
+              <span className="hidden lg:block text-[10.5px] text-ink-faint font-medium tracking-wide mt-[3px]">
+                Умная фотостудия
               </span>
-           </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 md:gap-5">
-        {/* Desktop Helper Icons */}
-        <div className="hidden md:flex items-center gap-1">
-           <button className="p-2 text-brand-muted hover:text-white hover:bg-white/5 rounded-full transition-colors relative">
-             <Bell className="w-4 h-4" />
-             <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-           </button>
-        </div>
-        
-        <div className="h-6 w-px bg-white/10 hidden md:block"></div>
-
-        {/* Credits Badge */}
-        <div 
-          onClick={() => setShowPricing(true)}
-          className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/10 transition-colors cursor-pointer group"
-        >
-           <div className="bg-yellow-500/20 p-1 rounded-full group-hover:bg-yellow-500/30 transition-colors">
-              <Zap className="w-3 h-3 text-yellow-400" fill="currentColor" />
-           </div>
-           <span className="text-xs font-bold text-white tabular-nums">
-             {credits} <span className="text-brand-muted font-normal ml-0.5">кр.</span>
-           </span>
-        </div>
-        
-        {/* Tariff Button (Desktop) */}
-        <button 
-          onClick={() => setShowPricing(true)}
-          className="hidden sm:flex items-center gap-2 bg-brand-accent hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
-        >
-          <span>Тариф PRO</span>
-        </button>
-        
-        {/* User Avatar */}
-        <button 
-          className="flex items-center gap-2 pl-2 cursor-pointer hover:opacity-90 transition-opacity"
-          onClick={onOpenProfile}
-        >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[1px] ring-2 ring-black border border-white/20 shadow-lg relative">
-             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full rounded-full bg-[#151921]" />
-             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#0B0E14] rounded-full"></div>
+            </div>
           </div>
-        </button>
-      </div>
-    </header>
+
+          {/* Nav tabs — Главная · Шаблоны · Генерация фото · Генерация видео */}
+          {onChangeView && (
+            <nav className="flex items-center gap-0.5 md:gap-1 ml-1 md:ml-2 overflow-x-auto no-scrollbar">
+              {([
+                { view: 'dashboard', icon: Home, label: 'Главная', short: 'Главная' },
+                { view: 'templates', icon: LayoutGrid, label: 'Шаблоны', short: 'Шаблоны' },
+                { view: 'chat', icon: ImageIcon, label: 'Генерация фото', short: 'Фото' },
+                { view: 'video', icon: Video, label: 'Генерация видео', short: 'Видео' },
+              ] as const).map(t => (
+                <button
+                  key={t.view}
+                  onClick={() => onChangeView(t.view)}
+                  className={`flex items-center gap-1.5 text-[13px] md:text-sm font-semibold px-2.5 md:px-3 py-2 rounded-[9px] whitespace-nowrap transition-colors ${currentView === t.view ? 'text-ink bg-surface-muted' : 'text-ink-muted hover:text-ink hover:bg-surface-muted/60'}`}
+                >
+                  <t.icon className="w-[15px] h-[15px]" />
+                  <span className="hidden md:inline">{t.label}</span>
+                  <span className="md:hidden">{t.short}</span>
+                </button>
+              ))}
+            </nav>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 md:gap-4">
+          {/* Desktop Helper Icons */}
+          <div className="hidden md:flex items-center gap-1">
+            <button className="p-2 text-ink-muted hover:text-ink hover:bg-surface-muted rounded-full transition-colors relative">
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </button>
+          </div>
+
+          <div className="h-6 w-px bg-[var(--border-color)] hidden md:block"></div>
+
+          {/* Credits Badge */}
+          <div
+            onClick={() => onChangeView ? onChangeView('profile') : setShowPricing(true)}
+            className="flex items-center gap-[7px] bg-card-light border border-[var(--border-color)] px-[13px] py-[7px] rounded-full hover:bg-surface-muted transition-colors cursor-pointer group"
+          >
+            <span className="w-[18px] h-[18px] rounded-full bg-amber-100 flex items-center justify-center">
+              <Zap className="w-[11px] h-[11px] text-amber-500" fill="currentColor" />
+            </span>
+            <span className="text-[13px] font-bold text-ink tabular-nums">
+              {credits} <span className="text-ink-faint font-medium ml-0.5">кр.</span>
+            </span>
+          </div>
+
+          {/* Tariff CTA (Desktop) — goes to Account → Subscription */}
+          <button
+            onClick={() => onChangeView ? onChangeView('profile') : setShowPricing(true)}
+            className="hidden sm:flex items-center gap-[7px] text-on-primary text-sm font-bold px-[18px] py-[9px] rounded-full shadow-cta active:scale-95 transition-all bg-primary hover:bg-primary-hover"
+          >
+            <Sparkles className="w-[15px] h-[15px]" />
+            <span>Тариф {TIER_LABELS[userTier]}</span>
+          </button>
+
+          {/* User Avatar */}
+          <button
+            className="flex items-center cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={onOpenProfile}
+          >
+            <div className="w-[38px] h-[38px] rounded-full bg-brand-grad p-[2px] shadow-md relative">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full rounded-full bg-card-light object-cover border-2 border-background-light" />
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-background-light rounded-full"></div>
+            </div>
+          </button>
+        </div>
+      </header>
     </>
   );
 };

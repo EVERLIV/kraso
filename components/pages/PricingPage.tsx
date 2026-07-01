@@ -66,9 +66,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ onAuth }) => {
     <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Тарифы Photo Smart</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Тарифы КрасоМир</h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Выберите план, который подходит именно вам. Прозрачные цены от ООО «АСПРО».
+            Выберите план, который подходит именно вам. Прозрачные цены от «Два А — Цифровые Решения».
           </p>
         </div>
 
@@ -135,7 +135,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onAuth }) => {
         <div className="text-center">
             <div className="inline-flex items-center gap-2 text-gray-500 text-sm bg-white/5 px-6 py-3 rounded-full border border-white/5">
                 <CreditCard className="w-4 h-4 text-red-500" />
-                <span>Эквайринг предоставлен АО "Альфа-Банк". Безопасный платеж SSL. Юридическое лицо: ООО «АСПРО».</span>
+                <span>Эквайринг предоставлен АО "Альфа-Банк". Безопасный платеж SSL. Юридическое лицо: «Два А — Цифровые Решения».</span>
             </div>
         </div>
       </div>

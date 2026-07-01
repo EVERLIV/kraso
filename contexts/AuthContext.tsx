@@ -3,154 +3,123 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, googleProvider, firebase } from "../lib/firebase";
 
 interface AuthContextType {
-  user: firebase.User | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
+    user: firebase.User | null;
+    loading: boolean;
+    signInWithGoogle: () => Promise<void>;
+    loginWithEmail: (email: string, pass: string) => Promise<void>;
+    registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
+    logout: () => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+/**
+ * On localhost we skip the emailVerified gate so test accounts can sign in
+ * without a real inbox. Production keeps the verification requirement.
+ */
+const isLocalDev = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<firebase.User | null>(null);
-  const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<firebase.User | null>(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // If Firebase Auth is initialized, listen to state changes
-    if (auth) {
-        const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-            setUser(currentUser);
+    useEffect(() => {
+        if (auth) {
+            const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+                if (currentUser && !currentUser.emailVerified && !isLocalDev) {
+                    auth.signOut().catch(e => console.error("Signout error", e));
+                    setUser(null);
+                } else {
+                    setUser(currentUser);
+                }
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } else {
             setLoading(false);
-        });
-        return () => unsubscribe();
-    } else {
-        // If no Firebase, we are in Demo Mode. 
-        setLoading(false);
-        return () => {};
-    }
-  }, []);
+            return () => { };
+        }
+    }, []);
 
-  // Helper to simulate login for Demo Mode or Fallback
-  const loginMockUser = async () => {
-    console.log("Fallback: Entering Demo Mode due to Firebase connection issues.");
-    await new Promise(resolve => setTimeout(resolve, 800)); // Fake network delay
-    
-    // Create a mock user object compatible with firebase.User structure
-    const mockUser = {
-        uid: "demo-user-123",
-        displayName: "Гость (Демо)",
-        email: "demo@photosmart.ru",
-        photoURL: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-        emailVerified: true,
-        isAnonymous: false,
-        metadata: {},
-        providerData: [],
-        refreshToken: "",
-        tenantId: null,
-        delete: async () => {},
-        getIdToken: async () => "mock-token",
-        getIdTokenResult: async () => ({} as any),
-        reload: async () => {},
-        toJSON: () => ({}),
-        phoneNumber: null
-    } as unknown as firebase.User;
-    
-    setUser(mockUser);
-  };
-
-  const signInWithGoogle = async () => {
-    if (auth && googleProvider) {
+    const signInWithGoogle = async () => {
+        if (!auth || !googleProvider) {
+            throw new Error("Вход недоступен. Проверьте подключение.");
+        }
         try {
             await auth.signInWithPopup(googleProvider);
         } catch (error: any) {
             console.error("Error signing in with Google", error);
-            const fallbackErrors = [
-                'auth/unauthorized-domain', 
-                'auth/api-key-not-valid', 
-                'auth/operation-not-allowed',
-                'auth/network-request-failed'
-            ];
-            
-            if (fallbackErrors.includes(error.code)) {
-                console.warn(`Firebase Auth issue (${error.code}). Switching to Demo Mode.`);
-                await loginMockUser();
-            } else {
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    // For other errors, still try fallback to keep app usable
-                    await loginMockUser();
-                } else {
-                    throw error;
-                }
-            }
+            throw error;
         }
-    } else {
-        await loginMockUser();
-    }
-  };
+    };
 
-  const loginWithEmail = async (email: string, pass: string) => {
-    if (auth) {
+    const loginWithEmail = async (email: string, pass: string) => {
+        if (!auth) {
+            throw new Error("Вход недоступен. Проверьте подключение.");
+        }
         try {
-            await auth.signInWithEmailAndPassword(email, pass);
+            const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+            if (userCredential.user && !userCredential.user.emailVerified && !isLocalDev) {
+                await auth.signOut();
+                throw new Error("unverified-email");
+            }
         } catch (error: any) {
-             console.error("Error logging in with email", error);
-             if (error.code === 'auth/network-request-failed') {
-                 console.warn("Network error during login. Switching to Demo Mode.");
-                 await loginMockUser();
-                 return;
-             }
-             throw error;
+            console.error("Error logging in with email", error);
+            throw error;
         }
-    } else {
-        await loginMockUser();
-    }
-  };
+    };
 
-  const registerWithEmail = async (email: string, pass: string, name: string) => {
-    if (auth) {
+    const registerWithEmail = async (email: string, pass: string, name: string) => {
+        if (!auth) {
+            throw new Error("Регистрация недоступна. Проверьте подключение.");
+        }
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-            // Update display name immediately
             if (userCredential.user) {
                 await userCredential.user.updateProfile({
                     displayName: name,
                     photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
                 });
-                // Trigger a reload to update local state if needed
-                setUser({ ...userCredential.user, displayName: name, photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}` } as firebase.User);
+                await userCredential.user.sendEmailVerification();
+                await auth.signOut();
             }
         } catch (error: any) {
-             console.error("Error registering", error);
-             if (error.code === 'auth/network-request-failed') {
-                 console.warn("Network error during registration. Switching to Demo Mode.");
-                 await loginMockUser();
-                 return;
-             }
-             throw error;
+            console.error("Error registering", error);
+            throw error;
         }
-    } else {
-        await loginMockUser();
-    }
-  };
+    };
 
-  const logout = async () => {
-    if (auth) {
+    const logout = async () => {
+        if (auth) {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error("Error signing out", error);
+            }
+        }
+        setUser(null);
+    };
+
+    const resetPassword = async (email: string) => {
+        if (!auth) {
+            throw new Error("Восстановление пароля недоступно. Проверьте подключение.");
+        }
         try {
-            await auth.signOut();
-        } catch (error) {
-            console.error("Error signing out", error);
+            await auth.sendPasswordResetEmail(email);
+        } catch (error: any) {
+            // Surface the real cause instead of a silent success on the UI.
+            console.error("sendPasswordResetEmail failed", error?.code, error?.message);
+            throw error;
         }
-    }
-    setUser(null);
-  };
+    };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, loginWithEmail, registerWithEmail, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={{ user, loading, signInWithGoogle, loginWithEmail, registerWithEmail, logout, resetPassword }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

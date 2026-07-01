@@ -7,12 +7,14 @@ import "firebase/compat/functions";
 import "firebase/compat/analytics";
 
 // Config provided by user
+// Use your domain for "Continue to yourdomain.com" on Google sign-in; leave empty for firebaseapp.com
+const customAuthDomain = import.meta.env.VITE_AUTH_DOMAIN || "";
 const firebaseConfig = {
   apiKey: "AIzaSyDlXu-Y-B0SWAbJs_1_mtnHlatCOXZTQT0",
-  authDomain: "project-1285666415996898989.firebaseapp.com",
+  authDomain: customAuthDomain || "project-1285666415996898989.firebaseapp.com",
   databaseURL: "https://project-1285666415996898989-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "project-1285666415996898989",
-  storageBucket: "project-1285666415996898989.firebasestorage.app",
+  storageBucket: "smartphotos.ru",
   messagingSenderId: "318064340729",
   appId: "1:318064340729:web:b5d3d5100d14ae2d4a3c28",
   measurementId: "G-LVBHWV70CD"

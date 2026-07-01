@@ -12,7 +12,7 @@ const AboutPage: React.FC = () => {
               <Glasses className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-5xl md:text-7xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">
-            Photo Smart
+            КрасоМир
           </h1>
           <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Мы объединяем искусство фотографии и мощь искусственного интеллекта, чтобы каждый мог создавать шедевры в один клик.
@@ -38,7 +38,7 @@ const AboutPage: React.FC = () => {
               </div>
               <h3 className="text-2xl font-bold mb-4 text-white">Масштаб</h3>
               <p className="text-gray-400 leading-relaxed text-lg">
-                Запущенный в 2024 году, Photo Smart уже помог более 500,000 пользователям создать миллионы уникальных изображений. Мы базируемся в Москве, но работаем на весь мир.
+                Запущенный в 2024 году, КрасоМир уже помог более 500,000 пользователям создать миллионы уникальных изображений. Мы базируемся в Иркутске, но работаем на весь мир.
               </p>
            </div>
         </div>
@@ -49,12 +49,12 @@ const AboutPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                  <div>
                     <span className="block text-gray-600 text-xs uppercase tracking-wider mb-2">Полное наименование</span>
-                    <p className="text-white text-base">Общество с ограниченной ответственностью «АСПРО»</p>
+                    <p className="text-white text-base">Компания «Два А — Цифровые Решения»</p>
                     <p className="mt-1 opacity-50">ASPRO Limited Liability Company</p>
                  </div>
                  <div>
                     <span className="block text-gray-600 text-xs uppercase tracking-wider mb-2">Сокращенное наименование</span>
-                    <p className="text-white text-base">ООО «АСПРО»</p>
+                    <p className="text-white text-base">«Два А — Цифровые Решения»</p>
                     <p className="mt-1 opacity-50">ASPRO LLC</p>
                  </div>
               </div>

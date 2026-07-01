@@ -1,0 +1,308 @@
+[
+  {
+    "id": "doc_ru_passport",
+    "title": "🇷🇺 Загранпаспорт РФ",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px (300 dpi)",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, лицо 70–80% кадра, анфас, без очков и головных уборов.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Russian international passport standard, face occupies 70-80% of the frame, plain white background."
+  },
+  {
+    "id": "doc_ru_internal",
+    "title": "🇷🇺 Паспорт РФ (внутренний)",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, овал лица чёткий, деловой вид.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Russian internal passport photo, plain white background, formal look."
+  },
+  {
+    "id": "doc_ru_medical",
+    "title": "🇷🇺 Медкнижка / справка РФ",
+    "sizeMm": "30×40 мм",
+    "sizePx": "354×472 px",
+    "aspectRatio": "3:4",
+    "hint": "Матовый белый фон, допускается лёгкая улыбка.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Russian medical record photo 30x40mm, plain white background."
+  },
+  {
+    "id": "doc_schengen",
+    "title": "🇪🇺 Виза Шенген",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Светло-серый или белый фон, лицо 70–80%, тёмная одежда.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain light grey or white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. EU Schengen visa standard, face 70-80% of height, dark plain clothing."
+  },
+  {
+    "id": "doc_uk",
+    "title": "🇬🇧 Виза/паспорт UK",
+    "sizeMm": "35×45 мм",
+    "sizePx": "600×750 px",
+    "aspectRatio": "3:4",
+    "hint": "Светло-серый/кремовый фон, нейтральное выражение.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain light grey background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. UK passport and visa standard, light grey or cream background, neutral expression."
+  },
+  {
+    "id": "doc_germany",
+    "title": "🇩🇪 Виза/паспорт Германия",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Светло-серый фон, биометрический стандарт.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain light grey background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. German biometric passport standard, light grey background."
+  },
+  {
+    "id": "doc_france",
+    "title": "🇫🇷 Виза/паспорт Франция",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Светло-серый фон, нейтральное выражение.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain light grey background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. French passport standard, light grey background."
+  },
+  {
+    "id": "doc_italy",
+    "title": "🇮🇹 Виза/паспорт Италия",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, лицо по центру.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Italian passport and Schengen visa standard, white background."
+  },
+  {
+    "id": "doc_spain",
+    "title": "🇪🇸 Виза/паспорт Испания",
+    "sizeMm": "32×26 мм голова / 35×45",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, голова крупно.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Spanish passport and Schengen visa standard, white background."
+  },
+  {
+    "id": "doc_poland",
+    "title": "🇵🇱 Виза/паспорт Польша",
+    "sizeMm": "35×45 мм",
+    "sizePx": "492×633 px",
+    "aspectRatio": "3:4",
+    "hint": "Светло-серый фон, лицо 70–80%.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain light grey background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Polish passport standard, light grey background."
+  },
+  {
+    "id": "doc_greece",
+    "title": "🇬🇷 Виза Греция (Шенген)",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, нейтральное выражение.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Greek Schengen visa standard, white background."
+  },
+  {
+    "id": "doc_czech",
+    "title": "🇨🇿 Виза Чехия (Шенген)",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Czech Schengen visa standard, white background."
+  },
+  {
+    "id": "doc_us_visa",
+    "title": "🇺🇸 Виза США (2×2″)",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px (мин.)",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, белый фон, голова 50–69% высоты.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white or off-white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. US visa and passport 2x2 inch square format, head 50-69% of photo height, off-white or white background."
+  },
+  {
+    "id": "doc_us_green_card",
+    "title": "🇺🇸 Green Card / DV-лотерея",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, свежее фото, белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. US Green Card and DV lottery 2x2 inch square, white background, head centered."
+  },
+  {
+    "id": "doc_canada",
+    "title": "🇨🇦 Виза/паспорт Канада",
+    "sizeMm": "50×70 мм",
+    "sizePx": "590×826 px",
+    "aspectRatio": "5:7",
+    "hint": "50×70 мм, белый фон, голова 31–36 мм.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Canadian passport and visa 50x70mm, chin-to-crown 31-36mm, plain white background."
+  },
+  {
+    "id": "doc_brazil",
+    "title": "🇧🇷 Виза Бразилия",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Brazil visa 2x2 inch square, white background."
+  },
+  {
+    "id": "doc_mexico",
+    "title": "🇲🇽 Виза Мексика",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, анфас.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Mexico visa standard, white background."
+  },
+  {
+    "id": "doc_china",
+    "title": "🇨🇳 Виза Китай",
+    "sizeMm": "33×48 мм",
+    "sizePx": "354×472 px",
+    "aspectRatio": "2:3",
+    "hint": "33×48 мм, белый фон, уши видны, без улыбки.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. China visa 33x48mm, white background, ears visible, no smile."
+  },
+  {
+    "id": "doc_india",
+    "title": "🇮🇳 Виза Индия (e-Visa)",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, белый фон, лицо по центру.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. India e-Visa 2x2 inch square, white background, face centered."
+  },
+  {
+    "id": "doc_japan",
+    "title": "🇯🇵 Виза/паспорт Япония",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, голова 34±2 мм.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Japan passport and visa 35x45mm, chin-to-crown 34mm, plain white background."
+  },
+  {
+    "id": "doc_korea",
+    "title": "🇰🇷 Виза Ю. Корея",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, уши видны.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. South Korea visa 35x45mm, white background, ears visible."
+  },
+  {
+    "id": "doc_thailand",
+    "title": "🇹🇭 Виза Таиланд",
+    "sizeMm": "40×60 мм",
+    "sizePx": "472×709 px",
+    "aspectRatio": "2:3",
+    "hint": "40×60 мм, белый фон, деловая одежда.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Thailand visa 40x60mm, white background, formal attire."
+  },
+  {
+    "id": "doc_vietnam",
+    "title": "🇻🇳 Виза Вьетнам",
+    "sizeMm": "40×60 мм",
+    "sizePx": "472×709 px",
+    "aspectRatio": "2:3",
+    "hint": "4×6 см, белый фон, без очков.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Vietnam visa 4x6cm, white background, no glasses."
+  },
+  {
+    "id": "doc_uae",
+    "title": "🇦🇪 Виза ОАЭ",
+    "sizeMm": "43×55 мм",
+    "sizePx": "300×369 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, лицо по центру, без улыбки.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. UAE visa standard, white background, no smile."
+  },
+  {
+    "id": "doc_turkey",
+    "title": "🇹🇷 Виза/паспорт Турция",
+    "sizeMm": "50×60 мм",
+    "sizePx": "591×709 px",
+    "aspectRatio": "5:6",
+    "hint": "50×60 мм, белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Turkey visa and passport 50x60mm, white background."
+  },
+  {
+    "id": "doc_israel",
+    "title": "🇮🇱 Виза Израиль",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Israel visa 2x2 inch square, white background."
+  },
+  {
+    "id": "doc_indonesia",
+    "title": "🇮🇩 Виза Индонезия (Бали)",
+    "sizeMm": "51×51 мм",
+    "sizePx": "600×600 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат 2×2″, белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Indonesia (Bali) visa 2x2 inch square, white background."
+  },
+  {
+    "id": "doc_australia",
+    "title": "🇦🇺 Виза/паспорт Австралия",
+    "sizeMm": "35×45 мм",
+    "sizePx": "826×1062 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый/светлый фон, голова 32–36 мм.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Australian passport and visa 35x45mm, plain white or light background."
+  },
+  {
+    "id": "doc_new_zealand",
+    "title": "🇳🇿 Виза Новая Зеландия",
+    "sizeMm": "35×45 мм",
+    "sizePx": "900×1200 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый/серый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. New Zealand visa 35x45mm, plain light background."
+  },
+  {
+    "id": "doc_egypt",
+    "title": "🇪🇬 Виза Египет",
+    "sizeMm": "40×60 мм",
+    "sizePx": "472×709 px",
+    "aspectRatio": "2:3",
+    "hint": "Белый фон.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Egypt visa 40x60mm, white background."
+  },
+  {
+    "id": "doc_resume",
+    "title": "💼 Резюме / CV",
+    "sizeMm": "35×45 мм",
+    "sizePx": "400×500 px",
+    "aspectRatio": "4:5",
+    "hint": "Нейтральный фон, деловая одежда, лёгкая улыбка допустима.",
+    "prompt": "Professional CV resume headshot. Keep the same person and face identity from the input image. Business attire, plain neutral light grey or white background, even soft lighting, no harsh shadows. Head and shoulders, face about 60% of the frame, slight natural friendly smile allowed. Corporate portrait, photorealistic, high quality."
+  },
+  {
+    "id": "doc_linkedin",
+    "title": "💼 LinkedIn / соцсети",
+    "sizeMm": "400×400 px",
+    "sizePx": "400×400 px",
+    "aspectRatio": "1:1",
+    "hint": "Квадрат, деловой портрет, дружелюбная улыбка.",
+    "prompt": "Professional LinkedIn profile headshot, square format. Keep the same person and face identity. Business casual attire, softly blurred neutral background, warm even lighting, confident friendly smile. Head and shoulders. Photorealistic, high quality."
+  },
+  {
+    "id": "doc_student",
+    "title": "🎓 Студенческий / пропуск",
+    "sizeMm": "30×40 мм",
+    "sizePx": "354×472 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый фон, нейтральное выражение.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Student ID / access pass photo 30x40mm, white background."
+  },
+  {
+    "id": "doc_driver",
+    "title": "🚗 Водительское удостоверение",
+    "sizeMm": "35×45 мм",
+    "sizePx": "413×531 px",
+    "aspectRatio": "3:4",
+    "hint": "Белый/светлый фон, нейтральное выражение.",
+    "prompt": "Official document ID photo. Keep the exact same person and face identity from the input image. Face strictly frontal, looking directly at camera, neutral expression, mouth closed, both eyes open, no smile. plain solid white background, evenly lit, no shadows, no red-eye. Head and shoulders only, centered. No hats or head coverings (unless religious), no glasses, no reflections. Sharp focus, high resolution, photorealistic, print quality 300 dpi. Driver license photo 35x45mm, plain light background."
+  }
+]

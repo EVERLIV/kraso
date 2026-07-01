@@ -1,0 +1,43 @@
+[2025-12-26T09:42:10.914Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[2025-12-26T09:42:10.915Z] > authorizing via signed-in user (hoaandrey@gmail.com)
+[2025-12-26T09:42:10.915Z] [iam] checking project project-1285666415996898989 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[2025-12-26T09:42:10.916Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:10.916Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:10.917Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989:testIamPermissions [none]
+[2025-12-26T09:42:10.917Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989:testIamPermissions x-goog-quota-user=projects/project-1285666415996898989
+[2025-12-26T09:42:10.917Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[2025-12-26T09:42:11.932Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989:testIamPermissions 200
+[2025-12-26T09:42:11.932Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[2025-12-26T09:42:11.932Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:11.932Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:11.932Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions [none]
+[2025-12-26T09:42:11.932Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[2025-12-26T09:42:13.139Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions 404
+[2025-12-26T09:42:13.139Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions {"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}}
+[2025-12-26T09:42:13.140Z] [functions] service account IAM check errored, deploy may fail: Request to https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://iam.googleapis.com/v1/projects/project-1285666415996898989/serviceAccounts/project-1285666415996898989@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account","status":404}
+
+=== Deploying to 'project-1285666415996898989'...
+
+i  deploying functions 
+[2025-12-26T09:42:13.142Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:13.142Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:13.142Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989 [none]
+[2025-12-26T09:42:13.413Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989 200
+[2025-12-26T09:42:13.413Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/project-1285666415996898989 {"projectNumber":"318064340729","projectId":"project-1285666415996898989","lifecycleState":"ACTIVE","name":"0511","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-11-05T08:09:52.133119Z"}
+i  functions: preparing codebase default for deployment 
+i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[2025-12-26T09:42:13.415Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:13.415Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:13.415Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/project-1285666415996898989/adminSdkConfig [none]
+[2025-12-26T09:42:14.151Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/project-1285666415996898989/adminSdkConfig 200
+[2025-12-26T09:42:14.151Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/project-1285666415996898989/adminSdkConfig {"projectId":"project-1285666415996898989","databaseURL":"https://project-1285666415996898989-default-rtdb.europe-west1.firebasedatabase.app","storageBucket":"project-1285666415996898989.firebasestorage.app"}
+[2025-12-26T09:42:14.152Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:14.152Z] Checked if tokens are valid: true, expires at: 1766745577479
+[2025-12-26T09:42:14.152Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/project-1285666415996898989/configs [none]
+[2025-12-26T09:42:14.531Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/project-1285666415996898989/configs 200
+[2025-12-26T09:42:14.531Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/project-1285666415996898989/configs {}
+[2025-12-26T09:42:14.532Z] Validating nodejs source
+
+Error: Runtime Node.js 18 was decommissioned on 2025-10-30. To deploy you must first upgrade your runtime version.

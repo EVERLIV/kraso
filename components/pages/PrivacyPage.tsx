@@ -5,22 +5,22 @@ const PrivacyPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-gray-300 pt-32 pb-20 px-6">
       <div className="max-w-4xl mx-auto space-y-8 font-sans leading-relaxed text-sm md:text-base">
-        
+
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-10 border-b border-white/10 pb-6 uppercase tracking-tight">
           Политика в области обработки и защиты персональных данных
         </h1>
 
         <p>
-          Настоящий документ определяет порядок обработки и защиты персональных данных пользователей сервиса SmartPhotos.Ru, владельцем которого является Общество с ограниченной ответственностью <strong>«АСПРО»</strong> (далее — Компания).
+          Настоящий документ определяет порядок обработки и защиты персональных данных пользователей сервиса КрасоМир, владельцем которого является Компания <strong>«Два А — Цифровые Решения»</strong> (далее — Компания).
         </p>
-        
+
         <p>
           Мы разработали эту Политику в строгом соответствии с требованиями Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных» для обеспечения защиты прав и свобод человека при обработке его персональных данных.
         </p>
 
         <h2 className="text-xl font-bold text-white pt-4">1. Термины и определения</h2>
         <div className="space-y-4">
-          <p><strong>Сервис</strong> — программный комплекс Компании, расположенный по адресу: <strong>SmartPhotos.Ru</strong> (включая поддомены).</p>
+          <p><strong>Сервис</strong> — программный комплекс Компании, расположенный по адресу: <strong>КрасоМир</strong> (включая поддомены).</p>
           <p><strong>Пользователь</strong> — дееспособное физическое лицо, использующее Сервис.</p>
           <p><strong>Персональные данные (ПД)</strong> — любая информация, относящаяся к определенному Пользователю.</p>
           <p><strong>Обработка ПД</strong> — любое действие с ПД, включая сбор, запись, систематизацию, накопление, хранение, уточнение, использование, передачу, обезличивание, блокирование и уничтожение.</p>
@@ -28,7 +28,7 @@ const PrivacyPage: React.FC = () => {
 
         <h2 className="text-xl font-bold text-white pt-4">2. Правовые основания обработки</h2>
         <ul className="list-disc pl-6 space-y-2 marker:text-purple-500">
-          <li><strong>Пользовательское соглашение</strong>, акцептуемое Пользователем при регистрации.</li>
+          <li><a href="/terms" className="text-purple-400 hover:text-purple-300 underline"><strong>Пользовательское соглашение</strong></a>, акцептуемое Пользователем при регистрации.</li>
           <li>Согласие на рекламную рассылку.</li>
           <li>Согласие на обработку файлов cookies.</li>
         </ul>
@@ -67,14 +67,18 @@ const PrivacyPage: React.FC = () => {
         </ul>
 
         <h2 className="text-xl font-bold text-white pt-4">8. Обращения Пользователей</h2>
-        <p>Запросы относительно обработки данных направляются на адрес: <strong>billing@asprollc.ru</strong>. Срок ответа составляет 10 рабочих дней.</p>
+        <p>Запросы относительно обработки данных направляются на адрес: <strong>info@asprollc.ru</strong>. Срок ответа составляет 10 рабочих дней.</p>
+
+        <p className="mt-10 text-gray-400">
+          См. также: <a href="/terms" className="text-purple-400 hover:text-purple-300 underline">Пользовательское соглашение</a>.
+        </p>
 
         <div className="mt-16 pt-10 border-t border-white/10 text-xs md:text-sm text-gray-500">
           <p className="font-bold text-white mb-4 uppercase">Реквизиты оператора:</p>
-          <p>Общество с ограниченной ответственностью «АСПРО»</p>
+          <p>Компания «Два А — Цифровые Решения»</p>
           <p>ИНН: 7708427184 | КПП: 770801001 | ОГРН: 1237700834139</p>
           <p>Адрес: 107140, г. Москва, вн.тер.г. муниципальный округ Красносельский, туп. 1-й Красносельский, д. 3, помещ. 2/1</p>
-          <p>Email: billing@asprollc.ru</p>
+          <p>Email: info@asprollc.ru</p>
         </div>
       </div>
     </div>

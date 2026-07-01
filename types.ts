@@ -1,11 +1,14 @@
 
-export type CategoryId = 'all' | 'tet' | 'christmas' | 'wedding' | 'formula1' | 'restaurants' | 'marketplaces' | 'business_print' | 'style_trends' | 'sports' | 'dating' | 'pranks' | 'documents' | 'kids' | 'family' | 'ecommerce' | 'fashion' | 'makeup' | 'business' | 'ugc' | 'bloggers' | 'rich_life' | 'trending' | 'new' | 'saved';
+export type CategoryId = 'all' | 'tet' | 'retro' | 'wedding' | 'formula1' | 'restaurants' | 'marketplaces' | 'business_print' | 'style_trends' | 'sports' | 'dating' | 'pranks' | 'documents' | 'kids' | 'family' | 'ecommerce' | 'fashion' | 'makeup' | 'business' | 'ugc' | 'bloggers' | 'rich_life' | 'trending' | 'new' | 'saved';
 
-export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5';
 
 export type ImageResolution = '1K' | '2K' | '4K';
 
-export type GenModelId = 'gemini-2.5-flash-image' | 'gemini-3-pro-image-preview';
+export type GenModelId =
+  | 'gemini-2.5-flash-image'          // Быстрая / дешевая (Flash)
+  | 'gemini-3-pro-image-preview'     // Премиум качество (Pro превью)
+  | 'nano-banana-v1';
 
 export interface Preset {
   id: string;
@@ -24,6 +27,7 @@ export interface GeneratedImage {
   prompt: string;
   isSaved?: boolean;
   createdAt?: any;
+  source?: 'chat' | 'studio' | 'video';
 }
 
 export enum AppState {
@@ -44,7 +48,7 @@ export interface ChatMessage {
   isError?: boolean;
 }
 
-export type ViewMode = 'dashboard' | 'chat' | 'upscale' | 'remove-bg';
+export type ViewMode = 'dashboard' | 'templates' | 'chat' | 'upscale' | 'remove-bg' | 'profile' | 'video' | 'design-system' | 'history';
 
 export type SubscriptionTier = 'free' | 'creator' | 'pro' | 'business';
 

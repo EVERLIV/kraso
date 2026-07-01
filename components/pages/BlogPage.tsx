@@ -14,7 +14,7 @@ const POSTS = [
   {
     id: 2,
     title: "Как создать идеальную карточку товара",
-    excerpt: "Пошаговое руководство по использованию шаблонов Photo Smart для увеличения CTR на Wildberries.",
+    excerpt: "Пошаговое руководство по использованию шаблонов КрасоМир для увеличения CTR на Wildberries.",
     date: "10 Дек 2024",
     author: "Дмитрий К.",
     image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
@@ -34,7 +34,7 @@ const BlogPage: React.FC = () => {
     <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Блог Photo Smart</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Блог КрасоМир</h1>
           <p className="text-gray-400">Новости, гайды и инсайты из мира AI</p>
         </div>
 

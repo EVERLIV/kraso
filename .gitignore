@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Secrets & credentials — NEVER commit
+.env
+.env.*
+!.env.example
+**/.env
+client_secret.json
+*service-account*.json
+serviceAccountKey.json
+
+# Firebase local artifacts
+.firebase/
+firebase-debug.log
+*.firebase.log
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

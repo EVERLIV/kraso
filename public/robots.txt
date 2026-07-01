@@ -1,0 +1,12 @@
+# SmartPhotos — ИИ генерация картинок, стилизация фотографий
+# https://smartphotos.ru
+
+User-agent: *
+Allow: /
+
+# Не индексировать служебные и API
+Disallow: /webhook
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://smartphotos.ru/sitemap.xml

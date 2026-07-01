@@ -52,7 +52,7 @@ export const CookieConsent: React.FC = () => {
                    Мы используем Cookies
                 </h3>
                 <p className="text-sm text-gray-300 leading-relaxed max-w-2xl">
-                   Для работы AI-генерации и сохранения ваших шедевров нам нужны файлы cookie. Продолжая, вы соглашаетесь с <strong>Пользовательским соглашением</strong> и <span className="text-white font-medium hover:text-brand-accent cursor-pointer transition-colors">Политикой конфиденциальности</span> сервиса Photo Smart.
+                   Для работы AI-генерации и сохранения ваших шедевров нам нужны файлы cookie. Продолжая, вы соглашаетесь с <strong>Пользовательским соглашением</strong> и <span className="text-white font-medium hover:text-brand-accent cursor-pointer transition-colors">Политикой конфиденциальности</span> сервиса КрасоМир.
                 </p>
              </div>
           </div>

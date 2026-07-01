@@ -1,0 +1,241 @@
+{
+  "status": "success",
+  "result": [
+    {
+      "projectId": "contract-buddy-cngoq",
+      "projectNumber": "109696027798",
+      "displayName": "Contract Buddy",
+      "name": "projects/contract-buddy-cngoq",
+      "resources": {
+        "hostingSite": "contract-buddy-cngoq"
+      },
+      "state": "ACTIVE",
+      "etag": "1_b3c59965-5f7c-4d36-ada2-7ec1c9e5df93"
+    },
+    {
+      "projectId": "eve-flutter",
+      "projectNumber": "1079177556164",
+      "displayName": "Eve-flutter",
+      "name": "projects/eve-flutter",
+      "resources": {
+        "hostingSite": "eve-flutter"
+      },
+      "state": "ACTIVE",
+      "etag": "1_35b56be0-2ca8-40dd-beeb-19d72f2f8f99"
+    },
+    {
+      "projectId": "everliv-health-eng-57986-875f0",
+      "projectNumber": "3666560336",
+      "displayName": "EVERLIV-FLUTTER-ENG",
+      "name": "projects/everliv-health-eng-57986-875f0",
+      "resources": {
+        "hostingSite": "everliv-health-eng-57986-875f0",
+        "realtimeDatabaseInstance": "everliv-health-eng-57986-875f0-default-rtdb"
+      },
+      "state": "ACTIVE",
+      "etag": "1_b5de4c68-68e6-48dd-8ded-86754b80dff3"
+    },
+    {
+      "projectId": "everliv-ru",
+      "projectNumber": "241577217484",
+      "displayName": "EVERLIV-RU",
+      "name": "projects/everliv-ru",
+      "resources": {
+        "hostingSite": "everliv-ru"
+      },
+      "state": "ACTIVE",
+      "etag": "1_7a4f3c3a-c168-4f0a-8408-3b9100f43e21"
+    },
+    {
+      "projectId": "flutter-ai-playground-2d876",
+      "projectNumber": "901626522667",
+      "displayName": "Flutter AI Playground",
+      "name": "projects/flutter-ai-playground-2d876",
+      "resources": {
+        "hostingSite": "flutter-ai-playground-2d876"
+      },
+      "state": "ACTIVE",
+      "etag": "1_063dc01b-5d64-439a-96ca-84db1f78190d"
+    },
+    {
+      "projectId": "gen-lang-client-0442590863",
+      "projectNumber": "28457852557",
+      "displayName": "Chat-Dubai",
+      "name": "projects/gen-lang-client-0442590863",
+      "resources": {
+        "hostingSite": "gen-lang-client-0442590863",
+        "realtimeDatabaseInstance": "gen-lang-client-0442590863-default-rtdb"
+      },
+      "state": "ACTIVE",
+      "etag": "1_659120ec-3b4a-44f0-86cc-7f5c5284e839"
+    },
+    {
+      "projectId": "health-and-wellness-app-123",
+      "projectNumber": "763849147194",
+      "displayName": "health-and-wellness-app-123",
+      "name": "projects/health-and-wellness-app-123",
+      "resources": {
+        "hostingSite": "health-and-wellness-app-123"
+      },
+      "state": "ACTIVE",
+      "etag": "1_c616a3ea-71d5-4435-99d7-2ffe2a0b6ce6"
+    },
+    {
+      "projectId": "med-eve",
+      "projectNumber": "639295506162",
+      "displayName": "MED-EVE",
+      "name": "projects/med-eve",
+      "resources": {
+        "hostingSite": "med-eve"
+      },
+      "state": "ACTIVE",
+      "etag": "1_f03c3cd5-6983-4f33-ae83-70302ee57c40"
+    },
+    {
+      "projectId": "parfume-by",
+      "projectNumber": "1063124278260",
+      "displayName": "Parfume",
+      "name": "projects/parfume-by",
+      "resources": {
+        "hostingSite": "parfume-by"
+      },
+      "state": "ACTIVE",
+      "etag": "1_5e3e5d75-982a-4d6c-a558-87045488b9ce"
+    },
+    {
+      "projectId": "project-1285666415996898989",
+      "projectNumber": "318064340729",
+      "displayName": "0511",
+      "name": "projects/project-1285666415996898989",
+      "resources": {
+        "hostingSite": "project-1285666415996898989",
+        "realtimeDatabaseInstance": "project-1285666415996898989-default-rtdb"
+      },
+      "state": "ACTIVE",
+      "etag": "1_e3ee4c3a-9110-4d7f-b8d5-69e5875de091"
+    },
+    {
+      "projectId": "rental-bot-fc249",
+      "projectNumber": "1048900787652",
+      "displayName": "RENTAL BOT",
+      "name": "projects/rental-bot-fc249",
+      "resources": {
+        "hostingSite": "rental-bot-fc249"
+      },
+      "state": "ACTIVE",
+      "etag": "1_79448f30-a1d7-4ab3-9ad7-ab601efe378e"
+    },
+    {
+      "projectId": "studio-1739947296-6beb5",
+      "projectNumber": "711693051695",
+      "displayName": "Firebase app",
+      "name": "projects/studio-1739947296-6beb5",
+      "resources": {
+        "hostingSite": "studio-1739947296-6beb5"
+      },
+      "state": "ACTIVE",
+      "etag": "1_976c6343-6aa0-4be7-9609-5ce5dd9bdd63"
+    },
+    {
+      "projectId": "studio-1969030425-5308e",
+      "projectNumber": "168162109650",
+      "displayName": "Firebase app",
+      "name": "projects/studio-1969030425-5308e",
+      "resources": {
+        "hostingSite": "studio-1969030425-5308e"
+      },
+      "state": "ACTIVE",
+      "etag": "1_a5ddc814-428d-4f02-990e-1a36fe51fb7d"
+    },
+    {
+      "projectId": "studio-2144930466-251c6",
+      "projectNumber": "586983801042",
+      "displayName": "Firebase app",
+      "name": "projects/studio-2144930466-251c6",
+      "resources": {
+        "hostingSite": "studio-2144930466-251c6"
+      },
+      "state": "ACTIVE",
+      "etag": "1_ea06e89e-3248-4cd1-82b1-e01566677662"
+    },
+    {
+      "projectId": "studio-2229411434-f4e26",
+      "projectNumber": "972024229235",
+      "displayName": "Firebase app",
+      "name": "projects/studio-2229411434-f4e26",
+      "resources": {
+        "hostingSite": "studio-2229411434-f4e26"
+      },
+      "state": "ACTIVE",
+      "etag": "1_e11da3c8-b939-4d7c-a85e-648b0fb883d6"
+    },
+    {
+      "projectId": "studio-3399234951-7b7f3",
+      "projectNumber": "869354035822",
+      "displayName": "EVERLIV RU RUSTORE",
+      "name": "projects/studio-3399234951-7b7f3",
+      "resources": {
+        "hostingSite": "studio-3399234951-7b7f3",
+        "realtimeDatabaseInstance": "studio-3399234951-7b7f3-default-rtdb"
+      },
+      "state": "ACTIVE",
+      "etag": "1_4644ab88-eabf-44af-8e5a-cd8bbfc1d0db"
+    },
+    {
+      "projectId": "studio-3607431342-9b8f4",
+      "projectNumber": "822184570698",
+      "displayName": "Firebase app",
+      "name": "projects/studio-3607431342-9b8f4",
+      "resources": {
+        "hostingSite": "studio-3607431342-9b8f4"
+      },
+      "state": "ACTIVE",
+      "etag": "1_53b2b1bb-f7fe-4120-b402-ba3d2b789380"
+    },
+    {
+      "projectId": "studio-5533740032-75050",
+      "projectNumber": "570491220112",
+      "displayName": "Firebase app",
+      "name": "projects/studio-5533740032-75050",
+      "resources": {
+        "hostingSite": "studio-5533740032-75050",
+        "realtimeDatabaseInstance": "studio-5533740032-75050-default-rtdb"
+      },
+      "state": "ACTIVE",
+      "etag": "1_a53845fc-f367-4bc0-bbf9-8adbb5a982f9"
+    },
+    {
+      "projectId": "studio-902226564-f9282",
+      "projectNumber": "859263960996",
+      "displayName": "Firebase app",
+      "name": "projects/studio-902226564-f9282",
+      "resources": {
+        "hostingSite": "studio-902226564-f9282"
+      },
+      "state": "ACTIVE",
+      "etag": "1_0bc9a49f-b172-4568-be3b-93f1861a92f9"
+    },
+    {
+      "projectId": "vn-photo-21419759-b67c6",
+      "projectNumber": "639474687400",
+      "displayName": "Firebase app",
+      "name": "projects/vn-photo-21419759-b67c6",
+      "resources": {
+        "hostingSite": "vn-photo-21419759-b67c6"
+      },
+      "state": "ACTIVE",
+      "etag": "1_52999f42-b4e7-42fb-91a6-6eeb957add93"
+    },
+    {
+      "projectId": "winged-fact-398708",
+      "projectNumber": "226355388991",
+      "displayName": "My First Project",
+      "name": "projects/winged-fact-398708",
+      "resources": {
+        "hostingSite": "winged-fact-398708"
+      },
+      "state": "ACTIVE",
+      "etag": "1_d21d20a9-70a8-4d49-b76f-2a6e675e8793"
+    }
+  ]
+}

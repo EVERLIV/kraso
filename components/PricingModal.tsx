@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, X, Zap, Crown, Briefcase, CreditCard, User, Loader2, Smartphone } from 'lucide-react';
+import { Check, X, Zap, Crown, Briefcase, CreditCard, User, Loader2, Smartphone, Sparkles } from 'lucide-react';
 import { SubscriptionPlan, SubscriptionTier } from '../types';
 import { createPaymentSession } from '../services/paymentService';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,9 +17,9 @@ const PLANS: SubscriptionPlan[] = [
     id: 'free',
     name: 'Free',
     price: 0,
-    credits: 5,
+    credits: 45,
     features: [
-      '5 Кредитов / старт',
+      '45 Кредитов (при регистрации)',
       'Водяной знак',
       'Стандартная скорость',
       'Ограниченные стили'
@@ -30,10 +30,10 @@ const PLANS: SubscriptionPlan[] = [
   {
     id: 'creator',
     name: 'Creator',
-    price: 99,
-    credits: 100,
+    price: 245,
+    credits: 350,
     features: [
-      '100 Кредитов / мес',
+      '350 Кредитов / мес',
       'Без водяного знака',
       'Генерация HD',
       'Стандартная скорость',
@@ -45,11 +45,11 @@ const PLANS: SubscriptionPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 299,
-    credits: 500,
+    price: 450,
+    credits: 750,
     isPopular: true,
     features: [
-      '500 Кредитов / мес',
+      '750 Кредитов / мес',
       'Доступ ко всем шаблонам',
       'Генерация 4K Ultra HD',
       'Высокая скорость',
@@ -62,10 +62,10 @@ const PLANS: SubscriptionPlan[] = [
   {
     id: 'business',
     name: 'Business',
-    price: 699,
-    credits: 2000,
+    price: 845,
+    credits: 4000,
     features: [
-      '2000 Кредитов / мес',
+      '4000 Кредитов / мес',
       'API Access (Beta)',
       'Безлимитное хранилище',
       'Параллельная генерация',
@@ -84,7 +84,6 @@ const formatRUB = (price: number) => {
 const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onSuccess, currentTier }) => {
   const { user } = useAuth();
   const [processing, setProcessing] = useState<SubscriptionTier | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'sbp'>('card');
 
   useEffect(() => {
     if (isOpen) {
@@ -96,29 +95,25 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onSuccess,
 
   const handlePurchase = async (plan: SubscriptionPlan) => {
     if (!user) {
-        alert("Пожалуйста, войдите в систему!");
-        return;
+      alert("Пожалуйста, войдите в систему!");
+      return;
     }
     if (plan.id === 'free') { onClose(); return; }
-    
+
     setProcessing(plan.id);
     try {
-        // Мы передаем email пользователя в функцию регистрации заказа.
-        // Банк вернет этот email в Callback-уведомлении, что позволит серверу 
-        // автоматически найти пользователя и начислить кредиты.
-        const checkoutUrl = await createPaymentSession(
-            user.uid, 
-            user.email || 'guest@photosmart.ru', 
-            plan.id, 
-            plan.price, 
-            paymentMethod
-        );
-        
-        window.location.href = checkoutUrl;
+      const checkoutUrl = await createPaymentSession(
+        user.uid,
+        user.email || 'guest@photosmart.ru',
+        plan.id,
+        plan.price
+      );
+
+      window.location.href = checkoutUrl;
     } catch (error) {
-        console.error(error);
-        alert("Ошибка оплаты. Пожалуйста, попробуйте снова.");
-        setProcessing(null);
+      console.error(error);
+      alert("Ошибка оплаты. Пожалуйста, попробуйте снова.");
+      setProcessing(null);
     }
   };
 
@@ -126,82 +121,89 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onSuccess,
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity animate-in fade-in" onClick={onClose} />
 
-      <div className="relative w-full max-w-6xl bg-[#0B0E14] border border-brand-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
-        
-        <div className="p-6 md:p-10 text-center relative overflow-hidden bg-brand-bg shrink-0">
-           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-brand-accent/10 blur-[100px] rounded-full pointer-events-none"></div>
-           <button onClick={onClose} className="absolute top-4 right-4 p-2 text-brand-muted hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-           
-           <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 relative z-10 uppercase tracking-tight">Пополнить баланс</h2>
-           
-           {/* Payment Method Switcher */}
-           <div className="flex justify-center gap-3 mt-6 relative z-10">
-              <button 
-                onClick={() => setPaymentMethod('card')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${paymentMethod === 'card' ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}`}
-              >
-                 <CreditCard className="w-4 h-4" />
-                 <span className="text-xs font-bold">Карта РФ</span>
-              </button>
-              <button 
-                onClick={() => setPaymentMethod('sbp')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${paymentMethod === 'sbp' ? 'bg-[#00A4E4] text-white border-[#00A4E4]' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}`}
-              >
-                 <Smartphone className="w-4 h-4" />
-                 <span className="text-xs font-bold">СБП</span>
-              </button>
-           </div>
+      <div className="relative w-full max-w-6xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-500">
+
+        <div className="p-8 md:p-12 text-center relative overflow-hidden shrink-0">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+          <button onClick={onClose} className="absolute top-6 right-6 p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-2xl transition-all active:scale-95 z-20">
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6 relative z-10">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Premium Access</span>
+          </div>
+
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-3 relative z-10 tracking-tight">Выберите свой план</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-lg relative z-10 font-medium">Раскройте потенциал ИИ без ограничений</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[#0F1218] custom-scrollbar">
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto items-stretch">
-              {PLANS.map((plan) => {
-                const isCurrent = currentTier === plan.id;
-                return (
-                <div key={plan.id} className={`relative bg-[#151921] rounded-2xl border transition-all duration-300 flex flex-col h-full ${plan.isPopular ? 'border-purple-500 shadow-2xl shadow-purple-900/20 scale-100 lg:scale-105 z-10' : 'border-brand-border hover:border-brand-accent/50'} ${isCurrent ? 'ring-2 ring-brand-accent/50 bg-brand-accent/5' : ''}`}>
+        <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-50 dark:bg-slate-950/50 custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto items-stretch">
+            {PLANS.map((plan) => {
+              // Normalize current tier for comparison
+              const normalizedCurrentTier = (currentTier || 'free').toLowerCase().trim();
+              const normalizedPlanId = plan.id.toLowerCase().trim();
+              const isCurrent = normalizedCurrentTier === normalizedPlanId;
+
+              // Debug logging (remove after testing)
+              if (plan.id === 'creator') {
+                console.log('PricingModal Debug:', {
+                  currentTier,
+                  normalizedCurrentTier,
+                  planId: plan.id,
+                  normalizedPlanId,
+                  isCurrent
+                });
+              }
+
+              return (
+                <div key={plan.id} className={`relative bg-white dark:bg-slate-900/50 backdrop-blur-sm rounded-[32px] border transition-all duration-500 flex flex-col h-full group ${plan.isPopular ? 'border-primary shadow-2xl scale-100 lg:scale-[1.02] z-10 ring-4 ring-primary/5' : 'border-slate-100 dark:border-slate-800 hover:border-primary/30 shadow-sm'} ${isCurrent ? 'bg-slate-50/50 dark:bg-slate-800/30' : ''}`}>
                   {plan.isPopular && (
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">ХИТ ПРОДАЖ</div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-on-primary text-[10px] font-bold px-5 py-2 rounded-full shadow-lg shadow-primary/30 whitespace-nowrap uppercase tracking-widest z-20">Хит Продаж</div>
                   )}
-                  <div className="p-6 flex-1 flex flex-col">
-                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-6 shadow-lg`}>
-                        {plan.id === 'free' && <User className="w-6 h-6 text-white" />}
-                        {plan.id === 'creator' && <Zap className="w-6 h-6 text-white" />}
-                        {plan.id === 'pro' && <Crown className="w-6 h-6 text-white" />}
-                        {plan.id === 'business' && <Briefcase className="w-6 h-6 text-white" />}
-                     </div>
-                     <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                     <div className="flex items-baseline gap-1 mb-6">
-                        <span className="text-2xl md:text-3xl font-bold text-white">{formatRUB(plan.price)}</span>
-                        {plan.price > 0 && <span className="text-brand-muted text-xs md:text-sm">/мес</span>}
-                     </div>
-                     <div className="space-y-3 mb-8">
-                        {plan.features.map((f, idx) => (
-                            <div key={idx} className="flex items-start gap-3 text-xs md:text-sm text-gray-300">
-                                <div className="mt-0.5 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center shrink-0"><Check className="w-2.5 h-2.5 text-green-400" /></div>
-                                {f}
-                            </div>
-                        ))}
-                     </div>
+                  <div className="p-8 pb-4 flex-1 flex flex-col">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-8 shadow-xl transition-transform group-hover:scale-110`}>
+                      {plan.id === 'free' && <User className="w-7 h-7 text-white" />}
+                      {plan.id === 'creator' && <Zap className="w-7 h-7 text-white" />}
+                      {plan.id === 'pro' && <Crown className="w-7 h-7 text-white" />}
+                      {plan.id === 'business' && <Briefcase className="w-7 h-7 text-white" />}
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-8">
+                      <span className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">{formatRUB(plan.price)}</span>
+                      {plan.price > 0 && <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">/мес</span>}
+                    </div>
+                    <div className="space-y-4 mb-8">
+                      {plan.features.map((f, idx) => (
+                        <div key={idx} className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          <div className="mt-1 w-4 h-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0"><Check className="w-2.5 h-2.5 text-emerald-500" /></div>
+                          {f}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-6 pt-0 mt-auto">
-                     <button onClick={() => !isCurrent && handlePurchase(plan)} disabled={!!processing || isCurrent} className={`w-full py-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${isCurrent ? 'bg-brand-border text-brand-muted cursor-default' : plan.isPopular ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/30 active:scale-95' : plan.id === 'free' ? 'bg-white/5 text-brand-muted hover:bg-white/10' : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'}`}>
-                        {processing === plan.id ? <Loader2 className="w-5 h-5 animate-spin" /> : isCurrent ? <><Check className="w-4 h-4" /> Текущий</> : plan.id === 'free' ? 'Бесплатно' : 'Купить'}
-                     </button>
+                  <div className="p-8 pt-0 mt-auto">
+                    <button onClick={() => !isCurrent && handlePurchase(plan)} disabled={!!processing || isCurrent} className={`w-full py-5 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2 uppercase tracking-[0.2em] ${isCurrent ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-default' : plan.isPopular ? 'bg-primary text-on-primary hover:bg-blue-600 hover:shadow-xl hover:shadow-primary/20 active:scale-95' : plan.id === 'free' ? 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100' : 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white hover:bg-black active:scale-95'}`}>
+                      {processing === plan.id ? <Loader2 className="w-5 h-5 animate-spin" /> : isCurrent ? <><Check className="w-4 h-4" /> Ваш тариф</> : plan.id === 'free' ? 'Бесплатно' : 'Выбрать'}
+                    </button>
                   </div>
                 </div>
-              )})}
-           </div>
+              )
+            })}
+          </div>
 
-           <div className="mt-12 text-center pb-8 border-t border-white/5 pt-8">
-              <p className="text-brand-muted text-[10px] md:text-xs mb-4 max-w-2xl mx-auto opacity-60">
-                Нажимая «Купить», вы соглашаетесь с условиями оферты. Фискальные чеки отправляются на ваш email через <b>Cloud Kassir</b> в соответствии с ФЗ-54. Эквайринг — АО «Альфа-Банк».
-              </p>
-              <div className="inline-flex flex-wrap justify-center gap-6 opacity-40">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-4" alt="Visa" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-6" alt="Mastercard" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Mir-logo.svg" className="h-4" alt="MIR" />
-              </div>
-           </div>
+          <div className="mt-16 text-center pb-12 border-t border-slate-100 dark:border-slate-800 pt-10">
+            <p className="text-slate-400 text-[10px] md:text-xs mb-8 max-w-2xl mx-auto leading-relaxed">
+              Нажимая «Купить», вы полностью соглашаетесь с условиями <span className="text-primary font-bold cursor-pointer">Оферты и Пользовательского соглашения</span>. <br />
+              Фискальные чеки отправляются на ваш email через <b>Cloud Kassir</b> в соответствии с ФЗ-54. Безопасные платежи обеспечиваются АО «Альфа-Банк».
+            </p>
+            <div className="inline-flex flex-wrap justify-center gap-8 opacity-40 hover:opacity-60 transition-opacity">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-4" alt="Visa" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-8" alt="Mastercard" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Mir-logo.svg" className="h-5" alt="MIR" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
