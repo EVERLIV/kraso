@@ -1,0 +1,14 @@
+.up-root {
+  background: #000;
+}
+
+.up-frame {
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+  background: transparent;
+}
+
+.up-compare:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}

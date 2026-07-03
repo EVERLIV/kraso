@@ -27,7 +27,7 @@ export interface GeneratedImage {
   prompt: string;
   isSaved?: boolean;
   createdAt?: any;
-  source?: 'chat' | 'studio' | 'video';
+  source?: 'chat' | 'studio' | 'video' | 'shorts' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'marketing';
 }
 
 export enum AppState {
@@ -48,7 +48,7 @@ export interface ChatMessage {
   isError?: boolean;
 }
 
-export type ViewMode = 'dashboard' | 'templates' | 'chat' | 'upscale' | 'remove-bg' | 'profile' | 'video' | 'design-system' | 'history';
+export type ViewMode = 'dashboard' | 'templates' | 'chat' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'profile' | 'video' | 'shorts' | 'marketing' | 'design-system' | 'history';
 
 export type SubscriptionTier = 'free' | 'creator' | 'pro' | 'business';
 

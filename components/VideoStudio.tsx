@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { Plus, Loader2, X, ChevronUp, Check, Video as VideoIcon, Play } from 'lucide-react';
+import { FolderHeart, LayoutGrid, List } from 'lucide-react';
 import { GeneratedImage } from '../types';
+import { KrasoModelId } from '../lib/krasoModels';
+import { VideoVariantId } from '../lib/videoModels';
+import { VideoMotionPreset } from '../lib/videoPresets';
+import { GEN_BAR_FORM, GEN_BAR_R } from './genbar/genBarStyles';
+import VideoStudioSidebar, { VideoQuality } from './video/VideoStudioSidebar';
+import VideoOnboarding from './video/VideoOnboarding';
+import VideoPresetPicker from './video/VideoPresetPicker';
+import VideoHistoryPanel, { VideoHistoryLayout } from './video/VideoHistoryPanel';
+import './video/videoTheme.css';
 
-type VideoRatio = '16:9' | '9:16' | '1:1';
+type VideoRatio = '16:9' | '9:16';
+type MainTab = 'how' | 'history';
 
 interface VideoStudioProps {
     prompt: string;
@@ -10,163 +20,180 @@ interface VideoStudioProps {
     attachedImage: string | null;
     setAttachedImage: (v: string | null) => void;
     triggerFileSelect: () => void;
-    duration: '5' | '10';
-    setDuration: (d: '5' | '10') => void;
     aspectRatio: VideoRatio;
     setAspectRatio: (r: VideoRatio) => void;
+    krasoModel: KrasoModelId;
+    onKrasoModelChange: (m: KrasoModelId) => void;
+    variant: VideoVariantId;
+    onVariantChange: (v: VideoVariantId) => void;
+    duration: number;
+    onDurationChange: (d: number) => void;
+    quality: VideoQuality;
+    onQualityChange: (q: VideoQuality) => void;
+    promptEnhanceEnabled: boolean;
+    onPromptEnhanceChange: (enabled: boolean) => void;
+    isEnhancingPrompt: boolean;
+    onEnhancePrompt: () => void;
+    selectedPreset: VideoMotionPreset | null;
+    onSelectPreset: (preset: VideoMotionPreset | null) => void;
     isGenerating: boolean;
     status?: string;
     onGenerate: () => void;
     historyData: GeneratedImage[];
+    cost: number;
+    error?: string | null;
 }
 
-const RATIOS: VideoRatio[] = ['16:9', '9:16', '1:1'];
-
-function RatioIcon({ ratio }: { ratio: string }) {
-    const [w, h] = ratio.split(':').map(Number);
-    const max = 16;
-    const bw = w >= h ? max : Math.round((w / h) * max);
-    const bh = h >= w ? max : Math.round((h / w) * max);
-    return (
-        <span className="inline-flex items-center justify-center w-4 h-4">
-            <span className="border-[1.5px] border-current rounded-[3px]" style={{ width: bw, height: bh }} />
-        </span>
-    );
+function HistoryTabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold ${GEN_BAR_R} transition-colors ${
+        active ? 'bg-surface-raised text-ink' : 'text-ink-muted hover:text-ink hover:bg-surface-raised'
+      }`}
+    >
+      {children}
+    </button>
+  );
 }
 
-/** Minimalist video generation studio — mirrors SceneStudio, with a preloader placeholder. */
 function VideoStudio(props: VideoStudioProps) {
     const {
         prompt, setPrompt, attachedImage, setAttachedImage, triggerFileSelect,
-        duration, setDuration, aspectRatio, setAspectRatio, isGenerating, status, onGenerate, historyData,
+        aspectRatio, setAspectRatio,
+        krasoModel, onKrasoModelChange, variant, onVariantChange, selectedPreset, onSelectPreset,
+        duration, onDurationChange, quality, onQualityChange,
+        promptEnhanceEnabled, onPromptEnhanceChange, isEnhancingPrompt, onEnhancePrompt,
+        isGenerating, status, onGenerate, historyData, cost, error,
     } = props;
-    const [ratioOpen, setRatioOpen] = useState(false);
-    const [durOpen, setDurOpen] = useState(false);
+
+    const [mainTab, setMainTab] = useState<MainTab>('history');
+    const [showPresets, setShowPresets] = useState(false);
+    const [historyLayout, setHistoryLayout] = useState<VideoHistoryLayout>('grid');
+    const [gridCols, setGridCols] = useState(4);
+
+    const handleSelectPreset = (preset: VideoMotionPreset) => {
+        onSelectPreset(preset);
+        setShowPresets(false);
+    };
+
+    const openPresets = () => setShowPresets(true);
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 bg-background-light overflow-hidden">
-            {/* Results grid */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-5 pt-4 pb-[190px]">
-                <div className="max-w-shell mx-auto">
-                    {(isGenerating || historyData.length > 0) ? (
-                        <div className="[column-gap:12px] [columns:180px] sm:[columns:220px] md:[columns:260px]">
-                            {/* Live preloader placeholder */}
-                            {isGenerating && (
-                                <div className="w-full mb-3 break-inside-avoid rounded-xl overflow-hidden border border-[var(--border-color)] bg-surface-muted relative"
-                                    style={{ aspectRatio: aspectRatio.replace(':', ' / ') }}>
-                                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/5 to-transparent" />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ink-muted px-4 text-center">
-                                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                                        <span className="text-[11px]">{status || 'Генерация видео…'}</span>
-                                        <span className="text-[10px] text-ink-faint">Обычно занимает 1–3 минуты</span>
-                                    </div>
+        <div className="video-studio flex-1 flex flex-col min-h-0 overflow-hidden bg-background-light">
+        <div className="vs-shell w-full max-w-[1440px] mx-auto flex flex-col md:flex-row flex-1 min-h-0 gap-3 md:gap-5 p-3 md:p-5">
+            <div className="vs-control-column shrink-0 self-start">
+                <VideoStudioSidebar
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    attachedImage={attachedImage}
+                    onUpload={triggerFileSelect}
+                    onClearImage={() => setAttachedImage(null)}
+                    selectedPreset={selectedPreset}
+                    onOpenPresets={openPresets}
+                    onClearPreset={() => onSelectPreset(null)}
+                    krasoModel={krasoModel}
+                    onKrasoModelChange={onKrasoModelChange}
+                    variant={variant}
+                    onVariantChange={onVariantChange}
+                    duration={duration}
+                    onDurationChange={onDurationChange}
+                    quality={quality}
+                    onQualityChange={onQualityChange}
+                    aspectRatio={aspectRatio}
+                    onAspectRatioChange={setAspectRatio}
+                    promptEnhanceEnabled={promptEnhanceEnabled}
+                    onPromptEnhanceChange={onPromptEnhanceChange}
+                    isEnhancingPrompt={isEnhancingPrompt}
+                    onEnhancePrompt={onEnhancePrompt}
+                    cost={cost}
+                    isGenerating={isGenerating}
+                    onGenerate={() => {
+                        onGenerate();
+                        setMainTab('history');
+                    }}
+                    error={error}
+                />
+            </div>
+
+            <div className="vs-workspace flex-1 flex flex-col min-w-0 min-h-0">
+                {showPresets ? (
+                    <VideoPresetPicker
+                        selectedId={selectedPreset?.id}
+                        onSelect={handleSelectPreset}
+                        onBack={() => setShowPresets(false)}
+                    />
+                ) : (
+                    <>
+                        <header className="shrink-0 flex items-center justify-between gap-3 pb-3 md:pb-4 flex-wrap">
+                            <div className={`${GEN_BAR_FORM} !p-1.5 w-fit inline-flex items-center gap-1 shrink-0`}>
+                                <HistoryTabBtn active={mainTab === 'history'} onClick={() => setMainTab('history')}>
+                                    <FolderHeart className="size-3.5" />
+                                    История
+                                </HistoryTabBtn>
+                                <HistoryTabBtn active={mainTab === 'how'} onClick={() => setMainTab('how')}>
+                                    Как это работает
+                                </HistoryTabBtn>
+                            </div>
+
+                            {mainTab === 'history' && (
+                                <div className="flex items-center gap-3 ml-auto">
+                                    <input
+                                        type="range"
+                                        min={2}
+                                        max={6}
+                                        value={8 - gridCols}
+                                        onChange={(e) => setGridCols(8 - Number(e.target.value))}
+                                        className="vs-thumb-slider hidden sm:block"
+                                        aria-label="Размер превью"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setHistoryLayout('list')}
+                                        className={`inline-flex items-center gap-1 text-xs font-semibold ${historyLayout === 'list' ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+                                    >
+                                        <List className="size-3.5" />
+                                        Список
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setHistoryLayout('grid')}
+                                        className={`inline-flex items-center gap-1 text-xs font-semibold ${historyLayout === 'grid' ? 'text-ink' : 'text-ink-muted hover:text-ink'}`}
+                                    >
+                                        <LayoutGrid className="size-3.5" />
+                                        Сетка
+                                    </button>
                                 </div>
                             )}
-                            {/* History videos */}
-                            {historyData.map((item, i) => {
-                                const valid = item.generated && (item.generated.startsWith('http') || item.generated.startsWith('blob:'));
-                                if (!valid) return null;
-                                return (
-                                    <div key={item.id || i} className="group relative w-full mb-3 break-inside-avoid rounded-xl overflow-hidden border border-[var(--border-color)] hover:border-primary transition-colors">
-                                        <video src={item.generated} className="w-full h-auto object-cover" muted loop playsInline preload="metadata"
-                                            onMouseOver={e => (e.currentTarget as HTMLVideoElement).play?.()}
-                                            onMouseOut={e => (e.currentTarget as HTMLVideoElement).pause?.()} />
-                                        <span className="absolute top-2 left-2 bg-black/55 backdrop-blur rounded-md p-1"><Play className="w-3 h-3 text-white fill-white" /></span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-24 text-center text-ink-muted">
-                            <div className="w-16 h-16 rounded-2xl bg-surface-muted flex items-center justify-center mb-4">
-                                <VideoIcon className="w-7 h-7 text-primary" />
-                            </div>
-                            <h2 className="text-base font-semibold text-ink mb-1">Оживите фото в видео</h2>
-                            <p className="text-[13px] max-w-xs">Загрузите фото, опишите движение и нажмите «Создать».</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+                        </header>
 
-            {/* Bottom control panel */}
-            <div className="absolute bottom-3 md:bottom-5 inset-x-0 z-30 flex justify-center px-3 md:px-5 pointer-events-none">
-                <div className="pointer-events-auto w-full max-w-genbar bg-card-light rounded-[24px] p-2.5 sm:p-3 border border-white/10 shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)]">
-                    {/* Prompt row */}
-                    <div className="flex items-start gap-2.5 mb-2.5">
-                        {attachedImage ? (
-                            <div className="relative w-16 h-16 shrink-0 mt-1">
-                                <img src={attachedImage} alt="" className="w-full h-full object-cover rounded-2xl border border-[var(--border-color)]" />
-                                <button onClick={() => setAttachedImage(null)} className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.5)] hover:bg-primary-hover" aria-label="Убрать">
-                                    <X className="w-3 h-3" strokeWidth={3} />
-                                </button>
-                            </div>
+                        {mainTab === 'history' ? (
+                            <VideoHistoryPanel
+                                items={historyData}
+                                layout={historyLayout}
+                                gridCols={gridCols}
+                                isGenerating={isGenerating}
+                                status={status}
+                            />
                         ) : (
-                            <button onClick={triggerFileSelect} className="w-16 h-16 mt-1 rounded-2xl border border-dashed border-[var(--border-color)] bg-surface-muted text-ink-muted hover:text-primary hover:border-primary/50 flex items-center justify-center shrink-0 transition-colors" aria-label="Добавить фото">
-                                <Plus className="w-6 h-6" />
-                            </button>
+                            <VideoOnboarding
+                                onOpenPresets={openPresets}
+                                onUpload={triggerFileSelect}
+                            />
                         )}
-                        <textarea
-                            value={prompt}
-                            onChange={e => setPrompt(e.target.value)}
-                            placeholder="Опишите движение и сцену…"
-                            rows={2}
-                            className="flex-1 min-w-0 bg-transparent outline-none text-[15px] font-medium text-ink placeholder:text-ink-faint px-1 pt-2 resize-none h-16"
-                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !isGenerating) { e.preventDefault(); onGenerate(); } }}
-                        />
-                    </div>
-
-                    {/* Controls row — the option chips wrap among themselves; Generate stays pinned to the bottom-right */}
-                    <div className="flex items-end gap-2">
-                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                        {/* Duration */}
-                        <div className="relative shrink-0">
-                            <button onClick={() => { setDurOpen(v => !v); setRatioOpen(false); }} className="flex items-center gap-1.5 text-xs font-semibold text-ink-body bg-surface-muted px-2.5 py-1.5 rounded-full hover:bg-[var(--border-soft)]">
-                                {duration} сек <ChevronUp className={`w-3 h-3 transition-transform ${durOpen ? '' : 'rotate-180'}`} />
-                            </button>
-                            {durOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setDurOpen(false)} />
-                                    <div className="absolute bottom-full left-0 mb-2 w-28 bg-card-light border border-[var(--border-color)] rounded-xl shadow-xl z-50 p-1 space-y-0.5">
-                                        {(['5', '10'] as const).map(d => (
-                                            <button key={d} onClick={() => { setDuration(d); setDurOpen(false); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] ${duration === d ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-surface-muted'}`}>
-                                                {d} сек {duration === d && <Check className="w-4 h-4" strokeWidth={3} />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Ratio */}
-                        <div className="relative shrink-0">
-                            <button onClick={() => { setRatioOpen(v => !v); setDurOpen(false); }} className="flex items-center gap-1.5 text-xs font-semibold text-ink-body bg-surface-muted px-2.5 py-1.5 rounded-full hover:bg-[var(--border-soft)]">
-                                <RatioIcon ratio={aspectRatio} /> {aspectRatio}
-                                <ChevronUp className={`w-3 h-3 transition-transform ${ratioOpen ? '' : 'rotate-180'}`} />
-                            </button>
-                            {ratioOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setRatioOpen(false)} />
-                                    <div className="absolute bottom-full left-0 mb-2 w-36 bg-card-light border border-[var(--border-color)] rounded-xl shadow-xl z-50 p-1 space-y-0.5">
-                                        <p className="px-3 py-1.5 text-[11px] text-ink-faint uppercase tracking-wider">Формат</p>
-                                        {RATIOS.map(r => (
-                                            <button key={r} onClick={() => { setAspectRatio(r); setRatioOpen(false); }} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] ${aspectRatio === r ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-surface-muted'}`}>
-                                                <RatioIcon ratio={r} /><span className="flex-1 text-left">{r}</span>
-                                                {aspectRatio === r && <Check className="w-4 h-4" strokeWidth={3} />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                        {/* Generate */}
-                        <button onClick={onGenerate} disabled={isGenerating} className="shrink-0 inline-flex items-center justify-center gap-1.5 text-on-primary text-[13px] font-bold px-4 py-2 rounded-lg shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 transition-all active:scale-[0.98]">
-                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Создать'}
-                        </button>
-                    </div>
-                </div>
+                    </>
+                )}
             </div>
+        </div>
         </div>
     );
 }

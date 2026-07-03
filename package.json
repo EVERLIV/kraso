@@ -19,6 +19,7 @@
     "firebase-functions": "^7.0.3",
     "lucide-react": "^0.556.0",
     "react": "^19.2.1",
+    "react-colorful": "^5.7.0",
     "react-dom": "^19.2.1",
     "replicate": "^1.4.0"
   },

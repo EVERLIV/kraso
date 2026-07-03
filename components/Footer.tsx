@@ -67,14 +67,14 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, onProductClick }) => {
 
    const renderColumn = (title: string, links: FooterLink[]) => (
       <div>
-         <h4 className="font-bold text-ink mb-5 text-sm">{title}</h4>
+         <h4 className="font-bold text-ink mb-5 text-sm text-balance">{title}</h4>
          <ul className="space-y-3 text-sm text-ink-muted">
             {links.map(link => (
                <li key={link.label}>
                   <button onClick={link.onClick} className="text-left hover:text-primary transition-colors inline-flex items-center gap-2">
                      {link.label}
                      {link.badge && (
-                        <span className="text-[8.5px] font-extrabold tracking-[0.05em] text-accent-pink bg-accent-pink-soft px-1.5 py-0.5 rounded-[5px]">{link.badge}</span>
+                        <span className="text-[8.5px] font-extrabold text-accent-pink bg-accent-pink-soft px-1.5 py-0.5 rounded-[5px]">{link.badge}</span>
                      )}
                   </button>
                </li>
@@ -90,17 +90,17 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, onProductClick }) => {
 
                {/* Brand + contacts (spans 2 cols) */}
                <div className="col-span-2">
-                  <div className="flex items-center gap-2.5 mb-5 cursor-pointer w-fit" onClick={() => onNavigate('home')}>
-                     <div className="w-[34px] h-[34px] bg-brand-grad rounded-[10px] flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(168,85,247,.5)]">
+                  <button type="button" className="flex items-center gap-2.5 mb-5 w-fit" onClick={() => onNavigate('home')}>
+                     <div className="size-[34px] bg-primary rounded-[10px] flex items-center justify-center shadow-sm">
                         <Glasses className="w-[18px] h-[18px] text-white" />
                      </div>
                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-ink text-lg tracking-[-0.02em]">КрасоМир</span>
-                        <span className="text-[9px] font-extrabold tracking-[0.08em] text-on-primary bg-ai-badge px-[5px] py-0.5 rounded-[5px]">AI</span>
+                        <span className="font-extrabold text-ink text-lg">КрасоМир</span>
+                        <span className="text-[9px] font-extrabold text-on-primary bg-ai-badge px-[5px] py-0.5 rounded-[5px]">AI</span>
                      </div>
-                  </div>
+                  </button>
 
-                  <p className="text-ink-muted text-sm leading-relaxed mb-5 max-w-xs">
+                  <p className="text-ink-muted text-sm leading-relaxed mb-5 max-w-xs text-pretty">
                      Умная фотостудия на нейросетях: 150+ стилей, генерация картинок ИИ, оживление фото в видео. Лицо сохраняется в каждом кадре.
                   </p>
 
@@ -129,7 +129,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, onProductClick }) => {
                            key={s.label}
                            href={s.href}
                            aria-label={s.label}
-                           className="w-9 h-9 rounded-full bg-surface-muted flex items-center justify-center text-ink-muted hover:bg-primary-soft hover:text-primary transition-all"
+                           className="size-9 rounded-full bg-surface-muted flex items-center justify-center text-ink-muted hover:bg-primary-soft hover:text-primary transition-colors"
                         >
                            {s.icon}
                         </a>

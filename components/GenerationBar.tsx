@@ -1,182 +1,255 @@
 import React, { useState } from 'react';
-import { Plus, Loader2, X, Cpu, Zap, ChevronUp } from 'lucide-react';
-import { AspectRatio, GenModelId, Preset } from '../types';
+import { Plus, Loader2, X, ChevronUp, Check, Sparkles, Gem } from 'lucide-react';
+import { AspectRatio, ImageResolution, Preset } from '../types';
+import KrasoModelPicker from './KrasoModelPicker';
+import { KrasoModelId, resolutionsForKraso, getKrasoModel } from '../lib/krasoModels';
+import {
+    GEN_BAR_FORM,
+    GEN_BAR_CHIP,
+    GEN_BAR_CHIP_MUTED,
+    GEN_BAR_DROPDOWN,
+    GEN_BAR_DROPDOWN_ITEM,
+    GEN_BAR_GENERATE,
+    GEN_BAR_ADD_PHOTO,
+    GEN_BAR_R,
+} from './genbar/genBarStyles';
 
 interface GenerationBarProps {
     prompt: string;
     onPromptChange: (value: string) => void;
     aspectRatio: AspectRatio;
     onAspectRatioChange: (ratio: AspectRatio) => void;
-    selectedModel: GenModelId;
-    onModelChange: (model: GenModelId) => void;
+    krasoModel: KrasoModelId;
+    onKrasoModelChange: (model: KrasoModelId) => void;
+    resolution: ImageResolution;
+    onResolutionChange: (resolution: ImageResolution) => void;
     selectedTemplate: Preset | null;
     onClearTemplate: () => void;
     hasSourceImage: boolean;
     onAddImageClick: () => void;
-    onGenerate: () => void;
+    onGenerate: (batchCount?: number) => void;
     isGenerating: boolean;
     cost: number;
+    batchCount?: number;
+    onBatchCountChange?: (n: number) => void;
     error?: string | null;
-    /** Thumbnails of attached source images (data URLs / urls) */
+    status?: string | null;
     sourceImages?: string[];
     onRemoveSourceImage?: (index: number) => void;
-    /** When true (document presets), the aspect-ratio picker is disabled. */
     ratioLocked?: boolean;
+    /** Override default prompt placeholder */
+    promptPlaceholder?: string;
 }
 
 const RATIOS: AspectRatio[] = ['1:1', '4:5', '9:16', '16:9'];
 
-const MODEL_OPTIONS = [
-    { id: 'gemini-2.5-flash-image', label: 'Быстрая', desc: 'Gemini 2.5', icon: Zap, color: 'text-amber-500' },
-    { id: 'gemini-3-pro-image-preview', label: 'Pro', desc: 'Gemini 3.0', icon: Cpu, color: 'text-primary' },
-] as const;
+function RatioIcon({ ratio, className = '' }: { ratio: string; className?: string }) {
+    const [w, h] = ratio.split(':').map(Number);
+    const max = 14;
+    const bw = w >= h ? max : Math.round((w / h) * max);
+    const bh = h >= w ? max : Math.round((h / w) * max);
+    return (
+        <span className={`inline-flex items-center justify-center size-4 ${className}`}>
+            <span className="border-[1.5px] border-current rounded-[2px]" style={{ width: bw, height: bh }} />
+        </span>
+    );
+}
 
-/**
- * Sticky bottom generation bar — Studio reference.
- * Sits below the template gallery; centered, pill-shaped, frosted.
- */
 function GenerationBar({
     prompt, onPromptChange, aspectRatio, onAspectRatioChange,
-    selectedModel, onModelChange, selectedTemplate, onClearTemplate,
-    hasSourceImage, onAddImageClick, onGenerate, isGenerating, cost, error,
+    krasoModel, onKrasoModelChange, resolution, onResolutionChange,
+    selectedTemplate, onClearTemplate,
+    hasSourceImage, onAddImageClick, onGenerate, isGenerating, cost, error, status,
     sourceImages = [], onRemoveSourceImage, ratioLocked = false,
+    batchCount = 1, onBatchCountChange, promptPlaceholder: promptPlaceholderProp,
 }: GenerationBarProps) {
-    const [modelOpen, setModelOpen] = useState(false);
-    const activeModel = MODEL_OPTIONS.find(m => m.id === selectedModel) || MODEL_OPTIONS[0];
+    const [ratioOpen, setRatioOpen] = useState(false);
+    const [resOpen, setResOpen] = useState(false);
+    const krasoCfg = getKrasoModel(krasoModel);
+    const availableResolutions = resolutionsForKraso(krasoModel);
+    const needsReference = !!selectedTemplate;
+    const canGenerate = !isGenerating && (!needsReference || hasSourceImage);
+    const promptPlaceholder = promptPlaceholderProp ?? (selectedTemplate
+        ? (hasSourceImage ? 'Уточнения к стилю (необязательно)…' : 'Загрузите фото — шаблон применится к нему')
+        : 'Опишите идею или выберите стиль…');
 
     return (
         <div className="z-30 flex justify-center px-2 sm:px-4 md:px-6 pb-[calc(22px+env(safe-area-inset-bottom))] pointer-events-none">
             <div className="pointer-events-auto w-full max-w-genbar">
+                {status && isGenerating && (
+                    <div className={`mb-2 mx-auto w-fit max-w-full text-ink-muted text-xs font-medium bg-card-light border border-[var(--border-color)] px-3 py-1.5 ${GEN_BAR_R} text-pretty`}>
+                        {status}
+                    </div>
+                )}
                 {error && (
-                    <div className="mb-2 mx-auto w-fit max-w-full text-red-500 text-xs font-medium bg-card-light border border-red-200 px-3 py-1.5 rounded-full shadow-sm">
+                    <div role="alert" className={`mb-2 mx-auto w-fit max-w-full text-red-400 text-xs font-medium bg-card-light border border-red-500/30 px-3 py-1.5 ${GEN_BAR_R} text-pretty`}>
                         {error}
                     </div>
                 )}
 
-                {/* Card: thumbnails + prompt (top), controls (bottom) — wraps on mobile */}
-                <div className="bg-card-light rounded-[24px] p-2.5 sm:p-3
-                                border border-white/10
-                                shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)]">
-
-                    {/* Selected style label */}
+                <div className={GEN_BAR_FORM}>
                     {selectedTemplate && (
-                        <div className="flex items-center gap-1.5 mb-2 px-0.5">
-                            <span className="text-[11px] text-ink-muted">Стиль:</span>
-                            <span className="inline-flex items-center gap-1.5 max-w-full text-[12px] font-semibold text-primary bg-primary/10 border border-primary/30 rounded-full pl-2 pr-1 py-0.5">
+                        <div className="flex items-center gap-1.5 mb-3">
+                            <span className="text-xs text-ink-muted">Стиль:</span>
+                            <span className={`inline-flex items-center gap-1.5 max-w-full text-xs font-semibold text-primary bg-primary/10 border border-primary/30 ${GEN_BAR_R} pl-2 pr-1 py-0.5`}>
                                 <span className="truncate">{selectedTemplate.title}</span>
-                                <button onClick={onClearTemplate} className="shrink-0 w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-hover" aria-label="Убрать стиль">
-                                    <X className="w-2.5 h-2.5" strokeWidth={3} />
+                                <button type="button" onClick={onClearTemplate} className="shrink-0 size-4 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-hover" aria-label="Убрать стиль">
+                                    <X className="size-2.5" strokeWidth={3} />
                                 </button>
                             </span>
                         </div>
                     )}
 
-                    {/* Top: attached photos + prompt */}
-                    <div className="flex items-center gap-2 mb-2.5">
-                        {/* Thumbnails */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Prompt row */}
+                    <div className="flex gap-3 mb-3 min-w-0">
+                        <div className="flex items-start gap-2 shrink-0">
                             {selectedTemplate && (
-                                <div className="relative w-16 h-16 shrink-0 mr-1 mt-1">
-                                    <img src={selectedTemplate.image || `/templates/${selectedTemplate.id}.jpg`} alt={selectedTemplate.title} className="w-full h-full object-cover rounded-2xl border border-primary/30" />
-                                    <button onClick={onClearTemplate} className="absolute -top-1.5 -right-1.5 z-10 w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.5)] hover:bg-primary-hover" aria-label="Убрать стиль">
-                                        <X className="w-2.5 h-2.5" strokeWidth={3} />
+                                <div className="relative size-14 shrink-0">
+                                    <img src={selectedTemplate.image || `/templates/${selectedTemplate.id}.webp`} alt="" className={`size-full object-cover ${GEN_BAR_R} border border-primary/30`} />
+                                    <button type="button" onClick={onClearTemplate} className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-on-primary flex items-center justify-center" aria-label="Убрать стиль">
+                                        <X className="size-2.5" strokeWidth={3} />
                                     </button>
                                 </div>
                             )}
-                            {sourceImages.slice(0, 3).map((src, i) => (
-                                <div key={i} className="relative w-16 h-16 shrink-0 mr-1 mt-1">
-                                    <img src={src} alt="Фото" className="w-full h-full object-cover rounded-2xl border border-[var(--border-color)]" />
+                            {sourceImages.slice(0, 2).map((src, i) => (
+                                <div key={i} className="relative size-14 shrink-0">
+                                    <img src={src} alt="" className={`size-full object-cover ${GEN_BAR_R} border border-[var(--border-color)]`} />
                                     {onRemoveSourceImage && (
-                                        <button onClick={() => onRemoveSourceImage(i)} className="absolute -top-1.5 -right-1.5 z-10 w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.5)] hover:bg-primary-hover" aria-label="Убрать фото">
-                                            <X className="w-2.5 h-2.5" strokeWidth={3} />
+                                        <button type="button" onClick={() => onRemoveSourceImage(i)} className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-on-primary flex items-center justify-center" aria-label="Убрать фото">
+                                            <X className="size-2.5" strokeWidth={3} />
                                         </button>
                                     )}
                                 </div>
                             ))}
-                            {/* Add photo */}
-                            <button
-                                onClick={onAddImageClick}
-                                className={`w-16 h-16 rounded-2xl border flex items-center justify-center shrink-0 transition-colors ${hasSourceImage ? 'bg-primary-soft border-primary/30 text-primary' : 'bg-surface-muted border-[var(--border-soft)] text-ink-body hover:bg-[var(--border-soft)]'}`}
-                                aria-label="Добавить фото"
-                            >
-                                <Plus className="w-5 h-5" />
+                            <button type="button" onClick={onAddImageClick} className={GEN_BAR_ADD_PHOTO} aria-label="Добавить фото">
+                                <Plus className="size-4" />
                             </button>
                         </div>
-
-                        {/* Prompt */}
                         <input
                             value={prompt}
                             onChange={e => onPromptChange(e.target.value)}
-                            placeholder="Опишите идею или выберите стиль…"
-                            className="flex-1 min-w-0 bg-transparent outline-none text-[15px] font-medium text-ink placeholder:text-ink-faint px-1"
-                            onKeyDown={e => { if (e.key === 'Enter' && !isGenerating) onGenerate(); }}
+                            placeholder={promptPlaceholder}
+                            className="flex-1 min-w-0 bg-transparent outline-none text-[15px] font-medium text-ink placeholder:text-ink-muted py-1"
+                            onKeyDown={e => { if (e.key === 'Enter' && !isGenerating && canGenerate) onGenerate(); }}
                         />
                     </div>
 
-                    {/* Bottom: controls (wrap on mobile); Generate stays pinned to the bottom-right */}
-                    <div className="flex items-end gap-2">
-                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                        {/* Model chip */}
-                        <div className="relative shrink-0">
-                            <button
-                                onClick={() => setModelOpen(v => !v)}
-                                className="flex items-center gap-1.5 text-xs font-semibold text-ink-body bg-surface-muted px-2.5 py-1.5 rounded-full hover:bg-[var(--border-soft)] transition-colors"
-                            >
-                                <activeModel.icon className={`w-[14px] h-[14px] ${activeModel.color}`} />
-                                <span className="hidden xs:inline">{activeModel.label}</span>
-                                <ChevronUp className={`w-3 h-3 transition-transform ${modelOpen ? '' : 'rotate-180'}`} />
-                            </button>
-                            {modelOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setModelOpen(false)} />
-                                    <div className="absolute bottom-full left-0 mb-2 w-52 bg-card-light border border-[var(--border-color)] rounded-xl shadow-xl z-50 p-1 space-y-1">
-                                        {MODEL_OPTIONS.map(opt => (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => { onModelChange(opt.id as GenModelId); setModelOpen(false); }}
-                                                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all ${selectedModel === opt.id ? 'bg-primary-soft' : 'hover:bg-surface-muted'}`}
-                                            >
-                                                <span className={`w-7 h-7 rounded-md bg-surface-muted flex items-center justify-center ${selectedModel === opt.id ? 'bg-primary/15' : ''}`}>
-                                                    <opt.icon className={`w-3.5 h-3.5 ${opt.color}`} />
-                                                </span>
-                                                <span className="text-left">
-                                                    <span className={`block text-xs ${selectedModel === opt.id ? 'font-bold text-primary' : 'font-medium text-ink'}`}>{opt.label}</span>
-                                                    <span className="block text-[10px] text-ink-faint">{opt.desc}</span>
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
+                    {/* Controls row — uniform h-10 chips */}
+                    <div className="flex items-end gap-3 min-w-0">
+                        <div className="flex h-10 items-center gap-2 flex-wrap flex-1 min-w-0">
+                            <KrasoModelPicker value={krasoModel} onChange={onKrasoModelChange} />
+
+                            {/* Aspect ratio chip */}
+                            <div className="relative shrink-0">
+                                <button
+                                    type="button"
+                                    disabled={ratioLocked}
+                                    onClick={() => { if (!ratioLocked) { setRatioOpen(v => !v); setResOpen(false); } }}
+                                    className={`${GEN_BAR_CHIP} ${ratioLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <RatioIcon ratio={aspectRatio} />
+                                    <span className="tabular-nums">{aspectRatio}</span>
+                                    {!ratioLocked && (
+                                        <ChevronUp className={`size-4 shrink-0 ${GEN_BAR_CHIP_MUTED} transition-transform ${ratioOpen ? '' : 'rotate-180'}`} />
+                                    )}
+                                </button>
+                                {ratioOpen && !ratioLocked && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setRatioOpen(false)} aria-hidden="true" />
+                                        <div className={`${GEN_BAR_DROPDOWN} w-36`}>
+                                            {RATIOS.map(r => (
+                                                <button
+                                                    key={r}
+                                                    type="button"
+                                                    onClick={() => { onAspectRatioChange(r); setRatioOpen(false); }}
+                                                    className={`${GEN_BAR_DROPDOWN_ITEM} ${aspectRatio === r ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-white/5'}`}
+                                                >
+                                                    <RatioIcon ratio={r} />
+                                                    <span className="flex-1 text-left tabular-nums">{r}</span>
+                                                    {aspectRatio === r && <Check className="size-3.5 text-primary" strokeWidth={3} />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Resolution chip */}
+                            {krasoCfg.allowsResolution && availableResolutions.length > 0 && (
+                                <div className="relative shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setResOpen(v => !v); setRatioOpen(false); }}
+                                        className={GEN_BAR_CHIP}
+                                    >
+                                        <Gem className="size-4 text-primary shrink-0" strokeWidth={2} />
+                                        <span className="tabular-nums">{resolution}</span>
+                                        <ChevronUp className={`size-4 shrink-0 ${GEN_BAR_CHIP_MUTED} transition-transform ${resOpen ? '' : 'rotate-180'}`} />
+                                    </button>
+                                    {resOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setResOpen(false)} aria-hidden="true" />
+                                            <div className={GEN_BAR_DROPDOWN}>
+                                                {availableResolutions.map(r => (
+                                                    <button
+                                                        key={r}
+                                                        type="button"
+                                                        onClick={() => { onResolutionChange(r); setResOpen(false); }}
+                                                        className={`${GEN_BAR_DROPDOWN_ITEM} justify-between tabular-nums ${resolution === r ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-white/5'}`}
+                                                    >
+                                                        {r}
+                                                        {resolution === r && <Check className="size-3.5 text-primary" strokeWidth={3} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Batch chip */}
+                            {onBatchCountChange && (
+                                <div className={GEN_BAR_CHIP}>
+                                    <button
+                                        type="button"
+                                        onClick={() => onBatchCountChange(Math.max(1, batchCount - 1))}
+                                        disabled={batchCount <= 1}
+                                        className={`${GEN_BAR_CHIP_MUTED} hover:text-ink disabled:opacity-40 transition-colors`}
+                                        aria-label="Меньше"
+                                    >
+                                        <span className="text-base leading-none">−</span>
+                                    </button>
+                                    <span className="font-semibold text-ink tabular-nums text-center min-w-[2rem]">
+                                        {batchCount}<span className="text-ink-muted">/4</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => onBatchCountChange(Math.min(4, batchCount + 1))}
+                                        disabled={batchCount >= 4}
+                                        className={`${GEN_BAR_CHIP_MUTED} hover:text-ink disabled:opacity-40 transition-colors`}
+                                        aria-label="Больше"
+                                    >
+                                        <Plus className="size-4" />
+                                    </button>
+                                </div>
                             )}
                         </div>
 
-                        {/* Aspect ratio segment — locked for document presets (fixed size) */}
-                        <div className={`flex items-center gap-1 shrink-0 ${ratioLocked ? 'opacity-50' : ''}`} title={ratioLocked ? 'Размер задан документом' : undefined}>
-                            {RATIOS.map(r => (
-                                <button
-                                    key={r}
-                                    disabled={ratioLocked}
-                                    onClick={() => !ratioLocked && onAspectRatioChange(r)}
-                                    className={`px-2 sm:px-2.5 py-[6px] rounded-lg text-[12px] font-semibold border transition-colors ${ratioLocked ? 'cursor-not-allowed' : ''} ${aspectRatio === r ? 'bg-primary/10 text-primary border-primary' : 'text-ink-muted border-[var(--border-color)]'} ${!ratioLocked && aspectRatio !== r ? 'hover:text-ink hover:border-ink-faint' : ''}`}
-                                >
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                        {/* Generate */}
                         <button
-                            onClick={onGenerate}
-                            disabled={isGenerating}
-                            className="shrink-0 inline-flex items-center justify-center gap-1.5 text-on-primary text-[13px] font-bold px-4 py-2 rounded-lg shadow-cta bg-primary hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                            type="button"
+                            onClick={() => onGenerate(batchCount)}
+                            disabled={!canGenerate}
+                            className={GEN_BAR_GENERATE}
                         >
                             {isGenerating ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
                             ) : (
                                 <>
                                     <span>Создать</span>
-                                    <span className="opacity-80 font-semibold">· {cost}</span>
+                                    <span className="inline-flex items-center gap-1 opacity-90 tabular-nums">
+                                        <Sparkles className="size-3.5" />
+                                        {cost * batchCount}
+                                    </span>
                                 </>
                             )}
                         </button>

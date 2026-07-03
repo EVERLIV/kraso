@@ -1,0 +1,218 @@
+/* Video Studio — layout + history cards (uses app design tokens) */
+
+.video-studio {
+  color: var(--ink);
+}
+
+/* Плавающая колонка управления — по высоте контента */
+.video-studio .vs-control-column {
+  width: 100%;
+  max-width: 300px;
+  align-self: flex-start;
+  overflow: visible;
+}
+
+/* Рабочая область справа */
+.video-studio .vs-workspace {
+  background: var(--bg-light);
+}
+
+/* Слайдер размера превью */
+.video-studio .vs-thumb-slider {
+  width: 90px;
+  height: 4px;
+  appearance: none;
+  background: var(--border-color);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.video-studio .vs-thumb-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+  margin-top: -4px;
+}
+
+/* ---- History cards ---- */
+.video-studio .vs-date-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg-light) 92%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 6px 0;
+}
+
+.video-studio .vs-date-check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--ink-faint);
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.video-studio .vs-date-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.video-studio .vs-result-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.video-studio .vs-result-card {
+  background: var(--card-light);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.video-studio .vs-result-media {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: var(--surface-muted);
+}
+
+.video-studio .vs-result-media video,
+.video-studio .vs-result-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-studio .vs-play-btn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.video-studio .vs-play-btn span {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.video-studio .vs-card-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.video-studio .vs-card-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.video-studio .vs-failed-card {
+  background: #2C1F22;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+.video-studio .vs-error-pill {
+  font-size: 12px;
+  font-weight: 700;
+  background: #3A2226;
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.video-studio .vs-error-pill--failed { color: #F19A9A; }
+.video-studio .vs-error-pill--refund { color: #F1C99A; }
+
+.video-studio .vs-list-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--card-light);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  align-items: center;
+}
+
+.video-studio .vs-list-thumb {
+  width: 56px;
+  height: 74px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-muted);
+  flex-shrink: 0;
+  position: relative;
+}
+
+@media (max-width: 767px) {
+  .video-studio {
+    flex-direction: column;
+  }
+
+  .video-studio .vs-control-column {
+    max-width: none;
+  }
+}
+
+/* ---- How it works (onboarding) — framed cards like the reference ---- */
+.video-studio .vs-how-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--card-light);
+  border: 1px solid var(--border-soft);
+  transition: border-color 0.15s ease;
+}
+
+.video-studio button.group:hover .vs-how-card {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-soft));
+}
+
+.video-studio .vs-how-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

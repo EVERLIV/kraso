@@ -1,59 +1,60 @@
 
-import { AspectRatio, GenModelId } from "../types";
+import { AspectRatio, GenModelId, ImageResolution } from "../types";
+import { inferKrasoModel, type KrasoModelId } from "../lib/krasoModels";
+import { USE_FAL_STUDIO } from "../lib/featureFlags";
 
 export interface ReferenceImage {
   data: string; // Base64 data
   mimeType: string;
+  role?: 'character' | 'reference';
 }
 
-export const generateImageWithGemini = async (
+export interface GenerateImageOptions {
+  quality?: ImageResolution | string;
+  format?: string;
+  onProgress?: (status: string) => void;
+  intensity?: number;
+  /** Kraso tier — preferred over inferring from legacy modelId */
+  krasoModel?: KrasoModelId;
+}
+
+const STUDIO_FUNCTION_URL =
+  import.meta.env.VITE_STUDIO_IMAGE_FUNCTION_URL ||
+  "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateStudioImage";
+
+const GEMINI_FUNCTION_URL =
+  import.meta.env.VITE_GOOGLE_IMAGE_FUNCTION_URL ||
+  "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateGoogleImage";
+
+async function callFalStudio(
   prompt: string,
-  referenceImages?: ReferenceImage[] | null,
-  aspectRatio: AspectRatio = '1:1',
-  modelId: GenModelId = 'gemini-2.5-flash-image',
-  options?: { quality?: string; format?: string; onProgress?: (status: string) => void; intensity?: number; }
-): Promise<string> => {
-  // All models now go through our Google Imagen Cloud Function.
-  // We ignore modelId variations for now and use a single underlying Imagen model.
+  referenceImages: ReferenceImage[],
+  aspectRatio: AspectRatio,
+  krasoTier: KrasoModelId,
+  options?: GenerateImageOptions,
+): Promise<string> {
+  const refs = referenceImages?.filter(r => r?.data) ?? [];
+  const resolution = (options?.quality as ImageResolution) || '1K';
 
-  // Take first reference image (основное лицо / исходное фото)
-  let imageBase64: string | null = null;
-  if (referenceImages && referenceImages.length > 0) {
-    imageBase64 = referenceImages[0].data; // уже очищенный base64 без data: префикса
-  }
-
-  const payload: any = {
+  const payload = {
     prompt,
     aspectRatio,
-    negativePrompt: "",
-    parameters: {},
-    // Передаём исходное фото в облачную функцию, если оно есть
-    imageBase64: imageBase64 || undefined,
-    intensity: options?.intensity || 50, // Pass intensity (0-100)
-    modelId, // Pass the selected model ID to the backend
+    krasoTier,
+    resolution,
+    referenceImages: refs.map(r => ({
+      data: r.data,
+      mimeType: r.mimeType,
+      role: r.role,
+    })),
+    imageBase64: refs[0]?.data,
+    mimeType: refs[0]?.mimeType,
   };
 
-  // Basic onProgress is not supported for Imagen REST right now; we'll just log start/finish.
-  options?.onProgress?.("Запрос к Google Imagen...");
+  options?.onProgress?.("Генерация через FAL...");
 
-  const functionUrl =
-    import.meta.env.VITE_GOOGLE_IMAGE_FUNCTION_URL ||
-    "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateGoogleImage";
-
-  console.log("[GeminiService] Calling Cloud Function:", functionUrl);
-  console.log("[GeminiService] Payload:", { 
-    promptLength: prompt.length, 
-    hasImage: !!imageBase64, 
-    aspectRatio, 
-    modelId,
-    intensity: options?.intensity 
-  });
-
-  const resp = await fetch(functionUrl, {
+  const resp = await fetch(STUDIO_FUNCTION_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
@@ -64,36 +65,96 @@ export const generateImageWithGemini = async (
       const errorJson = JSON.parse(text);
       errorMessage = errorJson.error || errorJson.message || text;
     } catch {
-      // Keep text as is
+      // keep text
     }
-    console.error("[GeminiService] Cloud Function error:", {
-      status: resp.status,
-      statusText: resp.statusText,
-      body: errorMessage
-    });
-    throw new Error(errorMessage || `Ошибка генерации (${resp.status}): ${resp.statusText}`);
+    throw new Error(errorMessage || `Ошибка FAL (${resp.status})`);
   }
 
   const data = await resp.json();
-  console.log("[GeminiService] Response received:", { 
-    hasData: !!data, 
-    hasImage: !!data?.image,
-    hasBase64: !!data?.image?.base64 
-  });
-
   const base64 = data?.image?.base64;
   const mimeType = data?.image?.mimeType || "image/png";
-
   if (!base64) {
-    console.error("[GeminiService] Missing base64 in response:", data);
-    throw new Error("Сервер не вернул изображение. Ответ: " + JSON.stringify(data));
+    throw new Error("Сервер не вернул изображение");
+  }
+  return `data:${mimeType};base64,${base64}`;
+}
+
+async function callGeminiLegacy(
+  prompt: string,
+  referenceImages: ReferenceImage[] | null | undefined,
+  aspectRatio: AspectRatio,
+  modelId: GenModelId,
+  options?: GenerateImageOptions,
+): Promise<string> {
+  const refs = referenceImages?.filter(r => r?.data) ?? [];
+  const primary = refs[0] ?? null;
+
+  const payload: Record<string, unknown> = {
+    prompt,
+    aspectRatio,
+    negativePrompt: "",
+    parameters: {
+      quality: options?.quality,
+      format: options?.format,
+    },
+    imageBase64: primary?.data || undefined,
+    mimeType: primary?.mimeType || undefined,
+    referenceImages: refs.map(r => ({
+      data: r.data,
+      mimeType: r.mimeType,
+      role: r.role,
+    })),
+    intensity: options?.intensity || 50,
+    modelId,
+    quality: options?.quality,
+  };
+
+  options?.onProgress?.("Запрос к Google Imagen...");
+
+  const resp = await fetch(GEMINI_FUNCTION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    let errorMessage = text;
+    try {
+      const errorJson = JSON.parse(text);
+      errorMessage = errorJson.error || errorJson.message || text;
+    } catch {
+      // keep text
+    }
+    throw new Error(errorMessage || `Ошибка генерации (${resp.status})`);
   }
 
-  // Return data URL so existing storage logic can handle upload
+  const data = await resp.json();
+  const base64 = data?.image?.base64;
+  const mimeType = data?.image?.mimeType || "image/png";
+  if (!base64) {
+    throw new Error("Сервер не вернул изображение");
+  }
   return `data:${mimeType};base64,${base64}`;
+}
+
+/** Main image generation entry — routes to FAL studio by default */
+export const generateImageWithGemini = async (
+  prompt: string,
+  referenceImages?: ReferenceImage[] | null,
+  aspectRatio: AspectRatio = '1:1',
+  modelId: GenModelId = 'gemini-2.5-flash-image',
+  options?: GenerateImageOptions,
+): Promise<string> => {
+  const resolution = (options?.quality as ImageResolution) || '1K';
+  const krasoTier = options?.krasoModel ?? inferKrasoModel(modelId, resolution);
+
+  if (USE_FAL_STUDIO) {
+    return callFalStudio(prompt, referenceImages ?? [], aspectRatio, krasoTier, options);
+  }
+  return callGeminiLegacy(prompt, referenceImages, aspectRatio, modelId, options);
 };
 
-// Legacy Helpers
 export const cleanBase64 = (dataUrl: string): string => {
   const parts = dataUrl.split(',');
   return parts.length > 1 ? parts[1] : parts[0];
@@ -106,5 +167,3 @@ export const getMimeType = (dataUrl: string): string => {
   }
   return 'image/jpeg';
 };
-
-// Video generation via FAL is no longer supported in this simplified setup.

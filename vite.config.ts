@@ -8,6 +8,20 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      watch: {
+        // Windows EBUSY при больших .webp в public — игнорируем через функцию (надёжнее glob на Win)
+        ignored: (filepath: string) => {
+          const p = filepath.replace(/\\/g, '/');
+          return (
+            p.includes('/public/palette/') ||
+            p.includes('/public/styles/') ||
+            p.includes('/public/marketing/pickers/') ||
+            p.includes('/public/marketing/videos/') ||
+            p.includes('/public/shorts/presets/') ||
+            p.includes('/public/video/how-it-works/')
+          );
+        },
+      },
     },
     plugins: [react()],
 

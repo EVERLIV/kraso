@@ -10,17 +10,18 @@ interface RemoveBgViewProps {
   credits: number;
   onUpdateCredits: (val: number) => void;
   isFreeTier: boolean;
+  initialImage?: string | null;
 }
 
-const RemoveBgView: React.FC<RemoveBgViewProps> = ({ credits, onUpdateCredits, isFreeTier }) => {
+const RemoveBgView: React.FC<RemoveBgViewProps> = ({ credits, onUpdateCredits, isFreeTier, initialImage }) => {
   const { user } = useAuth();
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(initialImage ?? null);
   const [result, setResult] = useState<string | null>(null);
   const [bgType, setBgType] = useState<'white' | 'green' | 'studio'>('white');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const COST = 1;
+  const COST = 15;
 
   const handleProcess = async () => {
     if (!image || !user) return;
@@ -138,7 +139,7 @@ const RemoveBgView: React.FC<RemoveBgViewProps> = ({ credits, onUpdateCredits, i
                 className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${!image || loading ? 'bg-brand-border text-brand-muted' : 'bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-900/20'}`}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Eraser className="w-5 h-5" />}
-                {loading ? 'Удаляем фон...' : 'Удалить фон (1 кр)'}
+                {loading ? 'Удаляем фон...' : `Удалить фон (${COST} кр)`}
               </button>
               {error && <p className="text-xs text-red-400 text-center">{error}</p>}
             </div>

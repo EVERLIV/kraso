@@ -3,10 +3,13 @@
 interface KlingVideoOptions {
     prompt: string;
     image_url: string;
-    duration?: '5' | '10';
+    duration?: string;
     aspect_ratio?: '16:9' | '9:16' | '1:1';
+    resolution?: '720p' | '1080p';
     negative_prompt?: string;
     cfg_scale?: number;
+    videoModelId?: string;
+    generateAudio?: boolean;
     onProgress?: (status: string) => void;
 }
 
@@ -24,7 +27,7 @@ export const uploadBase64ToUrl = async (base64Data: string): Promise<string> => 
  * Generate video from reference image using FAL Veo 3.1 via Cloud Function
  */
 export const generateKlingVideo = async (options: KlingVideoOptions): Promise<string> => {
-    const { prompt, image_url, duration = '10', aspect_ratio = '16:9', onProgress } = options;
+    const { prompt, image_url, duration = '10', aspect_ratio = '16:9', resolution = '720p', videoModelId, generateAudio = true, onProgress } = options;
 
     try {
         // Map duration: Veo only supports 8s
@@ -57,9 +60,10 @@ export const generateKlingVideo = async (options: KlingVideoOptions): Promise<st
                 image_urls: imageUrls,
                 aspect_ratio: veoAspectRatio,
                 duration: veoDuration,
-                resolution: "720p",
-                generate_audio: true,
+                resolution,
+                generate_audio: generateAudio,
                 auto_fix: true,
+                model_id: videoModelId,
             }),
         });
 

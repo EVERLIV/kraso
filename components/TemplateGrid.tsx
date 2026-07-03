@@ -8,6 +8,7 @@ interface TemplateGridProps {
   onSelect: (preset: Preset) => void;
   selectedId?: string | null;
   sort?: 'popular' | 'new' | 'az';
+  onBrowseAll?: () => void;
 }
 
 // Ids considered "popular" (surface first when sorting by popularity) and "new" (recent additions).
@@ -2341,7 +2342,7 @@ export const ALL_PRESETS: Preset[] = [
 
 
 
-const TemplateGrid: React.FC<TemplateGridProps> = ({ category, onSelect, selectedId, sort = 'popular' }) => {
+const TemplateGrid: React.FC<TemplateGridProps> = ({ category, onSelect, selectedId, sort = 'popular', onBrowseAll }) => {
   const filtered = ALL_PRESETS.filter(preset => {
     if (category === 'all') return true;
     if (category === 'trending') return ['retro-polaroid-classic', 'tet-traditional-yellow', 'market-shopee-hero', 'kids-dinosaur', 'makeup-bridal'].includes(preset.id);
@@ -2360,10 +2361,15 @@ const TemplateGrid: React.FC<TemplateGridProps> = ({ category, onSelect, selecte
 
   if (filteredPresets.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center text-ink-muted">
+      <div className="flex flex-col items-center justify-center py-16 text-center text-ink-muted px-4">
         <Sparkles className="w-12 h-12 mb-4 opacity-20" />
-        <p>В этой категории пока нет шаблонов.</p>
-        <p className="text-xs mt-1 opacity-50">Загляните позже.</p>
+        <p className="text-sm text-pretty mb-1">В этой категории пока нет шаблонов.</p>
+        <p className="text-xs text-ink-faint text-pretty mb-4">Попробуйте другую категорию.</p>
+        {onBrowseAll && (
+          <button onClick={onBrowseAll} className="text-sm font-medium text-primary hover:underline">
+            Все шаблоны
+          </button>
+        )}
       </div>
     );
   }
@@ -2378,36 +2384,35 @@ const TemplateGrid: React.FC<TemplateGridProps> = ({ category, onSelect, selecte
           key={preset.id}
           onClick={() => onSelect(preset)}
           aria-pressed={isActive}
-          className={`group relative w-full mb-3 break-inside-avoid rounded-xl overflow-hidden bg-card-light border-2 transition-colors duration-200 text-left ${isActive ? 'border-primary ring-2 ring-primary/40' : 'border-[var(--border-color)] hover:border-primary'}`}
+          className={`group relative w-full mb-3 break-inside-avoid rounded-xl overflow-hidden bg-card-light border-2 transition-colors duration-150 text-left ${isActive ? 'border-primary ring-2 ring-primary/40' : 'border-[var(--border-color)] hover:border-primary'}`}
         >
           <div className="relative overflow-hidden aspect-[3/4]">
             <img
               src={preset.image || FALLBACK_IMAGES[preset.category] || FALLBACK_IMAGES.default}
               alt={preset.title}
-              className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500"
+              className="w-full h-full object-cover motion-safe:group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 transition-transform duration-150 ease-out motion-reduce:transition-none"
               loading="lazy"
             />
-            {/* Bottom gradient for legible caption */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
             {/* Top-right badge: checkmark when active, + on hover otherwise */}
-            <div className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-primary flex items-center justify-center transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            <div className={`absolute top-2 right-2 size-7 rounded-full bg-primary flex items-center justify-center transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               {isActive ? <Check className="w-4 h-4 text-on-primary" strokeWidth={3} /> : <Plus className="w-4 h-4 text-on-primary" />}
             </div>
 
             {/* Active label chip */}
             {isActive && (
-              <div className="absolute top-2 left-2 text-[10px] font-extrabold uppercase tracking-wider text-on-primary bg-primary px-2 py-0.5 rounded-md pointer-events-none">
+              <div className="absolute top-2 left-2 text-[10px] font-extrabold uppercase text-on-primary bg-primary px-2 py-0.5 rounded-md pointer-events-none">
                 Выбрано
               </div>
             )}
 
             {/* Caption */}
             <div className="absolute left-2.5 right-2.5 bottom-2.5 pointer-events-none">
-              <div className="text-white font-bold text-[13px] tracking-[-0.01em] drop-shadow-[0_1px_6px_rgba(0,0,0,.5)] leading-tight line-clamp-1">
+              <div className="text-white font-bold text-sm leading-tight line-clamp-1 text-balance">
                 {preset.title}
               </div>
-              <div className="text-white/70 text-[10.5px] font-medium mt-0.5 line-clamp-1">
+              <div className="text-white/70 text-xs font-medium mt-0.5 line-clamp-1 text-pretty">
                 {preset.description}
               </div>
             </div>

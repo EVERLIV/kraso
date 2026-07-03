@@ -33,6 +33,9 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const { telegramWebhookHandler } = require("./telegramWebhook");
+const { generateTemplateImageHandler, generateTemplateBatchHandler } = require("./generateTemplateImage");
+const { generateStudioImageHandler } = require("./generateStudioImage");
+const { enhancePromptHandler } = require("./enhancePrompt");
 
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
@@ -40,6 +43,11 @@ exports.helloWorld = onRequest((request, response) => {
 });
 
 exports.telegramWebhook = onRequest(telegramWebhookHandler);
+
+exports.generateTemplateImage = generateTemplateImageHandler;
+exports.generateTemplateBatch = generateTemplateBatchHandler;
+exports.generateStudioImage = generateStudioImageHandler;
+exports.enhancePrompt = enhancePromptHandler;
 
 /**
  * Google Imagen / Gemini image generation (Nano Banana).
@@ -68,7 +76,7 @@ exports.generateGoogleImage = onRequest({ timeoutSeconds: 120 }, async (req, res
     return;
   }
 
-  const { prompt, aspectRatio = "1:1", imageBase64, intensity = 50, modelId = "gemini-2.5-flash-image" } = req.body || {};
+  const { prompt, aspectRatio = "1:1", imageBase64, mimeType, referenceImages, intensity = 50, modelId = "gemini-2.5-flash-image", quality } = req.body || {};
   if (!prompt || typeof prompt !== "string") {
     res.status(400).json({ error: "Missing or invalid prompt" });
     return;
@@ -80,18 +88,33 @@ exports.generateGoogleImage = onRequest({ timeoutSeconds: 120 }, async (req, res
 
     const contents = [];
     contents.push({ text: prompt });
-    if (imageBase64 && typeof imageBase64 === "string") {
-      const mimeType = (req.body.mimeType) || "image/jpeg";
-      contents.push({ inlineData: { mimeType, data: imageBase64 } });
+
+    const images = Array.isArray(referenceImages) && referenceImages.length > 0
+      ? referenceImages
+      : imageBase64
+        ? [{ data: imageBase64, mimeType: mimeType || "image/jpeg" }]
+        : [];
+
+    for (const img of images) {
+      if (img?.data && typeof img.data === "string") {
+        contents.push({
+          inlineData: {
+            mimeType: img.mimeType || "image/jpeg",
+            data: img.data,
+          },
+        });
+      }
     }
 
     const allowedRatios = ["1:1", "16:9", "9:16", "4:3", "3:4", "4:5", "5:4", "2:3", "3:2", "21:9"];
     const safeRatio = allowedRatios.includes(String(aspectRatio)) ? aspectRatio : "1:1";
+    const imageConfig = { aspectRatio: safeRatio };
+    if (quality === "4K" || quality === "2K" || quality === "1K") {
+      imageConfig.imageSize = quality;
+    }
     const config = {
       responseModalities: ["TEXT", "IMAGE"],
-      imageConfig: {
-        aspectRatio: safeRatio,
-      },
+      imageConfig,
     };
 
     const modelName = (modelId === "gemini-3-pro-image-preview") ? "gemini-3-pro-image-preview" : "gemini-2.5-flash-image";

@@ -9,6 +9,7 @@ import TemplateGrid, { ALL_PRESETS } from './components/TemplateGrid';
 import LandingPage from './components/LandingPage';
 import SceneStudio from './components/SceneStudio';
 import VideoStudio from './components/VideoStudio';
+import { VIDEO_GEN_FAILED } from './components/video/VideoHistoryPanel';
 import PricingModal from './components/PricingModal';
 import InfoModal, { InfoPageType } from './components/InfoModal';
 import DesignSystemView from './components/DesignSystemView';
@@ -16,7 +17,21 @@ import GenerationBar from './components/GenerationBar';
 import GenerationSheet from './components/GenerationSheet';
 import AccountView from './components/AccountView';
 import HomeDashboard from './components/HomeDashboard';
+import HistoryMediaViewer from './components/HistoryMediaViewer';
+import UpscaleView from './components/UpscaleView';
+import RecolorView from './components/RecolorView';
+import RestoreView from './components/RestoreView';
+import RemoveBgView from './components/RemoveBgView';
+import ShortsStudio from './components/ShortsStudio';
+import MarketingStudio from './components/MarketingStudio';
 import { isDocumentPresetId, documentAspectRatio } from './lib/documentSpecs';
+import { SHORTS_STUDIO_ENABLED } from './lib/featureFlags';
+import { buildUserFacingPrompt, getDisplayPrompt } from './lib/promptUtils';
+import { calculateKrasoCost, applyKrasoModel, apiResolutionForKraso, KrasoModelId } from './lib/krasoModels';
+import { calculateVideoKrasoCost } from './lib/krasoVideoModels';
+import { getDefaultVariant, getVariant, type VideoVariantId } from './lib/videoModels';
+import { VideoMotionPreset } from './lib/videoPresets';
+import { fetchCommunityFeed, publishToCommunity, toggleCommunityLike, CommunityPost } from './services/communityService';
 import Footer from './components/Footer';
 import TermsPage from './components/pages/TermsPage';
 import PrivacyPage from './components/pages/PrivacyPage';
@@ -35,7 +50,7 @@ import {
     X, ChevronDown, ChevronUp, Utensils, Info, LayoutDashboard, MessageSquare, Settings,
     Store, Dumbbell, Heart, Flower, Ghost, Flag, Layers, Printer, PartyPopper,
     Video, Folder, History, Sparkles, Type, Trash2, Wand2, SlidersHorizontal, Image as ImageIcon, ArrowRight, ArrowLeft, Star, Cpu, Monitor, Maximize2, Share2, Paintbrush, RotateCcw,
-    Home, Crown, User as UserIcon, FolderHeart, Plus, Check
+    Home, Crown, User as UserIcon, FolderHeart, Plus, Check, Globe, ImagePlus
 } from 'lucide-react';
 
 // Define Categories Configuration
@@ -65,6 +80,16 @@ const CATEGORIES: CategoryItem[] = [
     { id: 'trending', label: 'Популярное', icon: Flame },
     { id: 'saved', label: 'Сохраненное', icon: Bookmark },
 ];
+
+// One representative image per category — picked once at load, used for the category-picker cards.
+const CATEGORY_THUMBS: Record<string, string> = {};
+CATEGORIES.forEach(cat => {
+    if (cat.id === 'all' || cat.id === 'saved') return;
+    const matches = ALL_PRESETS.filter(p => p.category === cat.id);
+    if (matches.length > 0) {
+        CATEGORY_THUMBS[cat.id] = matches[Math.floor(Math.random() * matches.length)].image || '';
+    }
+});
 
 const FUNNY_STATUSES = [
     "Разогреваем нейроны...",
@@ -128,6 +153,10 @@ const App: React.FC = () => {
     const [isGenSheetOpen, setIsGenSheetOpen] = useState(false);
     const [accountTab, setAccountTab] = useState<'profile' | 'subscription' | 'usage' | 'promocode'>('profile');
     const [templateSort, setTemplateSort] = useState<'popular' | 'new' | 'az'>('popular');
+    // History grid density: fewer columns = bigger tiles (6), more columns = smaller tiles (12)
+    const [historyColumns, setHistoryColumns] = useState(8);
+    const [historyTab, setHistoryTab] = useState<'history' | 'community'>('history');
+    const [historyViewerItem, setHistoryViewerItem] = useState<GeneratedImage | null>(null);
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -155,6 +184,7 @@ const App: React.FC = () => {
     // Settings
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
     const [selectedModel, setSelectedModel] = useState<GenModelId>('gemini-2.5-flash-image');
+    const [krasoModel, setKrasoModel] = useState<KrasoModelId>('kraso-fast');
     const [resolution, setResolution] = useState<ImageResolution>('1K');
 
     // App Status
@@ -223,12 +253,16 @@ const App: React.FC = () => {
     };
 
     // Context Settings State (Lifted from Children)
-    const [chatQuality, setChatQuality] = useState<'low' | 'medium' | 'high'>('high');
     const [chatFormat, setChatFormat] = useState<'jpeg' | 'png'>('jpeg');
     const [chatAspectRatio, setChatAspectRatio] = useState<AspectRatio>('1:1');
     const [chatModel, setChatModel] = useState<GenModelId>('gemini-2.5-flash-image');
-    const [videoDuration, setVideoDuration] = useState<'5' | '10'>('5');
-    const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('16:9');
+    const [chatKrasoModel, setChatKrasoModel] = useState<KrasoModelId>('kraso-fast');
+    const [chatResolution, setChatResolution] = useState<ImageResolution>('1K');
+    const [videoDuration, setVideoDuration] = useState(5);
+    const [videoQuality, setVideoQuality] = useState<'720p' | '1080p'>('720p');
+    const [videoPromptEnhance, setVideoPromptEnhance] = useState(true);
+    const [isEnhancingVideoPrompt, setIsEnhancingVideoPrompt] = useState(false);
+    const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16'>('16:9');
     const [videoNegativePrompt, setVideoNegativePrompt] = useState('blur, distort, and low quality');
     const [videoCfgScale, setVideoCfgScale] = useState(0.5);
 
@@ -240,8 +274,25 @@ const App: React.FC = () => {
     // Video Shared State (Lifting from AnimateInterface)
     const [videoPrompt, setVideoPrompt] = useState('');
     const [videoAttachedImage, setVideoAttachedImage] = useState<string | null>(null);
+    const [videoKrasoModel, setVideoKrasoModel] = useState<KrasoModelId>('kraso-quality');
+    const [videoVariant, setVideoVariant] = useState<VideoVariantId>(getDefaultVariant('kraso-quality').id);
+    const [selectedVideoPreset, setSelectedVideoPreset] = useState<VideoMotionPreset | null>(null);
     const [isVideoGenerating, setIsVideoGenerating] = useState(false);
     const [videoStatus, setVideoStatus] = useState('Оживляем фото...');
+
+    // Shorts Studio
+    const [shortsBootstrap, setShortsBootstrap] = useState<{ image?: string; presetId?: string } | null>(null);
+
+    // Tools (upscale / remove-bg) — prefill from history
+    const [toolInitialImage, setToolInitialImage] = useState<string | null>(null);
+
+    // Batch generation
+    const [templateBatchCount, setTemplateBatchCount] = useState(1);
+
+    // Community
+    const [communityFeed, setCommunityFeed] = useState<CommunityPost[]>([]);
+    const [communityLoading, setCommunityLoading] = useState(false);
+    const [publishedIds, setPublishedIds] = useState<Set<string>>(new Set());
 
     const videoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -249,6 +300,13 @@ const App: React.FC = () => {
     const scrollViewportRef = useRef<HTMLDivElement>(null);
 
     // --- Effects ---
+
+    // Shorts Studio скрыт из публичного UI, пока не готов к релизу
+    useEffect(() => {
+        if (!SHORTS_STUDIO_ENABLED && view === 'shorts') {
+            setView('dashboard');
+        }
+    }, [view]);
 
     // Sync legal route (/terms, /privacy) with browser back/forward
     useEffect(() => {
@@ -286,6 +344,20 @@ const App: React.FC = () => {
         }
         return () => clearInterval(interval);
     }, [appState]);
+
+    useEffect(() => {
+        if (view !== 'history') setHistoryViewerItem(null);
+    }, [view]);
+
+    useEffect(() => {
+        if (view !== 'history' || historyTab !== 'community') return;
+        let cancelled = false;
+        setCommunityLoading(true);
+        fetchCommunityFeed().then(posts => {
+            if (!cancelled) setCommunityFeed(posts);
+        }).finally(() => { if (!cancelled) setCommunityLoading(false); });
+        return () => { cancelled = true; };
+    }, [view, historyTab]);
 
     // Realtime User Profile Listener
     useEffect(() => {
@@ -380,173 +452,169 @@ const App: React.FC = () => {
 
     // --- Handlers ---
 
-    const calculateCost = () => {
-        // Flash 2.5 (Standard) -> ~5 RUB real cost -> 15 Credits (Margin safe)
-        if (selectedModel === 'gemini-2.5-flash-image' || !selectedModel) {
-            return 15;
-        }
-
-        // Nano Banana 2 (Pro) -> ~20 RUB real cost -> 60 Credits (Margin safe)
-        let base = 60;
-        if (resolution === '2K') base = 90;
-        if (resolution === '4K') base = 120; // Double the standard rate per user request
-        return base;
+    const handleKrasoModelChange = (id: KrasoModelId) => {
+        setKrasoModel(id);
+        const next = applyKrasoModel(id, resolution);
+        setSelectedModel(next.model);
+        setResolution(next.resolution);
     };
-    const currentCost = calculateCost();
 
-    const handleChatGenerate = async () => {
+    const handleResolutionChange = (res: ImageResolution) => {
+        const next = applyKrasoModel(krasoModel, res);
+        setResolution(next.resolution);
+    };
+
+    const calculateCost = () => calculateKrasoCost(krasoModel, resolution);
+    const currentCost = calculateCost();
+    const chatUnitCost = calculateKrasoCost(chatKrasoModel, chatResolution);
+
+    const handleChatKrasoChange = (id: KrasoModelId) => {
+        setChatKrasoModel(id);
+        const next = applyKrasoModel(id, chatResolution);
+        setChatModel(next.model);
+        setChatResolution(next.resolution);
+    };
+
+    const handleVideoKrasoModelChange = (id: KrasoModelId) => {
+        if (id === 'kraso-realism' && id !== videoKrasoModel) {
+            const ok = window.confirm(
+                'КрасоРеализм использует дорогие премиум-модели (Veo 3.1, Sora 2 и др.). Продолжить?',
+            );
+            if (!ok) return;
+        }
+        setVideoKrasoModel(id);
+        setVideoVariant(getDefaultVariant(id).id);
+    };
+
+    const handleChatResolutionChange = (res: ImageResolution) => {
+        const next = applyKrasoModel(chatKrasoModel, res);
+        setChatResolution(next.resolution);
+    };
+
+    const handleChatGenerate = async (batchCount = 1) => {
         if (!chatPrompt.trim() && chatAttachedImages.length === 0) return;
-        if (credits < 15) {
-            setErrorMsg('Недостаточно кредитов (15 кр)');
+        const unitCost = calculateKrasoCost(chatKrasoModel, chatResolution);
+        const totalCost = unitCost * batchCount;
+        if (credits < totalCost) {
+            setErrorMsg(`Недостаточно кредитов (${totalCost} кр)`);
             setIsPricingOpen(true);
             return;
         }
 
         const textToUse = chatPrompt.trim();
         const imagesToUse = [...chatAttachedImages];
-        const tempId = `temp-${Date.now()}`;
+        const tempIds = Array.from({ length: batchCount }, (_, i) => `temp-${Date.now()}-${i}`);
 
-        // 1. CLEAR INPUTS & OPTIMISTIC UPDATE
         setIsChatGenerating(true);
+        setErrorMsg(null);
         setChatPrompt('');
         setChatAttachedImages([]);
 
-        const optimisticMsg: GeneratedImage = {
-            id: tempId,
+        const optimisticMsgs: GeneratedImage[] = tempIds.map(id => ({
+            id,
             original: imagesToUse[0] || null,
-            generated: '', // Empty means loading
+            generated: '',
             prompt: textToUse,
             source: 'chat',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) } as any
-        };
-        setHistory(prev => [optimisticMsg, ...prev]);
+            createdAt: { seconds: Math.floor(Date.now() / 1000) } as any,
+        }));
+        setHistory(prev => [...optimisticMsgs, ...prev]);
 
         try {
             const modelId: GenModelId = chatModel;
-
-            // OPTIMIZATION: Compress reference images before sending to API
             const compressedImages = await Promise.all(
                 imagesToUse.map(img => img.startsWith('data:') ? compressImage(img, 1024) : Promise.resolve(img))
             );
-
             const references: ReferenceImage[] = compressedImages.map(img => ({
                 data: cleanBase64(img),
-                mimeType: getMimeType(img)
+                mimeType: getMimeType(img),
             }));
 
-            // Deduct credits
-            setCredits(c => Math.max(0, c - 15));
-            if (user) await deductCredits(user.uid, 15);
+            setCredits(c => Math.max(0, c - totalCost));
+            if (user) await deductCredits(user.uid, totalCost);
 
-            const generatedUrl = await generateImageWithGemini(
-                textToUse,
-                references,
-                chatAspectRatio,
-                modelId,
-                {
-                    quality: chatQuality,
-                    format: chatFormat,
-                    onProgress: (status) => {
-                        // We can show progress in the optimistic message UI if we had a status field there, 
-                        // but for now let's just log it or we could use a global toast.
-                        console.log("Chat Gen Status:", status);
+            const results = await Promise.all(
+                tempIds.map(async (tempId) => {
+                    const generatedUrl = await generateImageWithGemini(
+                        textToUse,
+                        references,
+                        chatAspectRatio,
+                        modelId,
+                        {
+                            quality: apiResolutionForKraso(chatKrasoModel, chatResolution),
+                            format: chatFormat,
+                            krasoModel: chatKrasoModel,
+                        },
+                    );
+                    let finalStorageUrl = generatedUrl;
+                    if (user) {
+                        finalStorageUrl = await uploadImageToStorage(user.uid, generatedUrl, 'generated');
+                        let originalUrl = imagesToUse[0] || null;
+                        if (originalUrl?.startsWith('data:')) {
+                            originalUrl = await uploadImageToStorage(user.uid, originalUrl, 'original');
+                        }
+                        const finalItem: GeneratedImage = {
+                            id: tempId,
+                            original: originalUrl,
+                            generated: finalStorageUrl,
+                            prompt: textToUse,
+                            source: 'chat',
+                            createdAt: { seconds: Math.floor(Date.now() / 1000) } as any,
+                        };
+                        const docId = await saveGenerationToHistory(user.uid, finalItem);
+                        return { ...finalItem, id: docId || tempId };
                     }
-                }
-            );
-
-            // 2. SIMPLIFIED: Save to Storage FIRST, then show to user
-            // This ensures all users see images from reliable Firebase Storage
-            let finalStorageUrl = generatedUrl;
-
-            if (user) {
-                try {
-                    console.log(`[App] Chat: Saving generated image to Storage for user: ${user.uid}`);
-                    finalStorageUrl = await uploadImageToStorage(user.uid, generatedUrl, 'generated');
-                    console.log(`[App] Chat: Generated image uploaded to Storage: ${finalStorageUrl}`);
-
-                    let originalUrl = imagesToUse[0] || null;
-                    if (originalUrl && originalUrl.startsWith('data:')) {
-                        originalUrl = await uploadImageToStorage(user.uid, originalUrl, 'original');
-                        console.log(`[App] Chat: Original image uploaded to Storage: ${originalUrl}`);
-                    }
-
-                    const finalItem: GeneratedImage = {
-                        id: tempId,
-                        original: originalUrl,
-                        generated: finalStorageUrl,
-                        prompt: textToUse,
-                        source: 'chat',
-                        createdAt: { seconds: Math.floor(Date.now() / 1000) } as any
-                    };
-
-                    // Update history with Storage URL
-                    setHistory(prev => prev.map(item =>
-                        item.id === tempId
-                            ? finalItem
-                            : item
-                    ));
-
-                    const docId = await saveGenerationToHistory(user.uid, finalItem);
-                    console.log(`[App] Chat: Generation saved to Firestore with ID: ${docId}`);
-
-                    // Update history item with real doc ID
-                    if (docId) {
-                        setHistory(prev => prev.map(item =>
-                            item.id === tempId
-                                ? { ...finalItem, id: docId }
-                                : item
-                        ));
-                    }
-                } catch (e) {
-                    console.error("[App] Chat: Storage save error:", e);
-                    // If Storage save fails, use original URL as fallback
-                    finalStorageUrl = generatedUrl;
-                    const fallbackItem: GeneratedImage = {
+                    return {
                         id: tempId,
                         original: imagesToUse[0] || null,
-                        generated: finalStorageUrl,
+                        generated: generatedUrl,
                         prompt: textToUse,
-                        source: 'chat',
-                        createdAt: { seconds: Math.floor(Date.now() / 1000) } as any
+                        source: 'chat' as const,
+                        createdAt: { seconds: Math.floor(Date.now() / 1000) } as any,
                     };
-                    setHistory(prev => prev.map(item =>
-                        item.id === tempId
-                            ? fallbackItem
-                            : item
-                    ));
-                }
-            } else {
-                // No user - just show the generated URL
-                const noUserItem: GeneratedImage = {
-                    id: tempId,
-                    original: imagesToUse[0] || null,
-                    generated: generatedUrl,
-                    prompt: textToUse,
-                    source: 'chat',
-                    createdAt: { seconds: Math.floor(Date.now() / 1000) } as any
-                };
-                setHistory(prev => prev.map(item =>
-                    item.id === tempId
-                        ? noUserItem
-                        : item
-                ));
-            }
+                }),
+            );
 
+            setHistory(prev => {
+                const without = prev.filter(item => !tempIds.includes(item.id || ''));
+                return [...results, ...without];
+            });
         } catch (error: any) {
             console.error(error);
             setErrorMsg(error.message || 'Ошибка генерации');
-            setHistory(prev => prev.filter(item => item.id !== tempId));
+            setHistory(prev => prev.filter(item => !tempIds.includes(item.id || '')));
         } finally {
             setIsChatGenerating(false);
         }
     };
 
-    const calculateVideoCost = () => {
-        return videoDuration === '10' ? 180 : 90;
+    const calculateVideoCost = () => calculateVideoKrasoCost(videoKrasoModel, videoDuration);
+
+    const runVideoPromptEnhance = async (raw: string): Promise<string> => {
+        const trimmed = raw.trim();
+        if (!trimmed || !videoPromptEnhance) return raw;
+        setIsEnhancingVideoPrompt(true);
+        try {
+            const { enhancePrompt } = await import('./services/promptEnhanceService');
+            return await enhancePrompt(trimmed, 'video', (s) => setVideoStatus(s));
+        } finally {
+            setIsEnhancingVideoPrompt(false);
+        }
+    };
+
+    const handleEnhanceVideoPrompt = async () => {
+        if (!videoPrompt.trim() || isEnhancingVideoPrompt) return;
+        setErrorMsg(null);
+        try {
+            const enhanced = await runVideoPromptEnhance(videoPrompt);
+            setVideoPrompt(enhanced);
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Не удалось улучшить промпт');
+        }
     };
 
     const handleVideoGenerate = async () => {
-        if (!videoPrompt.trim() && !videoAttachedImage) return;
+        if (!videoPrompt.trim() && !videoAttachedImage && !selectedVideoPreset) return;
         if (!videoAttachedImage) {
             setErrorMsg('Для анимации необходимо исходное фото');
             return;
@@ -560,19 +628,37 @@ const App: React.FC = () => {
             return;
         }
 
-        const textToUse = videoPrompt.trim();
+        const textToUseRaw = videoPrompt.trim();
         const imageToUse = videoAttachedImage;
         const tempId = `temp-v-${Date.now()}`;
 
         setIsVideoGenerating(true);
+        setErrorMsg(null);
         setVideoStatus('Инициализация...');
         setCredits(c => Math.max(0, c - cost));
+
+        let textToUse = textToUseRaw;
+        if (videoPromptEnhance && textToUseRaw) {
+            try {
+                textToUse = await runVideoPromptEnhance(textToUseRaw);
+                setVideoPrompt(textToUse);
+            } catch (err: any) {
+                setIsVideoGenerating(false);
+                setCredits(c => c + cost);
+                setErrorMsg(err.message || 'Не удалось улучшить промпт');
+                return;
+            }
+        }
+
+        const displayPrompt = selectedVideoPreset
+            ? `${selectedVideoPreset.title}${textToUse ? ` — ${textToUse}` : ''}`
+            : textToUse || 'Анимация фото';
 
         const optimisticMsg: GeneratedImage = {
             id: tempId,
             original: imageToUse,
-            generated: '', // Loading
-            prompt: textToUse || "Animate with smooth camera movement",
+            generated: '',
+            prompt: displayPrompt,
             source: 'video',
             createdAt: { seconds: Math.floor(Date.now() / 1000) } as any
         };
@@ -585,14 +671,19 @@ const App: React.FC = () => {
                 cloudOriginal = await uploadImageToStorage(user.uid, imageToUse, 'original');
             }
 
-            const promptText = textToUse || "Animate this image with smooth camera movement";
-            
+            const presetPrompt = selectedVideoPreset?.prompt || '';
+            const promptText = [presetPrompt, textToUse].filter(Boolean).join(' ')
+                || 'Animate this image with smooth, cinematic camera movement';
+
             const { generateKlingVideo } = await import('./services/klingService');
             const videoUrl = await generateKlingVideo({
                 prompt: promptText,
                 image_url: cloudOriginal,
-                duration: videoDuration,
+                duration: String(videoDuration),
                 aspect_ratio: videoAspectRatio,
+                resolution: videoQuality,
+                videoModelId: getVariant(videoKrasoModel, videoVariant).falModelId,
+                generateAudio: !!getVariant(videoKrasoModel, videoVariant).hasAudio,
                 negative_prompt: videoNegativePrompt,
                 cfg_scale: videoCfgScale,
                 onProgress: (status) => setVideoStatus(status)
@@ -626,7 +717,10 @@ const App: React.FC = () => {
         } catch (error: any) {
             console.error(error);
             setErrorMsg(error.message || 'Ошибка видео-генерации');
-            setHistory(prev => prev.filter(item => item.id !== tempId));
+            setCredits(c => c + cost);
+            setHistory(prev => prev.map(item =>
+                item.id === tempId ? { ...item, generated: VIDEO_GEN_FAILED } : item
+            ));
             setCredits(c => c + cost); // Refund
         } finally {
             setIsVideoGenerating(false);
@@ -646,6 +740,65 @@ const App: React.FC = () => {
     };
 
     const triggerVideoFileSelect = () => videoFileInputRef.current?.click();
+
+    const openShortsWithImage = (url: string, presetId?: string) => {
+        if (SHORTS_STUDIO_ENABLED) {
+            setShortsBootstrap({ image: url, presetId });
+            setView('shorts');
+        } else {
+            setVideoAttachedImage(url);
+            setVideoAspectRatio('9:16');
+            setView('video');
+        }
+    };
+
+    const openUpscaleWithImage = (url: string) => {
+        setToolInitialImage(url);
+        setView('upscale');
+    };
+    const openRecolorWithImage = (url: string) => {
+        setToolInitialImage(url);
+        setView('recolor');
+    };
+    const openRestoreWithImage = (url: string) => {
+        setToolInitialImage(url);
+        setView('restore');
+    };
+
+    const openRemoveBgWithImage = (url: string) => {
+        setToolInitialImage(url);
+        setView('remove-bg');
+    };
+
+    const handlePublishToCommunity = async (item: GeneratedImage) => {
+        if (!user || !item.id || publishedIds.has(item.id)) return;
+        try {
+            await publishToCommunity(
+                user.uid,
+                user.displayName || user.email || 'Пользователь',
+                user.photoURL,
+                item,
+            );
+            setPublishedIds(prev => new Set(prev).add(item.id!));
+            if (historyTab === 'community') {
+                const posts = await fetchCommunityFeed();
+                setCommunityFeed(posts);
+            }
+        } catch (e) {
+            console.error(e);
+            setErrorMsg('Не удалось опубликовать');
+        }
+    };
+
+    const handleCommunityLike = async (postId: string) => {
+        if (!user) return;
+        try {
+            const { likes, liked } = await toggleCommunityLike(postId, user.uid);
+            setCommunityFeed(prev => prev.map(p => p.id === postId ? { ...p, likes, likedBy: liked ? [...(p.likedBy || []), user.uid] : (p.likedBy || []).filter(id => id !== user.uid) } : p));
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -708,13 +861,20 @@ const App: React.FC = () => {
         else { setView('templates'); setActiveCategory('all'); }
     };
 
-    const handleGenerate = async () => {
-        if (!originalImage && !subjectImage && !promptInput && !selectedTemplate) {
+    const handleGenerate = async (batchCount = templateBatchCount) => {
+        const hasReference = !!(originalImage || subjectImage);
+
+        if (selectedTemplate && !hasReference) {
+            setErrorMsg("Загрузите фото — шаблон применится к вашему изображению");
+            return;
+        }
+        if (!selectedTemplate && !hasReference && !promptInput.trim()) {
             setErrorMsg("Загрузите фото или введите описание");
             return;
         }
 
-        if (credits < currentCost) {
+        const totalCost = currentCost * batchCount;
+        if (credits < totalCost) {
             setErrorMsg("Недостаточно кредитов");
             setIsPricingOpen(true);
             return;
@@ -771,132 +931,110 @@ const App: React.FC = () => {
 
         let finalPrompt = parts.join(' ');
 
-        setAppState(AppState.GENERATING);
+        const displayPrompt = buildUserFacingPrompt(selectedTemplate, promptInput, overlayText);
+        const tempIds = Array.from({ length: batchCount }, (_, i) => `studio-${Date.now()}-${i}`);
+        const refPreview = originalImage || subjectImage;
+
+        setView('chat');
+        setIsChatGenerating(true);
         setErrorMsg(null);
-        setCredits(prev => Math.max(0, prev - currentCost));
-        setGeneratedImage(null);
-        setMobileTab('canvas');
+        setGenStatus('');
+        setAppState(AppState.IDLE);
+        setCredits(prev => Math.max(0, prev - totalCost));
+
+        setHistory(prev => [
+            ...tempIds.map(id => ({
+                id,
+                original: refPreview || null,
+                generated: '',
+                prompt: displayPrompt,
+                source: 'studio' as const,
+                createdAt: { seconds: Math.floor(Date.now() / 1000) } as any,
+            })),
+            ...prev,
+        ]);
 
         try {
-            if (user) await deductCredits(user.uid, currentCost);
+            if (user) await deductCredits(user.uid, totalCost);
 
-            // OPTIMIZATION: Compress source images
             const compOriginal = originalImage && originalImage.startsWith('data:') ? await compressImage(originalImage, 1024) : originalImage;
             const compSubject = subjectImage && subjectImage.startsWith('data:') ? await compressImage(subjectImage, 1024) : subjectImage;
 
             const refs: ReferenceImage[] = [];
-            // Prioritize originalImage as the face reference
             if (compOriginal) refs.push({ data: cleanBase64(compOriginal), mimeType: getMimeType(compOriginal) });
             if (compSubject) refs.push({ data: cleanBase64(compSubject), mimeType: getMimeType(compSubject) });
 
-            console.log(`[Gen] Refs prepared: ${refs.length}`);
-            if (refs.length > 0) {
-                console.log(`[Gen] First ref size: ${refs[0].data.length} chars`);
-            } else {
-                console.warn("[Gen] NO REFERENCE IMAGE! Generation will be text-only.");
-            }
-
-            // ENHANCED PROMPT FOR LIKENESS
-            // Force the model to acknowledge the image input first
             const identityInstruction = "STRICT REQUIREMENT: Use the ATTACHED IMAGE as the absolute visual source. The output MUST depict the EXACT SAME PERSON (same face, same gender, same features) as in the attached image. Do not invent a new person. Do not change gender. Apply the style ONLY to the environment and clothing (if not specified otherwise).";
-
-            // Prepend this instruction
             const consolidatedPrompt = `${identityInstruction} ${finalPrompt}`;
 
-            setGenStatus('Запуск генерации...');
-            console.log("[Gen] Final Prompt sent:", consolidatedPrompt);
+            const apiQuality = apiResolutionForKraso(krasoModel, resolution);
 
-            const generatedUrl = await generateImageWithGemini(
-                consolidatedPrompt,
-                refs,
-                aspectRatio,
-                selectedModel,
-                {
-                    onProgress: (status) => setGenStatus(status),
-                    intensity: intensity, // Pass literal 0-100 value
-                }
+            const results = await Promise.all(
+                tempIds.map(async (tempId) => {
+                    const generatedUrl = await generateImageWithGemini(
+                        consolidatedPrompt,
+                        refs,
+                        aspectRatio,
+                        selectedModel,
+                        { intensity, quality: apiQuality, krasoModel },
+                    );
+
+                    let finalGeneratedUrl = generatedUrl;
+                    if (userTier === 'free') {
+                        try {
+                            finalGeneratedUrl = await addWatermark(generatedUrl);
+                        } catch (e) {
+                            console.error("Watermark failed", e);
+                        }
+                    }
+
+                    if (user) {
+                        const storageUrl = await uploadImageToStorage(user.uid, finalGeneratedUrl, 'generated');
+                        let originalUrl = compOriginal || compSubject;
+                        if (originalUrl?.startsWith('data:')) {
+                            originalUrl = await uploadImageToStorage(user.uid, originalUrl, 'original');
+                        }
+                        const newRecord: GeneratedImage = {
+                            id: tempId,
+                            original: originalUrl,
+                            generated: storageUrl,
+                            prompt: displayPrompt,
+                            source: 'studio',
+                            isSaved: true,
+                            createdAt: { seconds: Date.now() / 1000 } as any,
+                        };
+                        const docId = await saveGenerationToHistory(user.uid, newRecord);
+                        return { ...newRecord, id: docId || tempId };
+                    }
+
+                    return {
+                        id: tempId,
+                        original: compOriginal || compSubject || null,
+                        generated: finalGeneratedUrl,
+                        prompt: displayPrompt,
+                        source: 'studio' as const,
+                        createdAt: { seconds: Date.now() / 1000 } as any,
+                    };
+                }),
             );
 
-
-            // 1. WATERMARK
-            let finalGeneratedUrl = generatedUrl;
-            if (userTier === 'free') {
-                try {
-                    setGenStatus('Добавление водяного знака...');
-                    finalGeneratedUrl = await addWatermark(generatedUrl);
-                } catch (e) {
-                    console.error("Watermark failed", e);
-                }
+            if (results.length > 0) {
+                setCurrentImageId(results[0].id || null);
             }
 
-            // 2. SIMPLIFIED: Save to Storage FIRST, then show to user
-            // This ensures all users see images from reliable Firebase Storage
-            let storageUrl = finalGeneratedUrl;
-
-            if (user) {
-                try {
-                    setGenStatus('Сохранение изображения...');
-                    console.log(`[App] Saving generated image to Storage for user: ${user.uid}`);
-                    console.log(`[App] Generated URL to save: ${finalGeneratedUrl?.substring(0, 100)}...`);
-
-                    // Save generated image to Storage
-                    storageUrl = await uploadImageToStorage(user.uid, finalGeneratedUrl, 'generated');
-                    console.log(`[App] Generated image uploaded to Storage: ${storageUrl}`);
-
-                    // Save original images if needed
-                    let originalUrl = compOriginal || compSubject;
-                    if (originalUrl && originalUrl.startsWith('data:')) {
-                        originalUrl = await uploadImageToStorage(user.uid, originalUrl, 'original');
-                        console.log(`[App] Original image uploaded to Storage: ${originalUrl}`);
-                    }
-
-                    // Save to history
-                    const newRecord: GeneratedImage = {
-                        original: originalUrl,
-                        generated: storageUrl,
-                        prompt: finalPrompt,
-                        source: 'studio',
-                        isSaved: true,
-                        createdAt: { seconds: Date.now() / 1000 } as any
-                    };
-
-                    const docId = await saveGenerationToHistory(user.uid, newRecord);
-                    const finalItem = { ...newRecord, id: docId || `temp_${Date.now()}` };
-
-                    console.log(`[App] Generation saved to Firestore with ID: ${docId}`);
-                    setCurrentImageId(finalItem.id);
-                    setHistory(prev => [finalItem, ...prev]);
-                } catch (e) {
-                    console.error("[App] Storage save error:", e);
-                    // If Storage save fails, still show the image (fallback to original URL)
-                    // But log the error for debugging
-                    if (!storageUrl || storageUrl === finalGeneratedUrl) {
-                        storageUrl = finalGeneratedUrl;
-                    }
-                }
-            }
-
-            // 3. Show image to user ONLY after Storage save (or fallback to original)
-            // Clear recovery attempts for new image
             imageRecoveryAttempted.current.clear();
-            setGeneratedImage(storageUrl);
-            setAppState(AppState.SUCCESS);
-            setGenStatus('');
-            console.log(`[App] Generated image displayed: ${storageUrl?.substring(0, 100)}...`);
-
+            setHistory(prev => {
+                const without = prev.filter(item => !tempIds.includes(item.id || ''));
+                return [...results, ...without];
+            });
         } catch (err: any) {
             console.error("[App] Generation error:", err);
-            console.error("[App] Error details:", {
-                message: err.message,
-                stack: err.stack,
-                response: err.response,
-                status: err.status
-            });
             setAppState(AppState.ERROR);
-            const errorMessage = err.message || err.toString() || "Ошибка генерации. Попробуйте еще раз.";
-            setErrorMsg(errorMessage);
-            setGenStatus('');
-            setCredits(prev => (prev || 0) + currentCost);
+            setErrorMsg(err.message || "Ошибка генерации. Попробуйте еще раз.");
+            setHistory(prev => prev.filter(item => !tempIds.includes(item.id || '')));
+            setCredits(prev => (prev || 0) + totalCost);
+        } finally {
+            setIsChatGenerating(false);
         }
     };
 
@@ -1203,8 +1341,91 @@ const App: React.FC = () => {
         );
     }
 
+    // Shorts Studio — отдельный полноэкранный инструмент (скрыт за feature flag)
+    if (SHORTS_STUDIO_ENABLED && view === 'shorts') {
+        return (
+            <div className="h-dvh overflow-hidden bg-[#0A0A0C]">
+                <SEO
+                    title="Shorts Studio — вертикальные ролики из фото | КрасоМир"
+                    description="Создавайте Shorts для Reels, TikTok и VK Clips. Визуальные пресеты, вертикальный формат 9:16."
+                    path="/shorts"
+                />
+                <CookieConsent />
+                <PricingModal
+                    isOpen={isPricingOpen}
+                    onClose={() => setIsPricingOpen(false)}
+                    onSuccess={() => { }}
+                    currentTier={userTier}
+                />
+                <ShortsStudio
+                    credits={credits || 0}
+                    onUpdateCredits={setCredits}
+                    onExit={() => { setShortsBootstrap(null); setView('dashboard'); }}
+                    onOpenCredits={() => openCreditsPage('upgrade')}
+                    onSwitchStudio={(studio) => {
+                        setShortsBootstrap(null);
+                        if (studio === 'marketing') setView('marketing');
+                        else if (studio === 'krasomir') setView('dashboard');
+                    }}
+                    initialImage={shortsBootstrap?.image}
+                    initialPresetId={shortsBootstrap?.presetId}
+                    shortsHistory={history.filter(h => h.source === 'shorts')}
+                    onHistoryChange={(updater) => {
+                        setHistory(prev => {
+                            const shorts = prev.filter(h => h.source === 'shorts');
+                            const rest = prev.filter(h => h.source !== 'shorts');
+                            return [...updater(shorts), ...rest];
+                        });
+                    }}
+                />
+            </div>
+        );
+    }
+
+    // Marketing Studio — отдельный полноэкранный инструмент со своим UI
+    if (view === 'marketing') {
+        return (
+            <div className="h-dvh overflow-hidden bg-[#0A0A0C]">
+                <SEO
+                    title="Marketing Studio — рекламные ролики из товара | КрасоМир"
+                    description="Создавайте UGC, TikTok и коммерческую рекламу из фото товара. Шаблоны, пресеты и генерация за минуту."
+                    path="/marketing"
+                />
+                <CookieConsent />
+                <PricingModal
+                    isOpen={isPricingOpen}
+                    onClose={() => setIsPricingOpen(false)}
+                    onSuccess={() => { }}
+                    currentTier={userTier}
+                />
+                <MarketingStudio
+                    credits={credits || 0}
+                    onUpdateCredits={setCredits}
+                    onExit={() => setView('dashboard')}
+                    onOpenCredits={() => openCreditsPage('upgrade')}
+                    onNavigateStudio={(studio) => {
+                        if (studio === 'shorts' && SHORTS_STUDIO_ENABLED) setView('shorts');
+                    }}
+                />
+            </div>
+        );
+    }
+
+    // Persistent sub-nav (История / Сообщество) lives in Header row 2.
+    const showStudioSubNav = view === 'history' || view === 'templates' || view === 'chat' || view === 'recolor';
+
+    const templatesSubNavExtra = view === 'templates' && activeCategory !== 'all' ? (
+        <button
+            type="button"
+            onClick={() => setActiveCategory('all')}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-ink transition-colors duration-100"
+        >
+            <ArrowLeft className="size-3.5" /> Все категории
+        </button>
+    ) : undefined;
+
     return (
-        <div className="h-screen bg-brand-bg text-brand-text font-sans flex flex-col overflow-hidden selection:bg-brand-accent selection:text-white">
+        <div className="h-dvh bg-brand-bg text-brand-text font-sans flex flex-col overflow-hidden selection:bg-brand-accent selection:text-white">
             <SEO
                 title="Студия генерации картинок ИИ — 150+ шаблонов | КрасоМир"
                 description="Ретро, свадьба, маркетплейс, портреты. Оживите фото в видео. Чат с нейросетью. Сохранение лица в каждом стиле. Создавайте за минуту."
@@ -1221,18 +1442,17 @@ const App: React.FC = () => {
 
             {/* Success Modal - Enhanced for Alfa Bank Flow */}
             {showPaymentSuccess && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-[#151921] border border-green-500 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+                    <div className="bg-[#151921] border border-green-500 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl">
                         <div className="relative mb-6">
-                            <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full"></div>
-                            <PartyPopper className="w-16 h-16 text-green-500 mx-auto relative z-10" />
+                            <PartyPopper className="w-16 h-16 text-green-500 mx-auto" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Оплата прошла успешно!</h2>
-                        <p className="text-gray-400 mb-1">Кредиты зачислены на баланс.</p>
-                        <p className="text-[10px] text-gray-500 mb-6 italic">Электронный чек отправлен на {paymentEmail}</p>
+                        <h2 className="text-2xl font-bold text-white mb-2 text-balance">Оплата прошла успешно!</h2>
+                        <p className="text-gray-400 mb-1 text-pretty">Кредиты зачислены на баланс.</p>
+                        <p className="text-[10px] text-gray-500 mb-6 italic text-pretty">Электронный чек отправлен на {paymentEmail}</p>
                         <button
                             onClick={() => setShowPaymentSuccess(false)}
-                            className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                            className="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold active:scale-95 transition-transform duration-100 ease-out"
                         >
                             Начать творчество
                         </button>
@@ -1243,12 +1463,20 @@ const App: React.FC = () => {
             <Header
                 credits={credits || 0}
                 onOpenAccountTab={(tab) => { setAccountTab(tab); setView('profile'); }}
-                onOpenCredits={openCreditsPage}
+                onOpenCredits={() => openCreditsPage('upgrade')}
                 userTier={userTier}
-                showBackOnMobile={view === 'chat' || view === 'video' || view === 'templates'}
+                showBackOnMobile={view === 'chat' || view === 'video' || view === 'templates' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg'}
                 onBack={() => setView('dashboard')}
                 currentView={view}
                 onChangeView={setView}
+                showSubNav={showStudioSubNav}
+                historyTab={historyTab}
+                onHistoryTab={setHistoryTab}
+                showDensitySlider={view === 'history'}
+                historyColumns={historyColumns}
+                onHistoryColumnsChange={setHistoryColumns}
+                historyCount={history.length}
+                subNavExtra={templatesSubNavExtra}
             />
 
             <div className="flex-1 flex overflow-hidden relative">
@@ -1270,71 +1498,130 @@ const App: React.FC = () => {
                 {view === 'history' && (
                     <div className="flex flex-1 flex-col min-w-0 bg-background-light relative overflow-hidden">
                         <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            <div className="w-full max-w-shell mx-auto px-4 md:px-6 pt-6 pb-[88px] lg:pb-8">
-                                <div className="mb-6">
-                                    <h2 className="text-[27px] font-extrabold tracking-[-0.025em] text-ink mb-1.5 flex items-center gap-2">
-                                        <History className="w-6 h-6 text-primary" /> История генераций
-                                    </h2>
-                                    <p className="text-[14.5px] text-ink-muted">Все ваши ранее созданные изображения и видео.</p>
-                                </div>
-
-                                {history.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-24 text-center text-ink-muted">
-                                        <div className="w-20 h-20 bg-surface-muted rounded-full flex items-center justify-center mb-6">
-                                            <ImageIcon className="w-8 h-8 text-ink-faint" />
-                                        </div>
-                                        <h3 className="text-lg font-bold text-ink mb-2">Здесь пока пусто</h3>
-                                        <p className="mb-6 max-w-xs">Сгенерируйте первое изображение — оно появится в истории.</p>
-                                        <button onClick={() => { setActiveCategory('all'); setView('templates'); }} className="px-6 py-3 bg-primary text-on-primary font-bold rounded-btn shadow-cta hover:bg-primary-hover transition-colors">
-                                            Создать первое фото
-                                        </button>
+                            {historyTab === 'community' ? (
+                                communityLoading ? (
+                                    <div className="flex items-center justify-center py-24">
+                                        <Loader2 className="size-8 animate-spin motion-reduce:animate-none text-ink-muted" />
+                                    </div>
+                                ) : communityFeed.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-24 text-center text-ink-muted px-4">
+                                        <Globe className="size-12 text-ink-faint mb-4" />
+                                        <h3 className="text-lg font-bold text-ink mb-2">Сообщество</h3>
+                                        <p className="max-w-xs text-pretty">Опубликуйте работу из истории — кнопка «В сообщество» в просмотре фото.</p>
                                     </div>
                                 ) : (
-                                    <div className="[column-gap:16px] [columns:160px] sm:[columns:200px] md:[columns:236px]">
-                                        {history.map((item, idx) => {
-                                            const isVideo = item.source === 'video' || /\.mp4(\?|$)/i.test(item.generated || '');
-                                            const isValidUrl = item.generated && (
-                                                item.generated.startsWith('http') ||
-                                                item.generated.startsWith('data:image') ||
-                                                item.generated.startsWith('data:video') ||
-                                                item.generated.startsWith('blob:')
-                                            );
-                                            if (!isValidUrl) return null;
+                                    <div className="w-full pb-[88px] lg:pb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" style={{ gap: '2px' }}>
+                                        {communityFeed.map((post, idx) => {
+                                            const liked = user && post.likedBy?.includes(user.uid);
                                             return (
-                                                <button
-                                                    key={item.id || idx}
-                                                    onClick={() => {
-                                                        imageRecoveryAttempted.current.clear();
-                                                        setGeneratedImage(item.generated);
-                                                        setCurrentImageId(item.id || null);
-                                                        setAppState(AppState.SUCCESS);
-                                                        setView('templates');
-                                                        setMobileTab('canvas');
-                                                    }}
-                                                    className="group relative w-full mb-4 break-inside-avoid rounded-tile overflow-hidden bg-card-light border border-[var(--border-soft)] shadow-sm hover:shadow-tile-hover hover:-translate-y-1 transition-all duration-300"
-                                                >
-                                                    {isVideo ? (
-                                                        <video src={item.generated} className="w-full h-auto object-cover" muted loop playsInline preload="metadata"
-                                                            onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play?.()}
-                                                            onMouseOut={(e) => (e.currentTarget as HTMLVideoElement).pause?.()} />
+                                                <div key={post.id || idx} className="group relative aspect-square overflow-hidden bg-card-light">
+                                                    {post.mediaType === 'video' ? (
+                                                        <video src={post.mediaUrl} className="size-full object-cover" muted loop playsInline preload="metadata" />
                                                     ) : (
-                                                        <img src={item.generated} alt={item.prompt || 'История'} loading="lazy" className="w-full h-auto object-cover group-hover:scale-[1.04] transition-transform duration-500" />
+                                                        <img src={post.mediaUrl} alt="" className="size-full object-cover" loading="lazy" />
                                                     )}
-                                                    {isVideo && (
-                                                        <span className="absolute top-2 left-2 bg-black/55 backdrop-blur rounded-md p-1"><Video className="w-3 h-3 text-white" /></span>
+                                                    <div className="absolute inset-x-0 bottom-0 p-2 bg-black/55 flex items-center justify-between gap-2">
+                                                        <span className="text-[10px] text-white truncate">{post.userName}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => post.id && handleCommunityLike(post.id)}
+                                                            className={`text-[10px] font-semibold tabular-nums flex items-center gap-0.5 ${liked ? 'text-red-400' : 'text-white/80'}`}
+                                                        >
+                                                            ♥ {post.likes}
+                                                        </button>
+                                                    </div>
+                                                    {post.mediaType === 'image' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openShortsWithImage(post.mediaUrl)}
+                                                            className="absolute top-2 right-2 size-7 rounded-lg bg-black/60 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-100"
+                                                            aria-label="Оживить"
+                                                        >
+                                                            ▶
+                                                        </button>
                                                     )}
-                                                    {item.prompt && (
-                                                        <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-[rgba(15,23,42,.8)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <p className="text-white text-[11px] font-medium line-clamp-2">{item.prompt}</p>
-                                                        </div>
-                                                    )}
-                                                </button>
+                                                </div>
                                             );
                                         })}
                                     </div>
-                                )}
-                            </div>
+                                )
+                            ) : history.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-24 text-center text-ink-muted px-4">
+                                    <div className="w-20 h-20 bg-surface-muted rounded-full flex items-center justify-center mb-6">
+                                        <ImageIcon className="w-8 h-8 text-ink-faint" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-ink mb-2">Здесь пока пусто</h3>
+                                    <p className="mb-6 max-w-xs">Сгенерируйте первое изображение — оно появится в истории.</p>
+                                    <button onClick={() => { setActiveCategory('all'); setView('templates'); }} className="px-6 py-3 bg-primary text-on-primary font-bold rounded-btn shadow-cta hover:bg-primary-hover transition-colors">
+                                        Создать первое фото
+                                    </button>
+                                </div>
+                            ) : (
+                                <div
+                                    className="w-full pb-[88px] lg:pb-8"
+                                    style={{ display: 'grid', gridTemplateColumns: `repeat(${historyColumns}, minmax(0, 1fr))`, gap: '2px' }}
+                                >
+                                    {history.map((item, idx) => {
+                                        const isVideo = item.source === 'video' || item.source === 'shorts' || /\.mp4(\?|$)/i.test(item.generated || '');
+                                        const isValidUrl = item.generated && (
+                                            item.generated.startsWith('http') ||
+                                            item.generated.startsWith('data:image') ||
+                                            item.generated.startsWith('data:video') ||
+                                            item.generated.startsWith('blob:')
+                                        );
+                                        if (!isValidUrl) return null;
+                                        return (
+                                            <div
+                                                key={item.id || idx}
+                                                onClick={() => setHistoryViewerItem(item)}
+                                                className="group relative aspect-square overflow-hidden bg-card-light cursor-pointer"
+                                            >
+                                                {isVideo ? (
+                                                    <video src={item.generated} className="w-full h-full object-cover" muted loop playsInline preload="metadata"
+                                                        onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play?.()}
+                                                        onMouseOut={(e) => (e.currentTarget as HTMLVideoElement).pause?.()} />
+                                                ) : (
+                                                    <img src={item.generated} alt={getDisplayPrompt(item) || 'История'} loading="lazy" className="w-full h-full object-cover motion-safe:group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 transition-transform duration-150 ease-out motion-reduce:transition-none" />
+                                                )}
+                                                {isVideo && (
+                                                    <span className="absolute top-2 left-2 bg-black/55 rounded-md p-1"><Video className="w-3 h-3 text-white" /></span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
+
+                        {historyViewerItem && (
+                            <HistoryMediaViewer
+                                item={history.find(h => h.id && h.id === historyViewerItem.id) ?? historyViewerItem}
+                                onClose={() => setHistoryViewerItem(null)}
+                                onDownload={handleDownload}
+                                onShare={handleShare}
+                                onToggleSave={handleToggleSave}
+                                onUseAsReference={(url) => {
+                                    setHistoryViewerItem(null);
+                                    setChatAttachedImages(prev => [...prev, url]);
+                                    setView('chat');
+                                }}
+                                onAnimate={(url) => {
+                                    setHistoryViewerItem(null);
+                                    openShortsWithImage(url);
+                                }}
+                                onUpscale={openUpscaleWithImage}
+                                onRemoveBg={openRemoveBgWithImage}
+                                onPublish={handlePublishToCommunity}
+                                isPublished={!!(historyViewerItem?.id && publishedIds.has(historyViewerItem.id))}
+                                onUseInTemplates={(url) => {
+                                    setHistoryViewerItem(null);
+                                    setOriginalImage(url);
+                                    setActiveCategory('all');
+                                    setView('templates');
+                                    setMobileTab('canvas');
+                                }}
+                            />
+                        )}
                     </div>
                 )}
 
@@ -1344,6 +1631,14 @@ const App: React.FC = () => {
                         onOpenTemplates={(cat) => { setActiveCategory(cat || 'all'); setView('templates'); setMobileTab('canvas'); }}
                         onOpenPhoto={() => setView('chat')}
                         onOpenVideo={() => setView('video')}
+                        {...(SHORTS_STUDIO_ENABLED ? { onOpenShorts: () => setView('shorts') } : {})}
+                        onOpenMarketing={() => setView('marketing')}
+                        onOpenUpscale={() => { setToolInitialImage(null); setView('upscale'); }}
+                        onOpenRecolor={() => { setToolInitialImage(null); setView('recolor'); }}
+                        onOpenRestore={() => { setToolInitialImage(null); setView('restore'); }}
+                        onOpenRemoveBg={() => { setToolInitialImage(null); setView('remove-bg'); }}
+                        onFooterNavigate={handleFooterNavigate}
+                        onFooterProductClick={handleFooterProductClick}
                     />
                 )}
 
@@ -1387,7 +1682,7 @@ const App: React.FC = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[9px] font-bold text-brand-accent uppercase tracking-tighter truncate">{selectedTemplate.id}</p>
-                                                <p className="text-[10px] text-brand-text font-medium truncate">{selectedTemplate.prompt.substring(0, 25)}...</p>
+                                                <p className="text-[10px] text-brand-text font-medium truncate">{selectedTemplate.title}</p>
                                             </div>
                                             <button onClick={() => setSelectedTemplate(null)} className="p-0.5 hover:bg-brand-accent/20 rounded text-brand-accent">
                                                 <X className="w-3.5 h-3.5" />
@@ -1514,7 +1809,7 @@ const App: React.FC = () => {
                                     ) : (
                                         <div className="grid grid-cols-3 gap-2">
                                             {history.slice(0, 6).map((item, idx) => {
-                                                const isVideo = item.source === 'video' || /\.mp4(\?|$)/i.test(item.generated || '');
+                                                const isVideo = item.source === 'video' || item.source === 'shorts' || /\.mp4(\?|$)/i.test(item.generated || '');
                                                 const isValidUrl = item.generated && (
                                                     item.generated.startsWith('http') ||
                                                     item.generated.startsWith('data:image') ||
@@ -1608,26 +1903,6 @@ const App: React.FC = () => {
 
                         <div className="flex flex-1 flex-col min-w-0 bg-background-light relative transition-all duration-300">
                             <div className="flex-1 flex flex-col items-center justify-start overflow-hidden relative">
-
-                                {appState === AppState.GENERATING && (
-                                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-brand-bg/80 backdrop-blur-md animate-in fade-in duration-500">
-                                        <div className="relative mb-8">
-                                            <div className="absolute inset-0 bg-brand-accent/20 blur-3xl rounded-full animate-pulse"></div>
-                                            <Loader2 className="w-16 h-16 text-brand-accent animate-spin relative z-10" />
-                                        </div>
-                                        <div className="text-center space-y-4 max-w-xs px-4">
-                                            <p className="text-xl font-bold text-white tracking-wide animate-pulse">
-                                                {genStatus || FUNNY_STATUSES[loadingStatusIndex]}
-                                            </p>
-                                            <div className="flex gap-1 justify-center">
-                                                {[0, 1, 2].map(i => (
-                                                    <div key={i} className="w-1.5 h-1.5 bg-brand-accent rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }}></div>
-                                                ))}
-                                            </div>
-                                            {!genStatus && <p className="text-xs text-brand-muted/60 italic">Это может занять до 15 секунд...</p>}
-                                        </div>
-                                    </div>
-                                )}
 
                                 {activeCategory === 'saved' ? (
                                     <div ref={scrollViewportRef} className="w-full h-full overflow-y-auto custom-scrollbar p-6 pb-[88px] lg:pb-6">
@@ -1852,27 +2127,6 @@ const App: React.FC = () => {
                                 ) : (
                                     <div ref={scrollViewportRef} className={`w-full h-full overflow-y-auto custom-scrollbar ${selectedTemplate ? 'hidden lg:block' : ''}`}>
 
-                                        {/* Sticky category pills */}
-                                        <div className="sticky top-0 z-20 bg-background-light border-b border-[var(--border-strong)]">
-                                            <div className="max-w-shell mx-auto px-4 md:px-6 py-2.5 flex items-center gap-2 overflow-x-auto custom-scrollbar">
-                                                {CATEGORIES.map(cat => {
-                                                    const active = cat.id === activeCategory;
-                                                    return (
-                                                        <button
-                                                            key={cat.id}
-                                                            onClick={() => setActiveCategory(cat.id)}
-                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap shrink-0 border transition-colors ${active ? 'bg-primary/10 text-primary border-primary' : 'bg-transparent text-ink-muted border-[var(--border-color)] hover:text-ink hover:border-ink-faint'}`}
-                                                        >
-                                                            {cat.label}
-                                                            {cat.badge && !active && (
-                                                                <span className="text-[8.5px] font-extrabold tracking-[0.05em] text-accent-pink bg-accent-pink-soft px-1.5 py-0.5 rounded-[5px]">{cat.badge}</span>
-                                                            )}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-
                                         <div className="w-full max-w-shell mx-auto pt-6 pb-40 lg:pb-[150px] px-4 md:px-6">
 
                                             {activeCategory === 'all' && (
@@ -1923,62 +2177,93 @@ const App: React.FC = () => {
 
                                             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                                                 <div>
-                                                    <h2 className="text-[27px] font-extrabold tracking-[-0.025em] text-ink mb-1.5">
+                                                    <h2 className="text-2xl font-extrabold text-ink text-balance mb-1.5">
                                                         {activeCategory === 'all' ? 'Библиотека стилей' : CATEGORIES.find(c => c.id === activeCategory)?.label || 'Шаблоны'}
                                                     </h2>
-                                                    <p className="text-[14.5px] text-ink-muted">
+                                                    <p className="text-sm text-ink-muted text-pretty">
                                                         Выберите образ — он подставится в строку генерации внизу.
                                                     </p>
                                                 </div>
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setIsSortOpen(v => !v)}
-                                                        className="flex items-center gap-1.5 bg-card-light border border-[var(--border-color)] px-3.5 py-2 rounded-[10px] text-[13px] font-semibold text-ink-body hover:border-ink-faint transition-colors"
-                                                    >
-                                                        <SlidersHorizontal className="w-[15px] h-[15px] text-ink-muted" />
-                                                        {templateSort === 'popular' ? 'Популярные' : templateSort === 'new' ? 'Новые' : 'А–Я'}
-                                                        <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
-                                                    </button>
-                                                    {isSortOpen && (
-                                                        <>
-                                                            <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)} />
-                                                            <div className="absolute right-0 top-full mt-1.5 w-44 bg-card-light border border-[var(--border-color)] rounded-xl shadow-xl z-50 p-1">
-                                                                {([
-                                                                    { id: 'popular', label: 'Популярные' },
-                                                                    { id: 'new', label: 'Новые' },
-                                                                    { id: 'az', label: 'По алфавиту (А–Я)' },
-                                                                ] as const).map(opt => (
-                                                                    <button
-                                                                        key={opt.id}
-                                                                        onClick={() => { setTemplateSort(opt.id); setIsSortOpen(false); }}
-                                                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-colors ${templateSort === opt.id ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-surface-muted'}`}
-                                                                    >
-                                                                        {opt.label}
-                                                                        {templateSort === opt.id && <Check className="w-4 h-4" strokeWidth={3} />}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                {activeCategory !== 'all' && (
+                                                    <div className="relative">
+                                                        <button
+                                                            onClick={() => setIsSortOpen(v => !v)}
+                                                            className="flex items-center gap-1.5 bg-card-light border border-[var(--border-color)] px-3.5 py-2 rounded-[10px] text-[13px] font-semibold text-ink-body hover:border-ink-faint transition-colors"
+                                                        >
+                                                            <SlidersHorizontal className="w-[15px] h-[15px] text-ink-muted" />
+                                                            {templateSort === 'popular' ? 'Популярные' : templateSort === 'new' ? 'Новые' : 'А–Я'}
+                                                            <ChevronDown className={`w-3.5 h-3.5 text-ink-muted transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                        {isSortOpen && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-40" onClick={() => setIsSortOpen(false)} />
+                                                                <div className="absolute right-0 top-full mt-1.5 w-44 bg-card-light border border-[var(--border-color)] rounded-xl shadow-xl z-50 p-1">
+                                                                    {([
+                                                                        { id: 'popular', label: 'Популярные' },
+                                                                        { id: 'new', label: 'Новые' },
+                                                                        { id: 'az', label: 'По алфавиту (А–Я)' },
+                                                                    ] as const).map(opt => (
+                                                                        <button
+                                                                            key={opt.id}
+                                                                            onClick={() => { setTemplateSort(opt.id); setIsSortOpen(false); }}
+                                                                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[13px] transition-colors ${templateSort === opt.id ? 'bg-primary/10 text-primary font-semibold' : 'text-ink-body hover:bg-surface-muted'}`}
+                                                                        >
+                                                                            {opt.label}
+                                                                            {templateSort === opt.id && <Check className="w-4 h-4" strokeWidth={3} />}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {['family', 'kids', 'wedding', 'friends'].includes(activeCategory) && (
-                                                <div className="mb-6 bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                                <div className="mb-6 bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 flex items-start gap-3">
                                                     <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                                                    <div className="text-[11px] md:text-xs text-blue-200/80 leading-relaxed">
+                                                    <div className="text-xs md:text-sm text-blue-200/80 leading-relaxed text-pretty">
                                                         <span className="font-bold text-blue-300 block mb-1">Совет по групповым фото:</span>
                                                         Для идеального результата используйте фото, где лица всех людей обращены к камере и хорошо освещены. Оптимально до 3-4 человек. ИИ сохранит индивидуальность каждого лица!
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <TemplateGrid
-                                                category={activeCategory}
-                                                onSelect={handleTemplateSelect}
-                                                selectedId={selectedTemplate?.id}
-                                                sort={templateSort}
-                                            />
+                                            {activeCategory === 'all' ? (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                    {CATEGORIES.filter(c => c.id !== 'all').map(cat => (
+                                                        <button
+                                                            key={cat.id}
+                                                            onClick={() => setActiveCategory(cat.id)}
+                                                            className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-[var(--border-color)] text-left"
+                                                        >
+                                                            {CATEGORY_THUMBS[cat.id] ? (
+                                                                <img src={CATEGORY_THUMBS[cat.id]} alt={cat.label} className="w-full h-full object-cover motion-safe:group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 transition-transform duration-150 ease-out motion-reduce:transition-none" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-surface-muted flex items-center justify-center">
+                                                                    <cat.icon className="w-8 h-8 text-ink-faint" />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-black/50" />
+                                                            {cat.badge && (
+                                                                <span className="absolute top-3 right-3 text-[8.5px] font-extrabold text-accent-pink bg-accent-pink-soft px-1.5 py-0.5 rounded-[5px]">{cat.badge}</span>
+                                                            )}
+                                                            <div className="absolute inset-x-0 bottom-0 p-3.5 flex items-center gap-2">
+                                                                <cat.icon className="w-4 h-4 text-white shrink-0" />
+                                                                <span className="text-white font-bold text-sm text-balance">{cat.label}</span>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <TemplateGrid
+                                                    category={activeCategory}
+                                                    onSelect={handleTemplateSelect}
+                                                    selectedId={selectedTemplate?.id}
+                                                    sort={templateSort}
+                                                    onBrowseAll={() => setActiveCategory('all')}
+                                                />
+                                            )}
 
                                             <div className="h-12 w-full"></div>
                                         </div>
@@ -2002,8 +2287,10 @@ const App: React.FC = () => {
                                     onPromptChange={setPromptInput}
                                     aspectRatio={aspectRatio}
                                     onAspectRatioChange={setAspectRatio}
-                                    selectedModel={selectedModel}
-                                    onModelChange={setSelectedModel}
+                                    krasoModel={krasoModel}
+                                    onKrasoModelChange={handleKrasoModelChange}
+                                    resolution={resolution}
+                                    onResolutionChange={handleResolutionChange}
                                     selectedTemplate={selectedTemplate}
                                     onClearTemplate={() => setSelectedTemplate(null)}
                                     hasSourceImage={!!originalImage || !!subjectImage}
@@ -2016,8 +2303,10 @@ const App: React.FC = () => {
                                         else if (target === subjectImage) setSubjectImage(null);
                                     }}
                                     onGenerate={handleGenerate}
-                                    isGenerating={appState === AppState.GENERATING}
+                                    isGenerating={false}
                                     cost={currentCost}
+                                    batchCount={templateBatchCount}
+                                    onBatchCountChange={setTemplateBatchCount}
                                     error={errorMsg}
                                     ratioLocked={isDocSelected}
                                 />
@@ -2030,45 +2319,100 @@ const App: React.FC = () => {
                 )}
 
                 {view === 'chat' && (
-                    <div className="flex-1 flex min-w-0 bg-background-light relative w-full main-content overflow-hidden">
+                    <div className="flex-1 flex flex-col min-w-0 bg-background-light relative w-full main-content overflow-hidden">
                         <SceneStudio
                             prompt={chatPrompt}
                             setPrompt={setChatPrompt}
                             attachedImages={chatAttachedImages}
                             setAttachedImages={setChatAttachedImages}
                             triggerFileSelect={triggerChatFileSelect}
-                            model={chatModel}
-                            setModel={setChatModel}
+                            krasoModel={chatKrasoModel}
+                            onKrasoModelChange={handleChatKrasoChange}
                             aspectRatio={chatAspectRatio}
                             setAspectRatio={setChatAspectRatio}
-                            quality={chatQuality}
-                            setQuality={setChatQuality}
+                            resolution={chatResolution}
+                            onResolutionChange={handleChatResolutionChange}
                             isGenerating={isChatGenerating}
                             onGenerate={handleChatGenerate}
-                            historyData={history.filter(h => h.source === 'chat')}
-                            credits={credits || 0}
+                            historyData={history.filter(h => h.source !== 'video' && h.source !== 'shorts')}
+                            cost={chatUnitCost}
+                            error={view === 'chat' ? errorMsg : null}
+                            onUseAsReference={(url) => setChatAttachedImages(prev => [...prev, url])}
+                            onGenerateVideoFrom={(url) => openShortsWithImage(url)}
                         />
                     </div>
                 )}
 
                 {view === 'video' && (
-                    <div className="flex-1 flex min-w-0 bg-background-light relative w-full main-content overflow-hidden">
+                    <div className="flex-1 flex flex-col min-w-0 bg-background-light relative w-full main-content overflow-hidden">
                         <VideoStudio
                             prompt={videoPrompt}
                             setPrompt={setVideoPrompt}
                             attachedImage={videoAttachedImage}
                             setAttachedImage={setVideoAttachedImage}
                             triggerFileSelect={triggerVideoFileSelect}
-                            duration={videoDuration}
-                            setDuration={setVideoDuration}
                             aspectRatio={videoAspectRatio}
                             setAspectRatio={setVideoAspectRatio}
+                            krasoModel={videoKrasoModel}
+                            onKrasoModelChange={handleVideoKrasoModelChange}
+                            variant={videoVariant}
+                            onVariantChange={setVideoVariant}
+                            duration={videoDuration}
+                            onDurationChange={setVideoDuration}
+                            quality={videoQuality}
+                            onQualityChange={setVideoQuality}
+                            promptEnhanceEnabled={videoPromptEnhance}
+                            onPromptEnhanceChange={setVideoPromptEnhance}
+                            isEnhancingPrompt={isEnhancingVideoPrompt}
+                            onEnhancePrompt={handleEnhanceVideoPrompt}
+                            selectedPreset={selectedVideoPreset}
+                            onSelectPreset={setSelectedVideoPreset}
                             isGenerating={isVideoGenerating}
                             status={videoStatus}
-                            historyData={history.filter(h => h.source === 'video')}
+                            historyData={history.filter(h => h.source === 'video' || h.source === 'shorts')}
                             onGenerate={handleVideoGenerate}
+                            cost={calculateVideoCost()}
+                            error={view === 'video' ? errorMsg : null}
                         />
                     </div>
+                )}
+
+                {view === 'upscale' && (
+                    <UpscaleView
+                        credits={credits || 0}
+                        onUpdateCredits={setCredits}
+                        isFreeTier={userTier === 'free'}
+                        initialImage={toolInitialImage}
+                    />
+                )}
+
+                {view === 'recolor' && (
+                    <RecolorView
+                        credits={credits || 0}
+                        onUpdateCredits={setCredits}
+                        isFreeTier={userTier === 'free'}
+                        initialImage={toolInitialImage}
+                        historyData={history.filter(h => h.source !== 'video' && h.source !== 'shorts')}
+                        onGenerationSaved={(item) => setHistory(prev => [item, ...prev])}
+                    />
+                )}
+
+                {view === 'restore' && (
+                    <RestoreView
+                        credits={credits || 0}
+                        onUpdateCredits={setCredits}
+                        isFreeTier={userTier === 'free'}
+                        initialImage={toolInitialImage}
+                    />
+                )}
+
+                {view === 'remove-bg' && (
+                    <RemoveBgView
+                        credits={credits || 0}
+                        onUpdateCredits={setCredits}
+                        isFreeTier={userTier === 'free'}
+                        initialImage={toolInitialImage}
+                    />
                 )}
 
                 {view === 'design-system' && (
@@ -2080,7 +2424,7 @@ const App: React.FC = () => {
             <input type="file" ref={videoFileInputRef} className="hidden" accept="image/*" onChange={handleVideoFileUpload} />
 
             {/* Mobile Navigation (Higgsfield-style) — Главная · Библиотека · Создать · Pro · Профиль */}
-            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-card-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video' || view === 'templates') ? 'hidden' : ''}`}>
+            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-background-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video' || view === 'templates' || view === 'marketing' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg') ? 'hidden' : ''}`}>
                 <button
                     onClick={() => setView('dashboard')}
                     className={`flex flex-col items-center gap-1 py-1 transition-colors ${view === 'dashboard' ? 'text-ink' : 'text-ink-faint'}`}
@@ -2101,12 +2445,7 @@ const App: React.FC = () => {
                 <div className="flex justify-center">
                     <button
                         onClick={() => { if (view !== 'dashboard') setView('dashboard'); setIsGenSheetOpen(true); }}
-                        className="-mt-5 w-12 h-12 rounded-2xl flex items-center justify-center text-on-primary
-                                   bg-gradient-to-b from-[#d4ff3a] to-[#9bdd04]
-                                   border-t border-white/40
-                                   shadow-[0_5px_0_0_#6fa000,0_8px_12px_-2px_rgba(0,0,0,0.5)]
-                                   active:translate-y-[3px] active:shadow-[0_2px_0_0_#6fa000,0_4px_8px_-2px_rgba(0,0,0,0.5)]
-                                   transition-all duration-100"
+                        className="size-12 -mt-5 rounded-2xl flex items-center justify-center text-on-primary bg-primary shadow-md active:scale-95 transition-transform duration-100 ease-out"
                         aria-label="Создать"
                     >
                         <Plus className="w-6 h-6" strokeWidth={2.5} />
@@ -2114,8 +2453,8 @@ const App: React.FC = () => {
                 </div>
 
                 <button
-                    onClick={() => { setAccountTab('subscription'); setView('profile'); }}
-                    className={`flex flex-col items-center gap-1 py-1 transition-colors ${view === 'profile' && accountTab === 'subscription' ? 'text-ink' : 'text-ink-faint'}`}
+                    onClick={() => openCreditsPage('upgrade')}
+                    className={`flex flex-col items-center gap-1 py-1 transition-colors ${creditsTab === 'upgrade' ? 'text-ink' : 'text-ink-faint'}`}
                 >
                     <Crown className="w-[21px] h-[21px]" />
                     <span className="text-[10px]">Pro</span>
@@ -2134,40 +2473,15 @@ const App: React.FC = () => {
             <GenerationSheet
                 open={isGenSheetOpen}
                 onClose={() => setIsGenSheetOpen(false)}
-                prompt={promptInput}
-                onPromptChange={setPromptInput}
-                aspectRatio={aspectRatio}
-                onAspectRatioChange={setAspectRatio}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                selectedTemplate={selectedTemplate}
-                onClearTemplate={() => setSelectedTemplate(null)}
-                sourceImages={[originalImage, subjectImage].filter(Boolean) as string[]}
-                onAddImageClick={triggerDashboardFileSelect}
-                onRemoveSourceImage={(i) => {
-                    const imgs = [originalImage, subjectImage].filter(Boolean) as string[];
-                    const target = imgs[i];
-                    if (target === originalImage) setOriginalImage(null);
-                    else if (target === subjectImage) setSubjectImage(null);
-                }}
-                onGenerate={() => { setIsGenSheetOpen(false); handleGenerate(); }}
-                isGenerating={appState === AppState.GENERATING}
-                cost={currentCost}
-                error={errorMsg}
-                ratioLocked={isDocSelected}
                 onOpenTemplates={() => { setView('templates'); setActiveCategory('all'); }}
-                videoPrompt={videoPrompt}
-                onVideoPromptChange={setVideoPrompt}
-                videoAttachedImage={videoAttachedImage}
-                onVideoAddImageClick={triggerVideoFileSelect}
-                onVideoRemoveImage={() => setVideoAttachedImage(null)}
-                videoDuration={videoDuration}
-                onVideoDurationChange={setVideoDuration}
-                videoAspectRatio={videoAspectRatio}
-                onVideoAspectRatioChange={setVideoAspectRatio}
-                onVideoGenerate={() => { setIsGenSheetOpen(false); handleVideoGenerate(); }}
-                isVideoGenerating={isVideoGenerating}
-                videoStatus={videoStatus}
+                onOpenPhoto={() => setView('chat')}
+                onOpenVideo={() => setView('video')}
+                {...(SHORTS_STUDIO_ENABLED ? { onOpenShorts: () => setView('shorts') } : {})}
+                onOpenMarketing={() => setView('marketing')}
+                onOpenUpscale={() => { setToolInitialImage(null); setView('upscale'); }}
+                onOpenRecolor={() => { setToolInitialImage(null); setView('recolor'); }}
+                onOpenRestore={() => { setToolInitialImage(null); setView('restore'); }}
+                onOpenRemoveBg={() => { setToolInitialImage(null); setView('remove-bg'); }}
             />
 
         </div>
