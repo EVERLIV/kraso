@@ -6,11 +6,10 @@ interface BeforeAfterCompareProps {
     after: string;
     className?: string;
     initialPosition?: number;
-    showLabels?: boolean;
 }
 
 function BeforeAfterCompare({
-    before, after, className = '', initialPosition = 50, showLabels = true,
+    before, after, className = '', initialPosition = 50,
 }: BeforeAfterCompareProps) {
     const [pos, setPos] = useState(initialPosition);
     const ref = useRef<HTMLDivElement>(null);
@@ -32,7 +31,7 @@ function BeforeAfterCompare({
     return (
         <div
             ref={ref}
-            className={`up-compare relative w-full aspect-[3/4] max-h-[min(72dvh,520px)] rounded-[var(--ms-radius-panel)] overflow-hidden border border-[var(--ms-hairline)] select-none cursor-ew-resize bg-[var(--ms-raised)] ${className}`}
+            className={`it-compare select-none ${className}`}
             onMouseDown={e => onPointerDown(e.clientX)}
             onMouseMove={e => dragging.current && move(e.clientX)}
             onMouseUp={() => { dragging.current = false; }}
@@ -56,18 +55,8 @@ function BeforeAfterCompare({
                 />
             </div>
 
-            {showLabels && (
-                <>
-                    <span className="absolute top-3 left-3 text-[11px] font-semibold text-white bg-black/55 px-2 py-1 rounded-md">До</span>
-                    <span className="absolute top-3 right-3 text-[11px] font-semibold text-[var(--ms-on-lime)] bg-[var(--ms-lime)] px-2 py-1 rounded-md">После</span>
-                </>
-            )}
-
-            <div
-                className="absolute top-0 bottom-0 w-px bg-white/90 pointer-events-none"
-                style={{ left: `${pos}%` }}
-            >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-9 rounded-full bg-white text-[var(--ms-on-lime)] flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+            <div className="it-compare__handle" style={{ left: `${pos}%` }}>
+                <div className="it-compare__knob">
                     <ChevronsLeftRight className="size-4" strokeWidth={2.5} />
                 </div>
             </div>

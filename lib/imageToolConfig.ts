@@ -18,7 +18,7 @@ export interface ImageToolConfig {
 export const UPSCALE_TOOL: ImageToolConfig = {
     id: 'upscale',
     title: 'Upscale',
-    description: 'Загрузите изображение — повысьте разрешение и детализацию с помощью ИИ.',
+    description: 'Загрузите изображение — повысьте разрешение и качество с помощью ИИ.',
     actionLabel: 'Улучшить',
     downloadPrefix: 'upscale',
     historyTag: '[UPSCALE]',
