@@ -136,3 +136,15 @@ export function tierForVariant(variantId: VideoVariantId): KrasoModelId {
   }
   return 'kraso-quality';
 }
+
+export interface VideoVariantEntry {
+  tier: KrasoModelId;
+  variant: VideoVariantOption;
+}
+
+/** All video variants across tiers — for the horizontal model bar. */
+export function getAllVideoVariants(): VideoVariantEntry[] {
+  return (Object.keys(VIDEO_TIER_VARIANTS) as KrasoModelId[]).flatMap((tier) =>
+    VIDEO_TIER_VARIANTS[tier].map((variant) => ({ tier, variant })),
+  );
+}

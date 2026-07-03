@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
   <title>1 фото → 150+ стилей за минуту. Генерация картинок ИИ | КрасоМир</title>
   <meta name="description" content="Загрузите одно фото — получите ретро, свадьбу, маркетплейс, портрет. Нейросеть сохраняет лицо. Оживление фото в видео. Бесплатный старт. Генерация картинок ИИ онлайн." />
   <meta name="keywords" content="генерация картинок ИИ, нейросеть для фото, стилизация фотографий, AI фоторедактор, оживление фото, ретро стиль, свадебные фото, карточки товаров, фото в стиле" />
@@ -158,7 +159,14 @@
     }
 
     /* .dark kept as alias — theme is already dark by default */
+    html { color-scheme: dark; }
     .dark { color-scheme: dark; }
+
+    /* Touch: kill 300ms tap delay + double-tap zoom on controls, intentional tap highlight */
+    button, a, [role="button"], [role="tab"], [role="option"], input, textarea, select, label {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     /* === Design System keyframes (also available as Tailwind animate-*) === */
     @keyframes spmarq { from { transform: translateX(0) } to { transform: translateX(-50%) } }

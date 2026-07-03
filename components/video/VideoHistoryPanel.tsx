@@ -68,11 +68,11 @@ function VideoGridCard({ item }: { item: GeneratedImage }) {
   }
 
   return (
-    <div className="vs-result-card">
+    <div className="vs-result-card group">
       <div className="vs-result-media">
         {pending ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[var(--vs-text-dim)]" aria-busy="true">
-            <Loader2 className="size-6 animate-spin motion-reduce:animate-none text-[var(--vs-lime)]" />
+            <Loader2 className="size-6 animate-spin motion-reduce:animate-none text-primary" />
             <span className="text-[11px]">Генерация…</span>
           </div>
         ) : valid ? (
@@ -97,6 +97,11 @@ function VideoGridCard({ item }: { item: GeneratedImage }) {
           <MoreHorizontal className="size-4" />
         </button>
       </div>
+      {!pending && !failed && (
+        <div className="vs-result-card__label">
+          <p className="vs-result-card__title">{getDisplayPrompt(item) || 'Видео'}</p>
+        </div>
+      )}
     </div>
   );
 }

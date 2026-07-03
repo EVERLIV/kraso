@@ -1,0 +1,60 @@
+---
+description: Video Studio UI — layout, tokens, and UX rules for /video page
+globs: components/VideoStudio.tsx,components/video/**,lib/videoPresets.ts
+alwaysApply: false
+---
+
+# Video Studio Design System
+
+Full spec: `docs/design-system/video-studio.md`  
+Tokens: `components/genbar/genBarStyles.ts`, `components/video/videoStudioTokens.ts`  
+Styles: `components/video/videoTheme.css` (scoped under `.video-studio`)
+
+## Must use
+
+- `GEN_BAR_R` (6px), `GEN_BAR_FORM`, `GEN_BAR_CHIP`, `GEN_BAR_GENERATE` for controls
+- `vs-*` classes from `videoTheme.css` — never duplicate styles inline
+- CSS variables: `--ink`, `--primary`, `--border-soft`, `--surface-muted`, `--card-light`
+
+## Layout rules
+
+- Left: `vs-sidebar` (max 320px). Right: `vs-workspace`
+- Default right content: «История» / «Как это работает» — **no model bar**
+- «Сменить» opens `VideoPresetPicker` as **full workspace replacement**, not overlay
+- Gallery panel uses same surface as sidebar (`GEN_BAR_FORM` look: card-light + border + 6px radius)
+
+## Sidebar order
+
+`vs-mode-tabs` → `vs-preset-card` → `vs-model-row` (after gallery pick) → `vs-frames` → `vs-prompt-block` → `vs-sidebar__dock` (params + generate)
+
+## UX state
+
+- `presetPanelUsed === false`: hide model name, model row, audio badges
+- `presetPanelUsed === true`: show preset + model on card, `vs-model-row`, audio toggles if `variant.hasAudio`
+- Model list only inside `VideoPresetPicker`, not on static workspace
+
+## Prompt controls
+
+- Badges **inside** `vs-prompt-block` (`vs-prompt-badge`), not a separate row
+- Enhance: «Улучшение вкл.» / «Выкл.»
+- Audio (audio models only): «Звук вкл.» / «Без звука» → `videoGenerateAudio` in App
+
+## Presets
+
+- All models: «Обычная Генерация» (`DEFAULT_VIDEO_PRESET`)
+- Extra presets: Seedance models only (`getPresetsForModel`)
+- Picking preset in gallery sets preset **and** model tier/variant
+
+## Forbidden
+
+- Horizontal divider strips (`border-t`/`border-b`) between sidebar sections or under model tabs
+- Arbitrary border-radius (except 12px preset cards in gallery)
+- Model names on main workspace before gallery selection
+- Dropdown menus clipped by `overflow: hidden` on sidebar — use `vs-sidebar__dock` + upward `GEN_BAR_DROPDOWN`
+
+## New components checklist
+
+1. Read `docs/design-system/video-studio.md`
+2. Add styles to `videoTheme.css` under `.video-studio`
+3. Use tokens from `videoStudioTokens.ts` / `genBarStyles.ts`
+4. Verify dropdowns and mobile 375px

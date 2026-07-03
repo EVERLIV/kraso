@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { AspectRatio, ImageResolution } from '../../types';
 import { PhotoStyle } from '../../lib/recolorPresets';
+import { KrasoModelId, getKrasoModel, KRASO_MODELS } from '../../lib/krasoModels';
 
 const RATIOS: AspectRatio[] = ['9:16', '3:4', '4:5', '1:1', '4:3', '16:9'];
 const RESOLUTIONS: ImageResolution[] = ['1K', '2K', '4K'];
@@ -20,6 +21,8 @@ interface RecolorComposerProps {
     onRemovePromptReference: (index: number) => void;
     characterImage: string | null;
     selectedStyle: PhotoStyle | null;
+    krasoModelId: KrasoModelId;
+    onKrasoModelChange: (id: KrasoModelId) => void;
     colorLabel: string | null;
     colorActive: boolean;
     colorSwatches: string[];
@@ -43,17 +46,20 @@ interface RecolorComposerProps {
 
 function RecolorComposer({
     prompt, onPromptChange, promptReferences, onRemovePromptReference,
-    characterImage, selectedStyle, colorLabel, colorActive, colorSwatches, onOpenStyles, onOpenPalette,
+    characterImage, selectedStyle, krasoModelId, onKrasoModelChange, colorLabel, colorActive, colorSwatches, onOpenStyles, onOpenPalette,
     onPickCharacter, onRemoveCharacter, onPickPromptReference,
     aspectRatio, onAspectRatioChange, resolution, onResolutionChange,
     batchCount, onBatchChange, loading, error, credits, onGenerate, canGenerate,
 }: RecolorComposerProps) {
     const [ratioOpen, setRatioOpen] = useState(false);
     const [resolutionOpen, setResolutionOpen] = useState(false);
+    const [modelOpen, setModelOpen] = useState(false);
+    const activeModel = getKrasoModel(krasoModelId);
 
     const closeMenus = () => {
         setRatioOpen(false);
         setResolutionOpen(false);
+        setModelOpen(false);
     };
 
     const removeCharacter = (e: React.MouseEvent) => {
@@ -100,18 +106,56 @@ function RecolorComposer({
                             type="text"
                             value={prompt}
                             onChange={e => onPromptChange(e.target.value)}
-                            placeholder="Describe the scene you imagine"
+                            placeholder="Опишите сцену, которую представляете…"
+                            aria-label="Промпт для генерации"
+                            enterKeyHint="send"
+                            autoComplete="off"
                             className="is-prompt-input"
                         />
                     </div>
 
                     <div className="is-controls-row">
                         <div className="is-controls-left">
-                    <button type="button" className="is-chip" aria-label="Модель Soul 2.0">
-                        <Sparkles className="size-3.5 text-[var(--is-lime)]" strokeWidth={2} />
-                        Soul 2.0
-                        <ChevronRight className="size-3.5 text-[var(--is-muted)]" strokeWidth={2} />
-                    </button>
+                    <div className="relative shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => { setModelOpen(v => !v); setRatioOpen(false); setResolutionOpen(false); }}
+                            className="is-chip"
+                            aria-expanded={modelOpen}
+                            aria-haspopup="listbox"
+                            aria-label={`Модель ${activeModel.label}`}
+                        >
+                            <Sparkles className="size-3.5 text-[var(--is-lime)]" strokeWidth={2} />
+                            <span className="truncate max-w-[8rem]">{activeModel.label}</span>
+                            <ChevronRight className={`size-3.5 text-[var(--is-muted)] transition-transform ${modelOpen ? 'rotate-90' : ''}`} strokeWidth={2} />
+                        </button>
+                        {modelOpen && (
+                            <>
+                                <button type="button" className="is-menu-backdrop" onClick={closeMenus} aria-label="Закрыть меню" />
+                                <div className="is-menu" role="listbox" aria-label="Модель">
+                                    <p className="is-menu__label">Модель</p>
+                                    {KRASO_MODELS.map(m => (
+                                        <button
+                                            key={m.id}
+                                            type="button"
+                                            role="option"
+                                            aria-selected={krasoModelId === m.id}
+                                            title={m.description}
+                                            onClick={() => { onKrasoModelChange(m.id); setModelOpen(false); }}
+                                            className={`is-menu__item${krasoModelId === m.id ? ' is-menu__item--active' : ''}`}
+                                        >
+                                            <Sparkles className="size-3.5 shrink-0" strokeWidth={2} />
+                                            <span className="flex-1 text-left truncate">{m.label}</span>
+                                            {m.badge && (
+                                                <span className="is-menu__badge">{m.badge}</span>
+                                            )}
+                                            {krasoModelId === m.id && <Check className="size-4 shrink-0" strokeWidth={3} />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     <div className="relative shrink-0">
                         <button
@@ -200,7 +244,7 @@ function RecolorComposer({
                         onClick={onOpenPalette}
                         className={`is-chip${colorActive ? ' is-chip--active' : ''}`}
                         aria-pressed={colorActive}
-                        aria-label={colorActive ? `Палитра: ${colorLabel}` : 'Color Transfer'}
+                        aria-label={colorActive ? `Палитра: ${colorLabel}` : 'Перенос цвета'}
                     >
                         {colorActive && colorSwatches.length ? (
                             <span className="is-chip__swatches" aria-hidden>
@@ -211,7 +255,7 @@ function RecolorComposer({
                         ) : (
                             <Palette className="size-3.5" strokeWidth={2} />
                         )}
-                        {colorActive && colorLabel ? colorLabel : 'Color Transfer'}
+                        {colorActive && colorLabel ? colorLabel : 'Перенос цвета'}
                     </button>
                         </div>
                     </div>
@@ -233,7 +277,7 @@ function RecolorComposer({
                             {characterImage && (
                                 <img src={characterImage} alt="" className="is-char-tile__img" />
                             )}
-                            <span className="is-char-label">Character</span>
+                            <span className="is-char-label">Персонаж</span>
                         </button>
                         {characterImage && (
                             <button
@@ -257,10 +301,10 @@ function RecolorComposer({
                             <img src={selectedStyle.thumb} alt="" className="is-avatar-card__img" />
                         )}
                         <span className="is-avatar-card__change">
-                            <Pencil className="size-2.5" strokeWidth={2} aria-hidden /> Change
+                            <Pencil className="size-2.5" strokeWidth={2} aria-hidden /> Изменить
                         </span>
                         <span className="is-avatar-card__tag">
-                            {(selectedStyle?.title || 'General').toUpperCase()}
+                            {(selectedStyle?.title || 'Базовый').toUpperCase()}
                         </span>
                     </button>
 
@@ -273,10 +317,7 @@ function RecolorComposer({
                         {loading ? (
                             <Loader2 className="size-5 motion-safe:animate-spin motion-reduce:animate-none" aria-label="Генерация" />
                         ) : (
-                            <>
-                                Generate
-                                <span className="is-btn-generate__sub tabular-nums">{credits} free gens left</span>
-                            </>
+                            <>Создать</>
                         )}
                     </button>
                 </aside>

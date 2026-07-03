@@ -305,7 +305,122 @@
 
   .is-controls-right {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: flex-start;
+  }
+}
+
+/* Mobile: strict single vertical panel — every row is full width and
+   confined inside the panel padding so nothing clips past the edge. */
+@media (max-width: 640px) {
+  /* every box respects the panel width */
+  .is-prompt-bar,
+  .is-prompt-bar *,
+  .is-prompt-bar *::before,
+  .is-prompt-bar *::after {
+    box-sizing: border-box;
+  }
+
+  .is-prompt-bar {
+    border-radius: 20px;
+    padding: 14px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* stack the whole panel vertically */
+  .is-prompt-bar__body {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .is-prompt-bar__main {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 12px;
+  }
+
+  /* prompt row: refs stay left, input takes the rest, wraps if needed */
+  .is-prompt-row {
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .is-prompt-input {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* control chips: wrap freely, never exceed panel */
+  .is-controls-row,
+  .is-controls-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .is-controls-left > .relative,
+  .is-controls-left > * {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+
+  .is-chip {
+    max-width: 100%;
+    flex-shrink: 1;
+  }
+
+  .is-chip span.truncate {
+    max-width: 6rem;
+  }
+
+  /* character + template tiles side by side, generate full width below */
+  .is-controls-right {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .is-char-tile-wrap,
+  .is-avatar-card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .is-char-tile,
+  .is-avatar-card {
+    width: 100%;
+    height: 96px;
+  }
+
+  .is-btn-generate {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    height: 52px;
+    flex-direction: row;
+    gap: 8px;
+    font-size: 15px;
+  }
+
+  .is-btn-generate__sub {
+    margin-top: 0;
   }
 }
 
@@ -661,7 +776,7 @@
   position: absolute;
   bottom: 0;
   inset-inline: 0;
-  z-index: 20;
+  z-index: 60;
   padding-inline: 16px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom));
   pointer-events: none;
@@ -1396,6 +1511,19 @@
 .is-menu__item--active {
   color: var(--is-lime);
   background: rgba(214, 245, 32, 0.08);
+}
+
+.is-menu__badge {
+  flex-shrink: 0;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--is-lime);
+  color: #000;
 }
 
 .is-canvas-cell--placeholder {

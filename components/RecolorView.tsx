@@ -11,6 +11,7 @@ import { generateImageWithGemini, cleanBase64, getMimeType } from '../services/g
 import { uploadImageToStorage, saveGenerationToHistory, deductCredits } from '../services/firebaseService';
 import { useAuth } from '../contexts/AuthContext';
 import { AspectRatio, GeneratedImage, ImageResolution } from '../types';
+import { KrasoModelId } from '../lib/krasoModels';
 import './recolor/imageStudioTheme.css';
 
 interface RecolorViewProps {
@@ -46,6 +47,7 @@ function RecolorView({
     const [manualBackground, setManualBackground] = useState<string | null>(null);
     const [paletteOpen, setPaletteOpen] = useState(false);
 
+    const [krasoModelId, setKrasoModelId] = useState<KrasoModelId>('kraso-quality');
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('3:4');
     const [resolution, setResolution] = useState<ImageResolution>('2K');
     const [batchCount, setBatchCount] = useState(1);
@@ -205,7 +207,7 @@ function RecolorView({
                     refs,
                     aspectRatio,
                     'gemini-2.5-flash-image',
-                    { quality: resolution },
+                    { quality: resolution, krasoModel: krasoModelId },
                 );
 
                 await deductCredits(user.uid, PALETTE_GEN_COST);
@@ -232,8 +234,9 @@ function RecolorView({
                 onGenerationSaved(item);
             }
         } catch (err) {
-            console.error(err);
-            setError('Ошибка генерации. Попробуйте ещё раз.');
+            console.error('[RecolorView] generation failed:', err);
+            const detail = err instanceof Error ? err.message : String(err);
+            setError(detail ? `Ошибка генерации: ${detail}` : 'Ошибка генерации. Попробуйте ещё раз.');
         } finally {
             setLoading(false);
         }
@@ -289,6 +292,8 @@ function RecolorView({
                             onRemovePromptReference={(i) => setPromptReferences(prev => prev.filter((_, idx) => idx !== i))}
                             characterImage={characterImage}
                             selectedStyle={selectedStyle}
+                            krasoModelId={krasoModelId}
+                            onKrasoModelChange={setKrasoModelId}
                             colorLabel={colorLabel}
                             colorActive={colorActive}
                             colorSwatches={colorSwatches}

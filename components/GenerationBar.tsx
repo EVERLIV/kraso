@@ -77,7 +77,7 @@ function GenerationBar({
         <div className="z-30 flex justify-center px-2 sm:px-4 md:px-6 pb-[calc(22px+env(safe-area-inset-bottom))] pointer-events-none">
             <div className="pointer-events-auto w-full max-w-genbar">
                 {status && isGenerating && (
-                    <div className={`mb-2 mx-auto w-fit max-w-full text-ink-muted text-xs font-medium bg-card-light border border-[var(--border-color)] px-3 py-1.5 ${GEN_BAR_R} text-pretty`}>
+                    <div aria-live="polite" className={`mb-2 mx-auto w-fit max-w-full text-ink-muted text-xs font-medium bg-card-light border border-[var(--border-color)] px-3 py-1.5 ${GEN_BAR_R} text-pretty`}>
                         {status}
                     </div>
                 )}
@@ -126,17 +126,21 @@ function GenerationBar({
                             </button>
                         </div>
                         <input
+                            type="text"
                             value={prompt}
                             onChange={e => onPromptChange(e.target.value)}
                             placeholder={promptPlaceholder}
+                            aria-label="Промпт для генерации"
+                            enterKeyHint="send"
+                            autoComplete="off"
                             className="flex-1 min-w-0 bg-transparent outline-none text-[15px] font-medium text-ink placeholder:text-ink-muted py-1"
                             onKeyDown={e => { if (e.key === 'Enter' && !isGenerating && canGenerate) onGenerate(); }}
                         />
                     </div>
 
-                    {/* Controls row — uniform h-10 chips */}
-                    <div className="flex items-end gap-3 min-w-0">
-                        <div className="flex h-10 items-center gap-2 flex-wrap flex-1 min-w-0">
+                    {/* Controls row — uniform h-10 chips; wraps on mobile so nothing overflows the panel */}
+                    <div className="flex items-end gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <div className="flex min-h-10 items-center gap-2 flex-wrap flex-1 min-w-0 w-full sm:w-auto">
                             <KrasoModelPicker value={krasoModel} onChange={onKrasoModelChange} />
 
                             {/* Aspect ratio chip */}
@@ -239,7 +243,7 @@ function GenerationBar({
                             type="button"
                             onClick={() => onGenerate(batchCount)}
                             disabled={!canGenerate}
-                            className={GEN_BAR_GENERATE}
+                            className={`${GEN_BAR_GENERATE} min-w-0 w-full sm:w-auto sm:min-w-[9rem]`}
                         >
                             {isGenerating ? (
                                 <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />

@@ -30,7 +30,7 @@ import { buildUserFacingPrompt, getDisplayPrompt } from './lib/promptUtils';
 import { calculateKrasoCost, applyKrasoModel, apiResolutionForKraso, KrasoModelId } from './lib/krasoModels';
 import { calculateVideoKrasoCost } from './lib/krasoVideoModels';
 import { getDefaultVariant, getVariant, type VideoVariantId } from './lib/videoModels';
-import { VideoMotionPreset } from './lib/videoPresets';
+import { VideoMotionPreset, buildVideoPresetPrompt } from './lib/videoPresets';
 import { fetchCommunityFeed, publishToCommunity, toggleCommunityLike, CommunityPost } from './services/communityService';
 import Footer from './components/Footer';
 import TermsPage from './components/pages/TermsPage';
@@ -261,6 +261,7 @@ const App: React.FC = () => {
     const [videoDuration, setVideoDuration] = useState(5);
     const [videoQuality, setVideoQuality] = useState<'720p' | '1080p'>('720p');
     const [videoPromptEnhance, setVideoPromptEnhance] = useState(true);
+    const [videoGenerateAudio, setVideoGenerateAudio] = useState(true);
     const [isEnhancingVideoPrompt, setIsEnhancingVideoPrompt] = useState(false);
     const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16'>('16:9');
     const [videoNegativePrompt, setVideoNegativePrompt] = useState('blur, distort, and low quality');
@@ -671,9 +672,7 @@ const App: React.FC = () => {
                 cloudOriginal = await uploadImageToStorage(user.uid, imageToUse, 'original');
             }
 
-            const presetPrompt = selectedVideoPreset?.prompt || '';
-            const promptText = [presetPrompt, textToUse].filter(Boolean).join(' ')
-                || 'Animate this image with smooth, cinematic camera movement';
+            const promptText = buildVideoPresetPrompt(selectedVideoPreset, textToUse);
 
             const { generateKlingVideo } = await import('./services/klingService');
             const videoUrl = await generateKlingVideo({
@@ -683,7 +682,7 @@ const App: React.FC = () => {
                 aspect_ratio: videoAspectRatio,
                 resolution: videoQuality,
                 videoModelId: getVariant(videoKrasoModel, videoVariant).falModelId,
-                generateAudio: !!getVariant(videoKrasoModel, videoVariant).hasAudio,
+                generateAudio: !!getVariant(videoKrasoModel, videoVariant).hasAudio && videoGenerateAudio,
                 negative_prompt: videoNegativePrompt,
                 cfg_scale: videoCfgScale,
                 onProgress: (status) => setVideoStatus(status)
@@ -2365,6 +2364,8 @@ const App: React.FC = () => {
                             onPromptEnhanceChange={setVideoPromptEnhance}
                             isEnhancingPrompt={isEnhancingVideoPrompt}
                             onEnhancePrompt={handleEnhanceVideoPrompt}
+                            generateAudioEnabled={videoGenerateAudio}
+                            onGenerateAudioChange={setVideoGenerateAudio}
                             selectedPreset={selectedVideoPreset}
                             onSelectPreset={setSelectedVideoPreset}
                             isGenerating={isVideoGenerating}

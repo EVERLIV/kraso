@@ -3,10 +3,12 @@ import {
     Sparkles, Type, Palette, MousePointer2, Layout, Filter,
     Plus, ArrowRight, Play, Moon, Sun, Zap, Star, Image as ImageIcon,
 } from 'lucide-react';
+import VideoStudioDesignSection from './design-system/VideoStudioDesignSection';
 
 /**
  * DesignSystemView — живая витрина дизайн-системы КрасоМир.
  * Все значения берутся из токенов в index.html (CSS-переменные + Tailwind).
+ * Video Studio: docs/design-system/video-studio.md
  * Используйте этот экран как справочник при перевёрстке остальных экранов.
  */
 
@@ -250,6 +252,9 @@ const DesignSystemView: React.FC = () => {
                         </button>
                     </div>
                 </section>
+
+                {/* Video Studio */}
+                <VideoStudioDesignSection />
 
                 {/* Trust row + shadows reference */}
                 <section className="space-y-6">
