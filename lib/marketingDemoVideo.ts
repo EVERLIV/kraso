@@ -27,10 +27,6 @@ export const MARKETING_DEMO_VARIANTS: Record<
         { hook: 'Mouth opens mid-sentence about the product, eyes bright.', scene: 'sunny park, golden bokeh background' },
         { hook: 'Enthusiastic selfie expression, product near cheek.', scene: 'urban sidewalk, soft natural daylight' },
     ],
-    'direct-to-camera': [
-        { hook: 'Lifts product to shoulder height, confident half-smile.', scene: 'light grey studio backdrop, ring-light catchlight' },
-        { hook: 'Presenter posture, product at chest, direct eye contact.', scene: 'clean white minimal studio, soft diffused key' },
-    ],
     'before-after': [
         { hook: 'Vertical split line divides frame — tired left, radiant right.', scene: 'neutral light background, equal lighting both halves' },
         { hook: 'Same person, messy hair left vs polished glow right.', scene: 'cozy room, cool vs warm color contrast' },
@@ -121,7 +117,6 @@ export function marketingDemoStartFrameBasename(tplId: string, slot: 1 | 2 | 3):
         'unboxing-asmr': ['unboxing-asmr', 'asmr-2', 'asmr-3'],
         'unboxing-tryon': ['unboxing-tryon', 'unboxing-tryon-2', 'unboxing-tryon-3'],
         'selfie-testimonial': ['selfie-testimonial', 'selfie-2', 'selfie-3'],
-        'direct-to-camera': ['direct-to-camera', 'direct-to-camera-2', 'direct-to-camera-3'],
         'before-after': ['before-after', 'before-after-2', 'before-after-3'],
         'product-review': ['product-review', 'product-review-2', 'product-review-3'],
         'couple-sharing': ['couple-1', 'couple-2', 'couple-3'],
@@ -129,7 +124,7 @@ export function marketingDemoStartFrameBasename(tplId: string, slot: 1 | 2 | 3):
         'camera-pov': ['pov-1', 'pov-2', 'pov-3'],
         'classic-modern': ['classic-1', 'classic-2', 'classic-3'],
         'mess-to-fresh': ['mess-fresh-1', 'mess-fresh-2', 'mess-fresh-3'],
-        'gadget-saved-me': ['gadget', 'gadget', 'gadget'],
+        'gadget-saved-me': ['gadget-1', 'gadget-2', 'gadget-3'],
     };
     const row = map[tplId];
     if (!row) throw new Error(`No start-frame map for template ${tplId}`);

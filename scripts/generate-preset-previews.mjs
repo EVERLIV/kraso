@@ -50,40 +50,27 @@ function castForJob(jobId) {
 
 /** In-scene first frame — NOT a neutral portrait on gray background. */
 const SEEDANCE_START_FRAMES = {
-  sd_grocery_paparazzi: (c) =>
-    `Night city sidewalk outside a club, ${c} in dark hoodie and oversized glasses holding an energy drink can, ` +
-    'wet pavement reflections, distant paparazzi camera flashes, cinematic photorealistic, 9:16 vertical, no text',
-  sd_gym_mirror: (c) =>
-    `Commercial gym interior, ${c} standing before a wall mirror between dumbbell racks, fluorescent light, ` +
-    'mid-flex pose, photorealistic, 9:16 vertical, no text',
-  sd_airport_sprint: (c) =>
-    `Airport terminal wide shot, ${c} sprinting with rolling suitcase, boarding pass visible, polished floors, ` +
-    'photorealistic motion blur hint, 9:16 vertical, no text',
-  sd_cafe_rain: (c) =>
-    `Rainy cafe window seat, ${c} in knit sweater holding latte with heart foam, rain on glass, warm interior light, ` +
-    'photorealistic, 9:16 vertical, no text',
-  sd_rooftop_wind: (c) =>
-    `Rooftop at night, ${c} on ledge with Tokyo skyline bokeh behind, wind in hair and jacket, ` +
-    'cinematic photorealistic, 9:16 vertical, no text',
-  sd_dino_sprint: (c) =>
-    `Daylight city sidewalk, ${c} mid-sprint in casual streetwear, coffee cup falling, T-Rex silhouette far behind, ` +
+  sd_dino_puppies: (c) =>
+    `Daylight city sidewalk chase, ${c} mid-sprint glancing back, a pack of tiny puppies running behind at ground level, ` +
+    'no dinosaur, no giant animal, one continuous city street, photorealistic action, 9:16 vertical, no text',
+  sd_kung_fu_punch: (c) =>
+    `Extreme close-up martial arts impact, fist connecting with ${c}'s cheek, water droplets spraying, dojo background blur, ` +
+    'slow-motion impact, photorealistic, 9:16 vertical, no text',
+  sd_frozen_world: (c) =>
+    `Frozen city plaza, every pedestrian perfectly still, fountain water suspended in air, bird frozen with wings raised, ` +
+    `${c} walking calmly through the only moving path, absolute stillness everywhere else, golden hour, photorealistic, 9:16 vertical, no text`,
+  sd_superflight: (c) =>
+    `Superhero flight toward camera, ${c} flying above city canyon, hair and jacket in wind, exhilarated face, buildings blurring, ` +
     'photorealistic action, 9:16 vertical, no text',
-  sd_spire_banner: (c) =>
-    `Skyscraper spire platform, ${c} in harness gripping black banner edge, city haze below, ` +
-    'photorealistic, 9:16 vertical, no text',
 };
 
 const WAN_START_FRAMES = {
-  wan_rpg_levelup: (c) =>
-    `3D stylized cartoon game avatar of ${c} on stone arena platform, fantasy RPG, bright colors, 9:16, no text`,
-  wan_platformer_run: (c) =>
-    `3D cartoon hero ${c} on floating candy platforms, Pixar style, saturated colors, 9:16, no text`,
-  wan_boss_intro: (c) =>
-    `3D cartoon warrior ${c} facing giant shadow dragon, low angle, dramatic sky, cel-shaded, 9:16, no text`,
-  wan_anime_powerup: (c) =>
-    `3D anime-style ${c} crouching with lightning aura spiraling, cracked ground, 9:16, no text`,
-  wan_arcade_highscore: (c) =>
-    `3D cartoon ${c} at neon arcade cabinet, HIGH SCORE screen glow, pink-cyan palette, 9:16, no text`,
+  wan_dark_anime: (c) =>
+    `3D anime-style ${c} in dark Victorian coat standing in candlelit gothic library, moonlight through arched windows, rose on open book, atmospheric, 9:16, no text`,
+  wan_disney_magic: (c) =>
+    `3D fairy-tale ${c} at enchanted forest clearing, giant glowing mushrooms, fireflies, crystal stream under stars, magical, 9:16, no text`,
+  wan_robots: (c) =>
+    `3D cyberpunk ${c} as biomechanical being in rain-soaked neon hangar, holographic schematics, futuristic city silhouette, 9:16, no text`,
 };
 
 function startFramePromptForJob(jobId, groupKey) {
@@ -98,7 +85,7 @@ function startFramePromptForJob(jobId, groupKey) {
 
 const GROUPS = {
   seedance: {
-    model: 'bytedance/seedance-v1.5-pro/image-to-video',
+    model: 'bytedance/seedance-2.0-fast/image-to-video',
     filter: (id) => id.startsWith('sd_'),
     buildPayload: (prompt, imageUrl, { resolution, duration }) => ({
       prompt,
@@ -141,7 +128,7 @@ function parseArgs(argv) {
     dryRun: false,
     skipExisting: false,
     resolution: '720p',
-    duration: 5,
+    duration: 6,
     skipRef: false,
   };
   for (let i = 0; i < argv.length; i++) {

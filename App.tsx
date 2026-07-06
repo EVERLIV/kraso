@@ -77,6 +77,9 @@ const CATEGORIES: CategoryItem[] = [
     { id: 'ugc', label: 'UGC Контент', icon: Video },
     { id: 'bloggers', label: 'Блогеры', icon: Camera },
     { id: 'rich_life', label: 'Роскошь', icon: Gem },
+    { id: 'transform_viral', label: 'Трансформации', icon: Sparkles, badge: 'VIRAL' },
+    { id: 'maternity', label: 'Беременность', icon: Heart, badge: 'NEW' },
+    { id: 'portraits_pro', label: 'Портреты PRO', icon: UserIcon, badge: 'PRO' },
     { id: 'trending', label: 'Популярное', icon: Flame },
     { id: 'saved', label: 'Сохраненное', icon: Bookmark },
 ];

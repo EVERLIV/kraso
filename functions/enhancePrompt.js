@@ -28,7 +28,7 @@ const VIDEO_BASE_RULES =
 const MODEL_HINTS = {
   kling: "\nTarget: Kling. Single continuous take — no cuts, no Shot N structure. One smooth camera move. Describe concrete body actions and environment in plain prose.",
   veo: "\nTarget: Veo 3.1. Single scene, lead with camera. One motivated move. Optional Audio: line. No montage, no scene changes.",
-  seedance: "\nTarget: Seedance 1.5. Scene-first: text paints a NEW location — reference photo = face/body likeness only, NOT the photo background or frozen portrait plate. Use gender-neutral \"the person/they\" in scene prose. Cinematic realism, natural film color grade, no AI slop. Exactly two hands, no third hand. Single take with camera arc wide→close.",
+  seedance: "\nTarget: Seedance 2.0. ONE continuous take only — no shot list, no cuts, no scene changes. Scene-first: reference photo = face/body likeness only. All subjects visible in opening frame. Cinematic realism, no AI slop. Exactly two hands.",
   wan: "\nTarget: Wan 2.5. Keep simple — one subject, one action, 3-4 elements max.",
   default: "",
 };

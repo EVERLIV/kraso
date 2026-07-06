@@ -199,14 +199,6 @@ export const STYLE_PICKER: PickerConfig = {
             category: 'ugc',
         },
         {
-            id: 'direct-to-camera',
-            title: 'Direct to Camera',
-            description: 'Уверенная подача прямо в объектив.',
-            prompt: 'direct-to-camera',
-            image: p('style', 'direct-to-camera'),
-            category: 'ugc',
-        },
-        {
             id: 'before-after',
             title: 'До и После',
             description: 'Трансформация результата в одном кадре.',
@@ -227,7 +219,7 @@ export const STYLE_PICKER: PickerConfig = {
             title: 'Этот гаджет спас меня',
             description: 'Восторженная рекомендация — вирусный формат.',
             prompt: 'gadget-saved-me',
-            image: p('style', 'gadget'),
+            image: p('style', 'gadget-1'),
             category: 'tiktok',
         },
     ],

@@ -232,6 +232,13 @@ const ATLAS_MODELS = {
     docsUrl: "https://www.atlascloud.ai/models",
     imageInputField: "image",
   },
+  "bytedance/seedance-2.0-fast/image-to-video": {
+    id: "bytedance/seedance-2.0-fast/image-to-video",
+    kind: "text-to-image",
+    label: "Seedance 2.0 Fast I2V",
+    docsUrl: "https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/image-to-video",
+    imageInputField: "image",
+  },
   "google/veo-3/image-to-video": {
     id: "google/veo-3/image-to-video",
     kind: "text-to-image",

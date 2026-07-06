@@ -80,7 +80,7 @@ function VideoStudioDesignSection() {
               <div className="vs-preset-workspace__models">
                 <span className="vs-picker-model-tab">Wan 2.5</span>
                 <span className="vs-picker-model-tab vs-picker-model-tab--active">Kling 3.0</span>
-                <span className="vs-picker-model-tab">Seedance 1.5 Pro</span>
+                <span className="vs-picker-model-tab">Seedance 2.0 Fast</span>
               </div>
               <div className="vs-preset-workspace__search-wrap">
                 <span className="text-[11px] text-ink-faint">Поиск</span>

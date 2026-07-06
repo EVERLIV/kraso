@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Clapperboard, Globe, Smartphone, Package, ShoppingBag, MessageCircle, Camera, ArrowLeftRight, Star, Zap, Video, Users, Lightbulb, Eye, Layers2, Wind } from 'lucide-react';
+import { DollarSign, Clapperboard, Globe, Smartphone, Package, ShoppingBag, MessageCircle, ArrowLeftRight, Star, Zap, Video, Users, Lightbulb, Eye, Layers2, Wind } from 'lucide-react';
 import { MARKETING_FILTERS, MARKETING_TEMPLATES, MarketingFilter, MarketingTemplate } from '../../lib/marketingPresets';
 
 const TEMPLATE_ICON: Record<string, React.ReactNode> = {
@@ -7,7 +7,6 @@ const TEMPLATE_ICON: Record<string, React.ReactNode> = {
     'unboxing-asmr':      <Package className="size-[15px] text-[var(--ms-on-lime)]" />,
     'unboxing-tryon':     <ShoppingBag className="size-[15px] text-white" />,
     'selfie-testimonial': <MessageCircle className="size-[15px] text-[var(--ms-on-lime)]" />,
-    'direct-to-camera':   <Camera className="size-[15px] text-white" />,
     'before-after':       <ArrowLeftRight className="size-[15px] text-white" />,
     'product-review':     <Star className="size-[15px] text-[var(--ms-on-lime)]" />,
     'gadget-saved-me':    <Zap className="size-[15px] text-white" />,

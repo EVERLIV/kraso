@@ -4,7 +4,7 @@ export type VideoVariantId =
   | 'wan-2.5'
   | 'kling-2.5-turbo'
   | 'kling-3'
-  | 'seedance-1.5-pro'
+  | 'seedance-2.0-fast'
   | 'veo-3'
   | 'veo-3.1';
 
@@ -107,12 +107,12 @@ export const VIDEO_TIER_VARIANTS: Record<KrasoModelId, VideoVariantOption[]> = {
       },
     },
     {
-      id: 'seedance-1.5-pro',
-      label: 'Seedance 1.5 Pro',
-      hint: 'Нативный звук · 4–12с · до 1080p',
+      id: 'seedance-2.0-fast',
+      label: 'Seedance 2.0 Fast',
+      hint: 'ByteDance · быстрый I2V · нативный звук · 4–12с',
       resolution: '1080p',
       hasAudio: true,
-      atlasModelId: 'bytedance/seedance-v1.5-pro/image-to-video',
+      atlasModelId: 'bytedance/seedance-2.0-fast/image-to-video',
       demoVideoUrl: '/video/demos/demo-seedance.mp4',
       params: {
         durationRange: { min: 4, max: 12 },

@@ -1,5 +1,5 @@
 
-export type CategoryId = 'all' | 'tet' | 'retro' | 'wedding' | 'formula1' | 'restaurants' | 'marketplaces' | 'business_print' | 'style_trends' | 'sports' | 'dating' | 'pranks' | 'documents' | 'kids' | 'family' | 'ecommerce' | 'fashion' | 'makeup' | 'business' | 'ugc' | 'bloggers' | 'rich_life' | 'trending' | 'new' | 'saved';
+export type CategoryId = 'all' | 'tet' | 'retro' | 'wedding' | 'formula1' | 'restaurants' | 'marketplaces' | 'business_print' | 'style_trends' | 'sports' | 'dating' | 'pranks' | 'documents' | 'kids' | 'family' | 'ecommerce' | 'fashion' | 'makeup' | 'business' | 'ugc' | 'bloggers' | 'rich_life' | 'transform_viral' | 'maternity' | 'portraits_pro' | 'trending' | 'new' | 'saved';
 
 export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5';
 

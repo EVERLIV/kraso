@@ -40,6 +40,7 @@ export const MARKETING_VIDEO_MODEL_ATLAS: Record<MarketingVideoModelId, string> 
     'kling-3.0-pro': 'kwaivgi/kling-v3.0-pro/image-to-video',
     'veo-3.1': 'google/veo-3.1/image-to-video',
     'seedance-1.5-pro': 'bytedance/seedance-v1.5-pro/image-to-video',
+    'seedance-2.0-fast': 'bytedance/seedance-2.0-fast/image-to-video',
 };
 
 export function getDefaultNegativeForModel(model: MarketingVideoModelId): string {
@@ -108,6 +109,21 @@ export function wrapRealisticSingleScene(
     );
 }
 
+/** Seedance i2v — strict single-take. No multishot / scene list syntax. */
+export function wrapSeedanceSingleScene(
+    scene: string,
+    camera: string,
+    audio?: string,
+): string {
+    return wrapCinematicViralScene(
+        scene,
+        camera,
+        audio,
+        'CRITICAL: one continuous take only — no cuts, no shot list, no scene changes, no time jumps. ' +
+            'Every person, animal, and object must already exist in the opening frame or enter only from a visible frame edge. ' +
+            'Nothing materializes mid-air. Same environment, same lighting, physics-consistent motion throughout.',
+    );
+}
 /** Cinematic viral i2v — scene-first prose, character from reference only. */
 export function wrapCinematicViralScene(
     scene: string,
@@ -156,6 +172,19 @@ export function wrapWanPreset(scene: string, action: string): string {
         `${action} ` +
         'Bright saturated colors, soft global illumination, squash-and-stretch motion. ' +
         'Family-friendly. 9:16 vertical. 5 seconds.'
+    );
+}
+
+/** Wan 2.5 atmospheric preset — slow, detailed, no fast cuts. 6 seconds. */
+export function wrapWanAtmospherePreset(scene: string, atmosphere: string): string {
+    return (
+        '3D stylized anime-inspired cinematic. Preserve character likeness from reference as stylized avatar — ' +
+        'same hair color, expressive eyes, clean skin. ' +
+        `${scene} ` +
+        `${atmosphere} ` +
+        'Slow deliberate camera movement — one continuous push-in, no fast cuts, no quick actions. ' +
+        'Focus on subtle atmospheric details: drifting particles, light caressing surfaces, gentle motion. ' +
+        'Anime color grade. 9:16 vertical. 6 seconds.'
     );
 }
 

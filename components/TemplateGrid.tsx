@@ -19,6 +19,8 @@ const POPULAR_IDS = new Set([
 const NEW_IDS = new Set([
   'retro-vhs-grain', 'market-fb-minimal', 'market-insta-story', 'tet-hoi-an', 'kids-chef', 'makeup-festival',
   'doc-schengen', 'doc-us-visa', 'doc-canada', 'doc-uk',
+  'viral-baby-self', 'viral-yearbook-90s', 'maternity-studio-gown', 'maternity-golden-hour',
+  'pro-linkedin', 'pro-corporate-headshot', 'pro-tinder-pack',
 ]);
 
 // Fallback images map in case generation fails
@@ -44,6 +46,9 @@ const FALLBACK_IMAGES: Record<string, string> = {
   pranks: 'https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?auto=format&fit=crop&w=400&q=60',
   style_trends: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=60',
   business_print: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=400&q=60',
+  transform_viral: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&w=400&q=60',
+  maternity: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&w=400&q=60',
+  portraits_pro: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=60',
   default: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=60'
 };
 
@@ -2335,6 +2340,212 @@ export const ALL_PRESETS: Preset[] = [
     description: 'Блестящие слезы',
     prompt: 'Apply glitter tears makeup. Glitter trails falling from eyes like tears. Emotional and artistic. CRUCIAL: Preserve facial identity. Photorealistic style.',
     image: '/templates/makeup-glitter-tears.webp'
+  },
+
+  // --- TRANSFORMATIONS / VIRAL ENTERTAINMENT ---
+  {
+    id: 'viral-baby-self',
+    category: 'transform_viral',
+    title: 'Я в детстве',
+    description: 'Baby-фильтр',
+    prompt: 'Transform the person from the photo into their childhood self around age 6–8. Same recognizable face — eyes, nose, mouth and bone structure adapted to a child\'s proportions. Cute casual kid outfit, warm nostalgic lighting, soft film tones. CRUCIAL: Preserve exact facial identity so it is clearly the same person as a child. Photorealistic, natural skin.',
+    image: '/templates/viral-baby-self.webp'
+  },
+  {
+    id: 'viral-elderly-self',
+    category: 'transform_viral',
+    title: 'Я в старости',
+    description: 'Состаривание',
+    prompt: 'Age the person from the photo realistically to 75–85 years old. Natural wrinkles, silver or white hair, gentle age spots, but CRUCIAL: keep the exact same facial identity — recognizable eyes, nose, face shape and distinctive features. Dignified portrait, soft window light, warm tones. Photorealistic.',
+    image: '/templates/viral-elderly-self.webp'
+  },
+  {
+    id: 'viral-yearbook-90s',
+    category: 'transform_viral',
+    title: 'Yearbook 90-х',
+    description: 'Вирусный тренд Epik',
+    prompt: '90s American high school yearbook portrait in the viral Epik trend style. Laser gradient backdrop, awkward shoulder-up pose, dated 90s haircut and clothing, cheesy studio flash. CRUCIAL: Preserve exact facial identity from the reference photo. Slightly retro color cast, authentic yearbook vibe. Photorealistic face.',
+    image: '/templates/viral-yearbook-90s.webp'
+  },
+  {
+    id: 'viral-barbie-ken',
+    category: 'transform_viral',
+    title: 'Барби / Кен',
+    description: 'Кукольный гламур',
+    prompt: 'Transform the person from the photo into a real-life Barbie or Ken doll aesthetic — flawless smooth skin, perfect styled hair, glamorous pink wardrobe or Ken preppy look, doll-like perfection. CRUCIAL: Keep the face exactly recognizable as the same person. Hot pink studio background, glossy toy commercial lighting. Photorealistic.',
+    image: '/templates/viral-barbie-ken.webp'
+  },
+  {
+    id: 'viral-anime-manga',
+    category: 'transform_viral',
+    title: 'Аниме / Манга',
+    description: 'Аниме-портрет',
+    prompt: 'High-quality anime manga portrait of the person from the photo. Clean cel shading, expressive eyes, detailed screentones, vibrant colors. CRUCIAL: Keep key facial features and identity clearly recognizable from the reference — same face structure adapted to anime style. Beautiful illustrated background, studio-quality anime art.',
+    image: '/templates/viral-anime-manga.webp'
+  },
+  {
+    id: 'viral-pixar-3d',
+    category: 'transform_viral',
+    title: 'Пиксар / 3D-мульт',
+    description: 'Мультяшный персонаж',
+    prompt: 'Pixar Disney-style 3D animated character portrait of the person from the photo. Friendly rounded features, subsurface skin scattering, cinematic rim lighting, colorful movie-still quality. CRUCIAL: Facial identity must remain clearly recognizable in stylized 3D form. High-end CGI render.',
+    image: '/templates/viral-pixar-3d.webp'
+  },
+  {
+    id: 'viral-fantasy-hero',
+    category: 'transform_viral',
+    title: 'Киберпанк / Фэнтези / Рыцарь',
+    description: 'Эпический герой',
+    prompt: 'Transform the person from the photo into an epic hero portrait — neon cyberpunk warrior with glowing implants and rain-soaked city, OR enchanted fantasy mage with magical aura, OR medieval knight in shining armor. CRUCIAL: Preserve exact facial identity in photorealistic cinematic style. Dramatic blockbuster lighting, movie poster quality.',
+    image: '/templates/viral-fantasy-hero.webp'
+  },
+  {
+    id: 'viral-polaroid-celebrity',
+    category: 'transform_viral',
+    title: 'Полароид со звездой',
+    description: 'Ретро-вечеринка',
+    prompt: 'Vintage Polaroid instant photo. The person from the photo posing arm-in-arm with a glamorous Hollywood celebrity lookalike at a retro party. Faded warm colors, flash bloom, authentic Polaroid white frame. CRUCIAL: Keep the person\'s face exactly identical to the reference. 1980s nostalgic vibe. Photorealistic.',
+    image: '/templates/viral-polaroid-celebrity.webp'
+  },
+  {
+    id: 'viral-vogue-cover',
+    category: 'transform_viral',
+    title: 'Обложка Vogue',
+    description: 'Fashion-обложка',
+    prompt: 'High fashion Vogue magazine cover portrait of the person from the photo. Editorial lighting, haute couture styling, confident pose, luxury beauty look. CRUCIAL: Preserve exact facial identity. Clean magazine layout feel without readable text or logos. Photorealistic, shot by top fashion photographer.',
+    image: '/templates/viral-vogue-cover.webp'
+  },
+  {
+    id: 'viral-rap-album',
+    category: 'transform_viral',
+    title: 'Обложка рэп-альбома',
+    description: 'Hip-hop стиль',
+    prompt: 'Hip-hop rap album cover portrait of the person from the photo. Bold streetwear, gold chains, dramatic low-key lighting, urban backdrop, confident attitude. CRUCIAL: Keep the face exactly recognizable. Album cover composition without readable text or artist name. Photorealistic, gritty cinematic grade.',
+    image: '/templates/viral-rap-album.webp'
+  },
+  {
+    id: 'viral-fursona',
+    category: 'transform_viral',
+    title: 'Fursona',
+    description: 'Животное-аватар',
+    prompt: 'Create a fursona anthropomorphic animal avatar based on the person from the photo. Cute fox, wolf or cat character with human-like expression and outfit, furry fandom art style but photorealistic 3D render quality. CRUCIAL: Preserve recognizable facial features and identity in the animal-human hybrid face. Vibrant colorful background.',
+    image: '/templates/viral-fursona.webp'
+  },
+
+  // --- MATERNITY PHOTOGRAPHY ---
+  {
+    id: 'maternity-studio-gown',
+    category: 'maternity',
+    title: 'Студийная съёмка',
+    description: 'Платье, бежевый фон',
+    prompt: 'Professional maternity studio photoshoot. The pregnant person from the photo with visible baby bump, wearing a flowing beige or white chiffon gown, standing against a clean beige seamless backdrop. CRUCIAL: Preserve exact facial identity. Soft studio lighting, ethereal elegant pose, fine art maternity photography. Photorealistic.',
+    image: '/templates/maternity-studio-gown.webp'
+  },
+  {
+    id: 'maternity-golden-hour',
+    category: 'maternity',
+    title: 'Закат на пляже',
+    description: 'Силуэт golden hour',
+    prompt: 'Golden hour maternity silhouette on a beach at sunset. The pregnant person from the photo in profile, hand gently resting on belly, warm orange and pink sky, ocean waves in background. CRUCIAL: Keep the face recognizable even in soft backlight. Dreamy romantic atmosphere. Photorealistic.',
+    image: '/templates/maternity-golden-hour.webp'
+  },
+  {
+    id: 'maternity-couple-embrace',
+    category: 'maternity',
+    title: 'Парная съёмка',
+    description: 'Партнёр обнимает сзади',
+    prompt: 'Couple maternity photoshoot. The pregnant person from the photo facing the camera with visible belly, loving partner embracing from behind with hands on the bump. CRUCIAL: Preserve exact facial identity of the main subject. Soft natural light, intimate tender mood, lifestyle photography. Photorealistic.',
+    image: '/templates/maternity-couple-embrace.webp'
+  },
+  {
+    id: 'maternity-milk-bath',
+    category: 'maternity',
+    title: 'Milk Bath',
+    description: 'Молочная ванна с цветами',
+    prompt: 'Fine art milk bath maternity photoshoot. The pregnant person from the photo seated in milky white water wearing an elegant flowing white chiffon dress that fully covers the body, only face and hands visible above floating pastel flowers. Modest, fully clothed, no nudity. CRUCIAL: Maintain exact facial identity. Soft diffused light, dreamy ethereal mood. Photorealistic.',
+    image: '/templates/maternity-milk-bath.webp'
+  },
+  {
+    id: 'maternity-gender-reveal',
+    category: 'maternity',
+    title: 'Гендер-пати',
+    description: 'Объявление для соцсетей',
+    prompt: 'Gender reveal pregnancy announcement photo for social media. The pregnant person from the photo holding pink and blue balloons or surrounded by pink/blue confetti, joyful excited expression, festive decorations. CRUCIAL: Preserve exact facial identity. Bright cheerful Instagram-ready photography. Photorealistic.',
+    image: '/templates/maternity-gender-reveal.webp'
+  },
+  {
+    id: 'maternity-window-home',
+    category: 'maternity',
+    title: 'У окна дома',
+    description: 'Мягкий свет',
+    prompt: 'Cozy at-home maternity portrait by a window. The pregnant person from the photo in a soft knit sweater, natural morning light through sheer curtains, hand on belly, peaceful domestic scene. CRUCIAL: Keep the face exactly identical. Warm intimate lifestyle photography. Photorealistic.',
+    image: '/templates/maternity-window-home.webp'
+  },
+
+  // --- PORTRAITS / PROFESSIONAL (MONETIZABLE) ---
+  {
+    id: 'pro-linkedin',
+    category: 'portraits_pro',
+    title: 'LinkedIn / Резюме',
+    description: 'Бизнес-портрет для профиля',
+    prompt: 'Professional LinkedIn and resume headshot of the person from the photo. Smart business-casual outfit, warm approachable smile, soft blurred neutral or office background, flattering natural window light. CRUCIAL: Preserve exact facial identity. Clean trustworthy corporate photography. Photorealistic.',
+    image: '/templates/pro-linkedin.webp'
+  },
+  {
+    id: 'pro-corporate-headshot',
+    category: 'portraits_pro',
+    title: 'Корпоративный headshot',
+    description: 'Пиджак, офисный фон',
+    prompt: 'Corporate executive headshot of the person from the photo wearing a tailored blazer and dress shirt, confident posture, modern glass office background with soft bokeh. CRUCIAL: Keep the face exactly identical. Premium company website quality. Photorealistic.',
+    image: '/templates/pro-corporate-headshot.webp'
+  },
+  {
+    id: 'pro-tinder-pack',
+    category: 'portraits_pro',
+    title: 'Tinder-pack',
+    description: 'Фото для знакомств',
+    prompt: 'Dating app profile photo of the person from the photo. Attractive natural smile, stylish casual outfit, golden hour outdoor café or park background, warm lifestyle photography. CRUCIAL: Preserve exact facial identity. Tinder Bumble Hinge ready, photorealistic, flattering but authentic.',
+    image: '/templates/pro-tinder-pack.webp'
+  },
+  {
+    id: 'pro-conference-speaker',
+    category: 'portraits_pro',
+    title: 'Спикер конференции',
+    description: 'Сцена, микрофон',
+    prompt: 'Professional conference speaker portrait. The person from the photo on stage at a business or tech conference, wireless headset microphone, confident speaking gesture, dramatic stage lighting, blurred audience and presentation screen behind. CRUCIAL: Maintain exact facial identity. TED talk style photorealistic photography.',
+    image: '/templates/pro-conference-speaker.webp'
+  },
+  {
+    id: 'pro-doctor',
+    category: 'portraits_pro',
+    title: 'Врач',
+    description: 'Медицинский образ',
+    prompt: 'Professional doctor portrait of the person from the photo wearing a clean white medical coat with stethoscope, bright clinic or hospital corridor background, trustworthy warm expression. CRUCIAL: Preserve exact facial identity. Medical professional headshot for clinic website. Photorealistic.',
+    image: '/templates/pro-doctor.webp'
+  },
+  {
+    id: 'pro-lawyer',
+    category: 'portraits_pro',
+    title: 'Юрист',
+    description: 'Юридический образ',
+    prompt: 'Professional lawyer portrait of the person from the photo in a formal dark suit, law office background with wooden bookshelves, confident authoritative expression. CRUCIAL: Keep the face exactly identical. Legal professional headshot. Photorealistic.',
+    image: '/templates/pro-lawyer.webp'
+  },
+  {
+    id: 'pro-realtor',
+    category: 'portraits_pro',
+    title: 'Риелтор',
+    description: 'Недвижимость',
+    prompt: 'Professional real estate agent portrait of the person from the photo in polished business attire, bright modern home interior or luxury property showcase background, friendly trustworthy smile. CRUCIAL: Preserve exact facial identity. Realtor headshot for property listings. Photorealistic.',
+    image: '/templates/pro-realtor.webp'
+  },
+  {
+    id: 'pro-visa-id',
+    category: 'portraits_pro',
+    title: 'Документы / Виза',
+    description: 'Фото на документы',
+    prompt: 'Professional ID and visa passport photo of the person from the photo. Plain white or light gray background, neutral calm expression, face centered and fully visible, even flat lighting, shoulders visible, formal dark top. CRUCIAL: Preserve exact facial identity exactly. ICAO passport photo standards, no shadows on face. Photorealistic.',
+    image: '/templates/pro-visa-id.webp'
   }
 ];
 

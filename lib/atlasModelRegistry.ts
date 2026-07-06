@@ -53,6 +53,7 @@ export const ATLAS_MODEL_IDS = {
   kling25TurboI2v: 'kwaivgi/kling-v2.5-turbo-pro/image-to-video',
   kling3ProI2v: 'kwaivgi/kling-v3.0-pro/image-to-video',
   seedance15ProI2v: 'bytedance/seedance-v1.5-pro/image-to-video',
+  seedance20FastI2v: 'bytedance/seedance-2.0-fast/image-to-video',
   veo3I2v: 'google/veo-3/image-to-video',
   veo31I2v: 'google/veo-3.1/image-to-video',
 } as const;

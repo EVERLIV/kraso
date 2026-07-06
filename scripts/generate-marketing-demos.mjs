@@ -1,5 +1,5 @@
 /**
- * Batch-generate Marketing Studio homepage demo videos via Seedance 1.5 Pro.
+ * Batch-generate Marketing Studio homepage demo videos via Kling 3.0 Pro.
  * User-facing generation still uses each template's videoModel (Veo/Kling/etc.).
  *
  * Usage:
@@ -31,10 +31,10 @@ const OUT_DIR = path.join(ROOT, 'public/marketing/videos');
 const REFS_DIR = path.join(OUT_DIR, 'refs');
 const RESULTS_PATH = path.join(__dirname, 'marketing-demo-results.json');
 
-const SEEDANCE_MODEL = 'bytedance/seedance-v1.5-pro/image-to-video';
+const KLING_MODEL = 'kwaivgi/kling-v3.0-pro/image-to-video';
 const REF_IMAGE_MODEL = 'z-image/turbo';
-const DURATION = 5;
-const RESOLUTION = '720p';
+const DURATION = 8;
+const RESOLUTION = '1080p';
 
 /** PNG start frames (existing style picker art) — one per card slot. */
 const START_FRAMES = {
@@ -42,7 +42,6 @@ const START_FRAMES = {
   'unboxing-asmr': ['unboxing-asmr', 'asmr-2', 'asmr-3'],
   'unboxing-tryon': ['unboxing-tryon', 'unboxing-tryon-2', 'unboxing-tryon-3'],
   'selfie-testimonial': ['selfie-testimonial', 'selfie-2', 'selfie-3'],
-  'direct-to-camera': ['direct-to-camera', 'direct-to-camera-2', 'direct-to-camera-3'],
   'before-after': ['before-after', 'before-after-2', 'before-after-3'],
   'product-review': ['product-review', 'product-review-2', 'product-review-3'],
   'couple-sharing': ['couple-1', 'couple-2', 'couple-3'],
@@ -50,7 +49,7 @@ const START_FRAMES = {
   'camera-pov': ['pov-1', 'pov-2', 'pov-3'],
   'classic-modern': ['classic-1', 'classic-2', 'classic-3'],
   'mess-to-fresh': ['mess-fresh-1', 'mess-fresh-2', 'mess-fresh-3'],
-  'gadget-saved-me': ['gadget', 'gadget', 'gadget'],
+  'gadget-saved-me': ['gadget-1', 'gadget-2', 'gadget-3'],
 };
 
 function parseArgs(argv) {
@@ -108,19 +107,19 @@ async function generateDemo(tpl, slotIndex, opts) {
   const prompt = resolveMarketingDemoVideoPrompt(tpl);
   const imageUrl = await resolveStartFrameUrl(tpl, slotIndex, opts);
 
-  console.log(`  [${outFile}] Seedance ${DURATION}s silent…`);
+  console.log(`  [${outFile}] Kling 3.0 Pro ${DURATION}s…`);
   let lastErr;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const { url: videoUrl } = await runAtlasVideo(
-        SEEDANCE_MODEL,
+        KLING_MODEL,
         {
           prompt,
           image: imageUrl,
           aspect_ratio: '9:16',
           resolution: RESOLUTION,
           duration: DURATION,
-          generate_audio: false,
+          generate_audio: true,
           negative_prompt: MARKETING_DEMO_NEGATIVE,
         },
         { timeoutMs: 480_000 },
@@ -149,7 +148,7 @@ async function main() {
   }
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  console.log(`Marketing demos | Seedance | ${DURATION}s silent | ${templates.length} templates × 3`);
+  console.log(`Marketing demos | Kling 3.0 Pro | ${DURATION}s | ${templates.length} templates × 3`);
 
   if (opts.dryRun) {
     for (const tpl of templates) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Smartphone, Package, ShoppingBag, MessageCircle, Video,
-    ArrowLeftRight, Star, Zap, Camera, Users, Lightbulb, Eye, Layers2, Wind,
+    ArrowLeftRight, Star, Zap, Users, Lightbulb, Eye, Layers2, Wind,
 } from 'lucide-react';
 import MarketingStudioShell, { MarketingNav, MarketingTool } from './marketing/MarketingStudioShell';
 import MarketingComposer from './marketing/MarketingComposer';
@@ -59,7 +59,6 @@ const TEMPLATE_ICON: Record<string, React.ReactNode> = {
     'unboxing-asmr':      <Package className="size-[15px] text-[var(--ms-on-lime)]" />,
     'unboxing-tryon':     <ShoppingBag className="size-[15px] text-white" />,
     'selfie-testimonial': <MessageCircle className="size-[15px] text-[var(--ms-on-lime)]" />,
-    'direct-to-camera':   <Camera className="size-[15px] text-white" />,
     'before-after':       <ArrowLeftRight className="size-[15px] text-white" />,
     'product-review':     <Star className="size-[15px] text-[var(--ms-on-lime)]" />,
     'gadget-saved-me':    <Zap className="size-[15px] text-white" />,
