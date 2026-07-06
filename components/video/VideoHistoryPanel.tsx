@@ -31,8 +31,18 @@ function isPending(item: GeneratedImage) {
 }
 
 function isValidVideo(item: GeneratedImage) {
-  return !isPending(item) && !isFailed(item)
-    && (item.generated.startsWith('http') || item.generated.startsWith('blob:'));
+  if (isPending(item) || isFailed(item)) return false;
+  const url = item.generated;
+  return (
+    url.startsWith('http') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:video') ||
+    /\.mp4(\?|$)/i.test(url)
+  );
+}
+
+function isReadyVideo(item: GeneratedImage) {
+  return !isPending(item) && !isFailed(item) && Boolean(item.generated);
 }
 
 interface VideoHistoryPanelProps {
@@ -41,6 +51,7 @@ interface VideoHistoryPanelProps {
   gridCols?: number;
   isGenerating?: boolean;
   status?: string;
+  onItemClick?: (item: GeneratedImage) => void;
 }
 
 function FailedCard() {
@@ -58,17 +69,28 @@ function FailedCard() {
   );
 }
 
-function VideoGridCard({ item }: { item: GeneratedImage }) {
+function VideoGridCard({ item, onItemClick }: { item: GeneratedImage; onItemClick?: (item: GeneratedImage) => void }) {
   const pending = isPending(item);
   const failed = isFailed(item);
   const valid = isValidVideo(item);
+  const ready = isReadyVideo(item);
+
+  const openViewer = () => {
+    if (ready) onItemClick?.(item);
+  };
 
   if (failed) {
     return <FailedCard />;
   }
 
   return (
-    <div className="vs-result-card group">
+    <div
+      className={`vs-result-card group${ready ? ' cursor-pointer' : ''}`}
+      role={ready ? 'button' : undefined}
+      tabIndex={ready ? 0 : undefined}
+      onClick={openViewer}
+      onKeyDown={ready ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); } } : undefined}
+    >
       <div className="vs-result-media">
         {pending ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[var(--vs-text-dim)]" aria-busy="true">
@@ -79,7 +101,7 @@ function VideoGridCard({ item }: { item: GeneratedImage }) {
           <>
             <video
               src={item.generated}
-              className="size-full object-cover"
+              className="size-full object-cover pointer-events-none"
               muted
               loop
               playsInline
@@ -87,14 +109,22 @@ function VideoGridCard({ item }: { item: GeneratedImage }) {
               onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play?.()}
               onMouseOut={(e) => (e.currentTarget as HTMLVideoElement).pause?.()}
             />
-            <div className="vs-play-btn">
+            <div className="vs-play-btn pointer-events-none">
               <span><Play className="size-4 fill-white text-white ml-0.5" /></span>
             </div>
           </>
+        ) : ready ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-muted)]">
+            <Play className="size-5 text-[var(--vs-text-muted)]" />
+          </div>
         ) : null}
-        <input type="checkbox" className="vs-card-check" aria-label="Выбрать" onClick={(e) => e.stopPropagation()} />
-        <button type="button" className="vs-card-menu" aria-label="Действия">
-          <MoreHorizontal className="size-4" />
+        <button
+          type="button"
+          className="vs-card-menu"
+          aria-label="Открыть"
+          onClick={(e) => { e.stopPropagation(); openViewer(); }}
+        >
+          <MoreHorizontal className="size-4" strokeWidth={2.25} />
         </button>
       </div>
       {!pending && !failed && (
@@ -106,14 +136,25 @@ function VideoGridCard({ item }: { item: GeneratedImage }) {
   );
 }
 
-function VideoListRow({ item }: { item: GeneratedImage }) {
+function VideoListRow({ item, onItemClick }: { item: GeneratedImage; onItemClick?: (item: GeneratedImage) => void }) {
   const pending = isPending(item);
   const failed = isFailed(item);
   const valid = isValidVideo(item);
+  const ready = isReadyVideo(item);
   const prompt = getDisplayPrompt(item) || 'Видео';
 
+  const openViewer = () => {
+    if (ready) onItemClick?.(item);
+  };
+
   return (
-    <div className="vs-list-row">
+    <div
+      className={`vs-list-row${ready ? ' cursor-pointer hover:bg-[var(--vs-surface-raised)]' : ''}`}
+      role={ready ? 'button' : undefined}
+      tabIndex={ready ? 0 : undefined}
+      onClick={openViewer}
+      onKeyDown={ready ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); } } : undefined}
+    >
       <div className="vs-list-thumb">
         {failed ? (
           <div className="size-full flex items-center justify-center bg-[var(--vs-error-bg)]">
@@ -125,11 +166,15 @@ function VideoListRow({ item }: { item: GeneratedImage }) {
           </div>
         ) : valid ? (
           <>
-            <video src={item.generated} className="size-full object-cover" muted playsInline preload="metadata" />
-            <span className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <video src={item.generated} className="size-full object-cover pointer-events-none" muted playsInline preload="metadata" />
+            <span className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
               <Play className="size-3 fill-white text-white" />
             </span>
           </>
+        ) : ready ? (
+          <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-muted)]">
+            <Play className="size-4 text-[var(--vs-text-muted)]" />
+          </span>
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
@@ -138,14 +183,19 @@ function VideoListRow({ item }: { item: GeneratedImage }) {
           {failed ? 'Ошибка · кредиты возвращены' : pending ? 'Генерация…' : 'Готово'}
         </p>
       </div>
-      <button type="button" className="vs-card-menu !static text-[var(--vs-text-muted)]" aria-label="Действия">
-        <MoreHorizontal className="size-4" />
+      <button
+        type="button"
+        className="vs-card-menu vs-card-menu--list"
+        aria-label="Открыть"
+        onClick={(e) => { e.stopPropagation(); openViewer(); }}
+      >
+        <MoreHorizontal className="size-4" strokeWidth={2.25} />
       </button>
     </div>
   );
 }
 
-function VideoHistoryPanel({ items, layout, gridCols = 4, isGenerating, status }: VideoHistoryPanelProps) {
+function VideoHistoryPanel({ items, layout, gridCols = 4, isGenerating, status, onItemClick }: VideoHistoryPanelProps) {
   const groups = useMemo(() => groupByDay(items), [items]);
 
   if (!items.length && !isGenerating) {
@@ -163,7 +213,6 @@ function VideoHistoryPanel({ items, layout, gridCols = 4, isGenerating, status }
       {groups.map((group) => (
         <section key={group.label} className="mb-8">
           <div className="vs-date-header">
-            <input type="checkbox" className="vs-date-check" aria-label={`Выбрать все за ${group.label}`} />
             <h3 className="vs-date-label">{group.label}</h3>
           </div>
           {layout === 'grid' ? (
@@ -172,13 +221,13 @@ function VideoHistoryPanel({ items, layout, gridCols = 4, isGenerating, status }
               style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
             >
               {group.items.map((item, i) => (
-                <VideoGridCard key={item.id || `${group.label}-${i}`} item={item} />
+                <VideoGridCard key={item.id || `${group.label}-${i}`} item={item} onItemClick={onItemClick} />
               ))}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {group.items.map((item, i) => (
-                <VideoListRow key={item.id || `${group.label}-${i}`} item={item} />
+                <VideoListRow key={item.id || `${group.label}-${i}`} item={item} onItemClick={onItemClick} />
               ))}
             </div>
           )}

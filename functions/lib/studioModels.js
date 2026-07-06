@@ -1,12 +1,12 @@
 /**
- * Build fal queue input for user studio / chat image generation.
+ * Build Atlas Cloud input for user studio / chat image generation.
  */
 
 const {
-  getFalModel,
+  getAtlasModel,
   resolveStudioModelId,
   STUDIO_TIER_T2I,
-} = require("./falModelRegistry");
+} = require("./atlasModelRegistry");
 
 /** @typedef {'kraso-fast' | 'kraso-quality' | 'kraso-realism'} StudioTier */
 
@@ -76,15 +76,15 @@ function buildStudioInput({
   let modelId;
   if (modelIdOverride) {
     modelId = modelIdOverride;
-    getFalModel(modelId);
+    getAtlasModel(modelId);
   } else if (hasReference) {
     modelId = resolveStudioModelId(krasoTier);
   } else {
     modelId = STUDIO_TIER_T2I[krasoTier] || STUDIO_TIER_T2I["kraso-quality"];
-    getFalModel(modelId);
+    getAtlasModel(modelId);
   }
 
-  const meta = getFalModel(modelId);
+  const meta = getAtlasModel(modelId);
   const input = {
     prompt,
     num_images: 1,
@@ -100,7 +100,7 @@ function buildStudioInput({
     }
   }
 
-  if (modelId.includes("nano-banana") || modelId.startsWith("google/")) {
+  if (modelId.includes("nano-banana") || modelId.startsWith("google/nano-banana")) {
     input.aspect_ratio = ASPECT_TO_NANO[aspectRatio] || "auto";
     input.safety_tolerance = "4";
     input.output_format = "png";
@@ -110,16 +110,16 @@ function buildStudioInput({
     if (meta.supportsResolution && resolution) {
       input.resolution = resolution;
     }
-  } else if (modelId === "fal-ai/flux-pro/kontext") {
+  } else if (modelId === "black-forest-labs/flux-kontext-pro/image-to-image") {
     const ar = ASPECT_TO_NANO[aspectRatio];
     if (ar) input.aspect_ratio = ar;
     input.output_format = "jpeg";
     input.safety_tolerance = "2";
-  } else if (modelId === "fal-ai/qwen-image-2/edit") {
+  } else if (modelId === "qwen/qwen-image-2/edit") {
     input.image_size = ASPECT_TO_QWEN_SIZE[aspectRatio] || "square_hd";
     input.enable_safety_checker = false;
     input.output_format = "png";
-  } else if (modelId === "openai/gpt-image-2/edit") {
+  } else if (modelId === "openai/gpt-image-2/edit" || modelId.endsWith("/edit")) {
     input.image_size = "auto";
     input.quality = resolution === "4K" || resolution === "2K" ? "high" : "medium";
     input.output_format = "png";

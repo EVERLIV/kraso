@@ -1,17 +1,29 @@
-export type PromptEnhanceContext = 'video' | 'image';
+export type PromptEnhanceContext = 'video' | 'image' | 'marketing-video';
 
 const ENHANCE_FUNCTION_URL =
   import.meta.env.VITE_ENHANCE_PROMPT_FUNCTION_URL ||
   'https://us-central1-project-1285666415996898989.cloudfunctions.net/enhancePrompt';
 
+export interface EnhancePromptOptions {
+  context?: PromptEnhanceContext;
+  modelId?: string;
+  onProgress?: (status: string) => void;
+}
+
 /**
- * Enhance a user prompt via FAL any-llm (Cloud Function).
+ * Enhance a user prompt via Atlas LLM (Cloud Function).
  */
 export async function enhancePrompt(
   prompt: string,
-  context: PromptEnhanceContext = 'video',
-  onProgress?: (status: string) => void,
+  contextOrOptions: PromptEnhanceContext | EnhancePromptOptions = 'video',
+  onProgressLegacy?: (status: string) => void,
 ): Promise<string> {
+  const opts: EnhancePromptOptions =
+    typeof contextOrOptions === 'string'
+      ? { context: contextOrOptions, onProgress: onProgressLegacy }
+      : contextOrOptions;
+
+  const { context = 'video', modelId, onProgress } = opts;
   const trimmed = prompt.trim();
   if (!trimmed) return prompt;
 
@@ -20,7 +32,7 @@ export async function enhancePrompt(
   const resp = await fetch(ENHANCE_FUNCTION_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: trimmed, context }),
+    body: JSON.stringify({ prompt: trimmed, context, modelId }),
   });
 
   if (!resp.ok) {

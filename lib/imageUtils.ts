@@ -87,7 +87,15 @@ export const addWatermark = async (imageUrl: string, text: string = "smartphotos
         };
         img.onerror = (e) => {
             console.error("Watermark load failed", e);
-            resolve(imageUrl); // Return original if load fails
+                resolve(imageUrl); // Return original if load fails
         };
     });
 };
+
+/** External CDN URLs (Atlas, legacy FAL, etc.) that should be re-persisted to Firebase Storage on load failure. */
+export function isEphemeralCdnUrl(url: string | undefined): boolean {
+    if (!url?.startsWith('http')) return false;
+    if (url.includes('firebasestorage.googleapis.com')) return false;
+    if (url.includes('storage.googleapis.com') && url.includes('/users/')) return false;
+    return true;
+}

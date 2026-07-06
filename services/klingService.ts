@@ -1,95 +1,92 @@
-// Video generation via FAL AI using Google Veo 3.1 model (through Cloud Function)
-
-interface KlingVideoOptions {
-    prompt: string;
-    image_url: string;
-    duration?: string;
-    aspect_ratio?: '16:9' | '9:16' | '1:1';
-    resolution?: '720p' | '1080p';
-    negative_prompt?: string;
-    cfg_scale?: number;
-    videoModelId?: string;
-    generateAudio?: boolean;
-    onProgress?: (status: string) => void;
-}
-
-/**
- * Upload base64 image to Firebase Storage or return URL if already a URL
- * This is now handled on the client side before calling the Cloud Function
- */
-export const uploadBase64ToUrl = async (base64Data: string): Promise<string> => {
-    if (base64Data.startsWith('http')) return base64Data;
-    // For data URLs, we'll pass them directly to Cloud Function which will handle upload
-    return base64Data;
-};
-
-/**
- * Generate video from reference image using FAL Veo 3.1 via Cloud Function
- */
-export const generateKlingVideo = async (options: KlingVideoOptions): Promise<string> => {
-    const { prompt, image_url, duration = '10', aspect_ratio = '16:9', resolution = '720p', videoModelId, generateAudio = true, onProgress } = options;
-
-    try {
-        // Map duration: Veo only supports 8s
-        const veoDuration = '8s';
-
-        // Map aspect_ratio: Veo only supports 16:9 and 9:16
-        let veoAspectRatio: '16:9' | '9:16' = '16:9';
-        if (aspect_ratio === '9:16') {
-            veoAspectRatio = '9:16';
-        }
-
-        onProgress?.('Подготовка запроса...');
-
-        // Prepare image URLs array (Cloud Function will handle upload if needed)
-        const imageUrls = [image_url];
-
-        const functionUrl =
-            import.meta.env.VITE_FAL_VEO_FUNCTION_URL ||
-            "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateFalVeoVideo";
-
-        onProgress?.('Генерация видео через Veo 3.1...');
-
-        const response = await fetch(functionUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                prompt,
-                image_urls: imageUrls,
-                aspect_ratio: veoAspectRatio,
-                duration: veoDuration,
-                resolution,
-                generate_audio: generateAudio,
-                auto_fix: true,
-                model_id: videoModelId,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = errorText;
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.error || errorJson.message || errorText;
-            } catch {
-                // Keep text as is
-            }
-            throw new Error(errorMessage || `Ошибка генерации видео (${response.status})`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.success || !data.video?.url) {
-            throw new Error("Cloud Function не вернул URL видео: " + JSON.stringify(data));
-        }
-
-        onProgress?.('Видео готово!');
-        return data.video.url;
-    } catch (error: any) {
-        console.error("FAL Veo video generation error:", error);
-        onProgress?.('Ошибка: ' + (error.message || 'Неизвестная ошибка'));
-        throw new Error(error.message || "Ошибка генерации видео через FAL Veo 3.1");
-    }
-};
+import { formatDuration } from '../lib/videoModels';
+
+export interface KlingVideoOptions {
+    prompt: string;
+    image_url: string;
+    /** Duration in seconds (integer). The service formats it for the target model. */
+    durationSeconds?: number;
+    aspect_ratio?: string;
+    resolution?: string;
+    negative_prompt?: string;
+    cfg_scale?: number;
+    /** Atlas Cloud model endpoint ID (e.g. kwaivgi/kling-v3.0-pro/image-to-video) */
+    videoModelId?: string;
+    generateAudio?: boolean;
+    /**
+     * Duration string format expected by the model.
+     * 'seconds' → "5", 'seconds-suffix' → "5s"  (Veo needs the suffix)
+     */
+    durationFormat?: 'seconds' | 'seconds-suffix';
+    onProgress?: (status: string) => void;
+}
+
+const FUNCTION_URL =
+    (import.meta.env.VITE_VIDEO_FUNCTION_URL as string | undefined) ||
+    'https://us-central1-project-1285666415996898989.cloudfunctions.net/generateAtlasVideo';
+
+/**
+ * Generate video from a reference image via Cloud Function → Atlas Cloud.
+ * Supports Wan 2.5, Kling 2.5 / 3.0, Seedance 1.5 Pro, Veo 3 / 3.1.
+ */
+export const generateKlingVideo = async (options: KlingVideoOptions): Promise<string> => {
+    const {
+        prompt,
+        image_url,
+        durationSeconds = 5,
+        aspect_ratio = '16:9',
+        resolution = '1080p',
+        negative_prompt,
+        videoModelId,
+        generateAudio = true,
+        durationFormat = 'seconds',
+        onProgress,
+    } = options;
+
+    const durationStr = formatDuration(durationSeconds, durationFormat);
+
+    onProgress?.('Подготовка запроса...');
+
+    const modelLabel = videoModelId?.includes('veo') ? 'Veo' :
+        videoModelId?.includes('kling') ? 'Kling' :
+        videoModelId?.includes('seedance') ? 'Seedance' :
+        videoModelId?.includes('wan') ? 'Wan' : 'модель';
+
+    onProgress?.(`Генерация видео — ${modelLabel}…`);
+
+    const response = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            prompt,
+            image_urls: [image_url],
+            aspect_ratio,
+            duration: durationStr,
+            resolution,
+            generate_audio: generateAudio,
+            auto_fix: true,
+            model_id: videoModelId,
+            ...(negative_prompt ? { negative_prompt } : {}),
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = errorText;
+        try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorJson.message || errorText;
+        } catch {
+            // keep plain text
+        }
+        throw new Error(errorMessage || `Ошибка генерации видео (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.video?.url) {
+        throw new Error('Cloud Function не вернул URL видео: ' + JSON.stringify(data));
+    }
+
+    onProgress?.('Видео готово!');
+    return data.video.url;
+};

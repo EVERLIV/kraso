@@ -1,4 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+    Smartphone, Package, ShoppingBag, MessageCircle, Video,
+    ArrowLeftRight, Star, Zap, Camera, Users, Lightbulb, Eye, Layers2, Wind,
+} from 'lucide-react';
 import MarketingStudioShell, { MarketingNav, MarketingTool } from './marketing/MarketingStudioShell';
 import MarketingComposer from './marketing/MarketingComposer';
 import MarketingPickerModal from './marketing/MarketingPickerModal';
@@ -11,51 +15,73 @@ import MarketingIconTile from './marketing/MarketingIconTile';
 import { StudioId } from './marketing/MarketingStudioSwitcher';
 import {
     MARKETING_TEMPLATES, MARKETING_FILTERS, DEFAULT_MARKETING_PROMPT,
-    MARKETING_GEN_COST, MarketingFilter, MarketingTemplate,
+    MARKETING_GEN_COST, MARKETING_VIDEO_GEN_COST, MarketingFilter, MarketingTemplate,
+    resolveMarketingPrompt, resolveMarketingVideoPrompt, resolveMarketingNegativePrompt,
 } from '../lib/marketingPresets';
+import { getAtlasModelIdForMarketing } from '../lib/videoPromptRules';
 import {
     PICKER_BY_TYPE, PickerType, PickerItem, COMPOSER_CHIP_DEFS, ComposerChipId,
 } from '../lib/marketingPickers';
 import { generateImageWithGemini, cleanBase64, getMimeType } from '../services/geminiService';
+import { generateKlingVideo } from '../services/klingService';
 import { analyzeProductUrl, analyzeAdReference } from '../services/marketingAnalysisService';
 import { uploadImageToStorage, saveGenerationToHistory, deductCredits } from '../services/firebaseService';
 import { useAuth } from '../contexts/AuthContext';
-import MarketingPreviewMedia, { MARKETING_PREVIEW_FALLBACK } from './marketing/MarketingPreviewMedia';
+import MarketingPreviewMedia from './marketing/MarketingPreviewMedia';
+
+export type MarketingGenMode = 'image' | 'video';
 
 interface MarketingStudioProps {
     credits: number;
     onUpdateCredits: (val: number) => void;
     onExit: () => void;
     onOpenCredits: () => void;
+    onOpenAccount?: () => void;
     onNavigateStudio?: (studio: StudioId) => void;
 }
 
-const FALLBACK = MARKETING_PREVIEW_FALLBACK;
-
 const DEFAULT_CHIP_LABELS: Record<ComposerChipId, string> = {
-    style: 'Распаковка ASMR',
+    style: 'UGC — Соцсети',
     hook: 'Хук',
     setting: 'Сеттинг',
 };
 
-function PreviewPanel({ src }: { src: string }) {
+function PreviewPanel({ src, poster }: { src: string; poster: string }) {
     return (
         <div className="flex-1 min-w-0 aspect-[3/4] rounded-[12px] overflow-hidden bg-[var(--ms-raised)]">
-            <MarketingPreviewMedia src={src} className="size-full object-cover" fallback={FALLBACK} />
+            <MarketingPreviewMedia src={src} className="size-full object-cover" fallback={poster} />
         </div>
     );
 }
+
+const TEMPLATE_ICON: Record<string, React.ReactNode> = {
+    'ugc':                <Smartphone className="size-[15px] text-white" />,
+    'unboxing-asmr':      <Package className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'unboxing-tryon':     <ShoppingBag className="size-[15px] text-white" />,
+    'selfie-testimonial': <MessageCircle className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'direct-to-camera':   <Camera className="size-[15px] text-white" />,
+    'before-after':       <ArrowLeftRight className="size-[15px] text-white" />,
+    'product-review':     <Star className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'gadget-saved-me':    <Zap className="size-[15px] text-white" />,
+    'couple-sharing':     <Users className="size-[15px] text-white" />,
+    'secret-hack':        <Lightbulb className="size-[15px] text-white" />,
+    'camera-pov':         <Eye className="size-[15px] text-white" />,
+    'classic-modern':     <Layers2 className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'mess-to-fresh':      <Wind className="size-[15px] text-[var(--ms-on-lime)]" />,
+};
 
 function TemplateCard({ tpl, onTry }: { tpl: MarketingTemplate; onTry: () => void }) {
     return (
         <div className="ms-panel p-3.5 shadow-[var(--ms-shadow-panel)]">
             <div className="grid grid-cols-3 gap-2">
                 {tpl.previews.map((src, i) => (
-                    <PreviewPanel key={i} src={src} />
+                    <PreviewPanel key={i} src={src} poster={tpl.previewPosters[i]} />
                 ))}
             </div>
             <div className="flex items-center gap-3 mt-3.5">
-                <MarketingIconTile variant={tpl.tileVariant} size="card" />
+                <MarketingIconTile variant={tpl.tileVariant} size="card">
+                    {TEMPLATE_ICON[tpl.id] ?? <Video className="size-[15px]" />}
+                </MarketingIconTile>
                 <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-bold truncate">{tpl.title}</p>
                     <p className="text-xs text-[var(--ms-muted)] truncate text-pretty mt-px">{tpl.subtitle}</p>
@@ -63,7 +89,7 @@ function TemplateCard({ tpl, onTry }: { tpl: MarketingTemplate; onTry: () => voi
                 <button
                     type="button"
                     onClick={onTry}
-                    className="ms-btn-primary shrink-0 px-5 py-2 text-[13px] rounded-[10px]"
+                    className="ms-btn-try shrink-0"
                 >
                     Попробовать
                 </button>
@@ -72,7 +98,7 @@ function TemplateCard({ tpl, onTry }: { tpl: MarketingTemplate; onTry: () => voi
     );
 }
 
-function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNavigateStudio }: MarketingStudioProps) {
+function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onOpenAccount, onNavigateStudio }: MarketingStudioProps) {
     const { user } = useAuth();
     const scrollRef = useRef<HTMLElement>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
@@ -82,13 +108,28 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
     const [msView, setMsView] = useState<MarketingNav>('home');
     const [filter, setFilter] = useState<MarketingFilter>('all');
     const [prompt, setPrompt] = useState(DEFAULT_MARKETING_PROMPT);
+    const [videoPrompt, setVideoPrompt] = useState(() => {
+        const tpl = MARKETING_TEMPLATES.find(t => t.id === 'ugc')!;
+        return resolveMarketingVideoPrompt(tpl);
+    });
+    const [genMode, setGenMode] = useState<MarketingGenMode>('image');
     const [productImage, setProductImage] = useState<string | null>(null);
     const [avatarImage, setAvatarImage] = useState<string | null>(null);
     const [chipLabels, setChipLabels] = useState<Record<ComposerChipId, string>>({ ...DEFAULT_CHIP_LABELS });
+
+    // Track hook/scene fragments for template slot substitution
     const [pickerFragments, setPickerFragments] = useState<Partial<Record<PickerType, string>>>({});
+
+    // Active template for re-resolving the prompt when hook/scene changes
+    const [activeTemplateId, setActiveTemplateId] = useState<string>('ugc');
+    // True once the user has manually edited the prompt text — stop auto-overwriting
+    const [isCustomPrompt, setIsCustomPrompt] = useState(false);
+    const [isCustomVideoPrompt, setIsCustomVideoPrompt] = useState(false);
+
     const [openPicker, setOpenPicker] = useState<PickerType | null>(null);
     const [loading, setLoading] = useState(false);
     const [lastResult, setLastResult] = useState<string | null>(null);
+    const [lastVideoResult, setLastVideoResult] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [mode, setMode] = useState<'product' | 'app'>('product');
     const [docked, setDocked] = useState(false);
@@ -144,20 +185,57 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
         setOpenPicker(picker);
     };
 
+    /** Resolve both image and video prompts from active template + latest fragments */
+    const reResolvePrompts = (
+        templateId: string,
+        hook?: string,
+        scene?: string,
+    ) => {
+        const tpl = MARKETING_TEMPLATES.find(t => t.id === templateId);
+        if (!tpl) return;
+        if (!isCustomPrompt) setPrompt(resolveMarketingPrompt(tpl, hook, scene));
+        if (!isCustomVideoPrompt) setVideoPrompt(resolveMarketingVideoPrompt(tpl, hook, scene));
+    };
+
     const handlePickerSelect = (item: PickerItem) => {
+        if (openPicker === 'style') {
+            // Style picker selects a template category — find matching template
+            const tpl = MARKETING_TEMPLATES.find(t => t.id === item.id);
+            if (tpl) {
+                setActiveTemplateId(tpl.id);
+                setIsCustomPrompt(false);
+                setIsCustomVideoPrompt(false);
+                setChipLabels(prev => ({ ...prev, style: tpl.title }));
+                setPrompt(resolveMarketingPrompt(tpl, pickerFragments.hook, pickerFragments.setting));
+                setVideoPrompt(resolveMarketingVideoPrompt(tpl, pickerFragments.hook, pickerFragments.setting));
+                setOpenPicker(null);
+                return;
+            }
+        }
+
+        // Hook or setting picker
         const chipDef = COMPOSER_CHIP_DEFS.find(c => c.picker === openPicker);
         if (chipDef) {
             setChipLabels(prev => ({ ...prev, [chipDef.id]: item.title }));
         }
-        if (openPicker) {
-            setPickerFragments(prev => ({ ...prev, [openPicker]: item.prompt }));
-        }
-        setPrompt(item.prompt);
+
+        const newHook = openPicker === 'hook' ? item.prompt : pickerFragments.hook;
+        const newScene = openPicker === 'setting' ? item.prompt : pickerFragments.setting;
+        const newFragments = openPicker
+            ? { ...pickerFragments, [openPicker]: item.prompt }
+            : pickerFragments;
+        setPickerFragments(newFragments);
+        reResolvePrompts(activeTemplateId, newHook, newScene);
         setOpenPicker(null);
     };
 
     const applyTemplate = (tpl: MarketingTemplate) => {
-        setPrompt(tpl.prompt);
+        setActiveTemplateId(tpl.id);
+        setIsCustomPrompt(false);
+        setIsCustomVideoPrompt(false);
+        setChipLabels(prev => ({ ...prev, style: tpl.title }));
+        setPrompt(resolveMarketingPrompt(tpl, pickerFragments.hook, pickerFragments.setting));
+        setVideoPrompt(resolveMarketingVideoPrompt(tpl, pickerFragments.hook, pickerFragments.setting));
         if (isMobile) {
             setShowComposer(true);
         } else {
@@ -165,10 +243,21 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
         }
     };
 
+    const handlePromptChange = (value: string) => {
+        setPrompt(value);
+        setIsCustomPrompt(true);
+    };
+
+    const handleVideoPromptChange = (value: string) => {
+        setVideoPrompt(value);
+        setIsCustomVideoPrompt(true);
+    };
+
     const openComposer = () => setShowComposer(true);
 
     const applyBrief = (brief: Awaited<ReturnType<typeof analyzeProductUrl>>) => {
         setPrompt(brief.prompt);
+        setIsCustomPrompt(true); // analysis result is always treated as custom
         setChipLabels(prev => ({
             ...prev,
             style: brief.styleLabel,
@@ -178,7 +267,6 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
         setPickerFragments({
             hook: brief.hook,
             setting: brief.setting,
-            style: brief.styleLabel,
         });
         setAnalysisNote(brief.summary);
         setOpenTool(null);
@@ -209,12 +297,14 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
 
     const handleGenerate = async () => {
         if (!user) return;
+        const cost = genMode === 'video' ? MARKETING_VIDEO_GEN_COST : MARKETING_GEN_COST;
+
         if (!productImage && mode === 'product') {
             setError('Загрузите фото товара');
             return;
         }
-        if (credits < MARKETING_GEN_COST) {
-            setError(`Недостаточно кредитов (${MARKETING_GEN_COST} кр)`);
+        if (credits < cost) {
+            setError(`Недостаточно кредитов (${cost} кр)`);
             onOpenCredits();
             return;
         }
@@ -223,24 +313,71 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
         setError(null);
 
         try {
-            const extras = Object.values(pickerFragments).filter(Boolean).join(' ');
-            const fullPrompt = `${prompt} ${extras} Вертикальный 9:16, фотореализм, готово для соцсетей.`;
+            if (genMode === 'video') {
+                // Video generation via Veo / Kling
+                const activeTpl = MARKETING_TEMPLATES.find(t => t.id === activeTemplateId);
+                const videoModel = activeTpl?.videoModel ?? 'kling-3.0-pro';
+                const videoModelId = getAtlasModelIdForMarketing(videoModel);
+                const negativePrompt = activeTpl ? resolveMarketingNegativePrompt(activeTpl) : undefined;
+                const imageUrl = productImage ?? avatarImage ?? '';
+                const durationFormat = videoModel === 'veo-3.1' ? 'seconds-suffix' as const : 'seconds' as const;
+                const durationSeconds = videoModel === 'veo-3.1' ? 8 : videoModel === 'seedance-1.5-pro' ? 6 : 10;
 
-            const refs: { data: string; mimeType: string }[] = [];
-            if (productImage) refs.push({ data: cleanBase64(productImage), mimeType: getMimeType(productImage) });
-            if (avatarImage) refs.push({ data: cleanBase64(avatarImage), mimeType: getMimeType(avatarImage) });
+                const videoUrl = await generateKlingVideo({
+                    prompt: videoPrompt,
+                    image_url: imageUrl,
+                    aspect_ratio: '9:16',
+                    resolution: '1080p',
+                    durationSeconds,
+                    durationFormat,
+                    videoModelId,
+                    negative_prompt: negativePrompt || undefined,
+                    generateAudio: true,
+                    onProgress: (status) => setError(status),
+                });
 
-            const dataUrl = await generateImageWithGemini(fullPrompt, refs, '9:16');
-            const url = await uploadImageToStorage(user.uid, dataUrl, 'generated');
-            await saveGenerationToHistory(user.uid, {
-                original: productImage,
-                generated: url,
-                prompt: `[MARKETING] ${prompt.slice(0, 120)}`,
-                source: 'marketing',
-            });
-            await deductCredits(user.uid, MARKETING_GEN_COST);
-            onUpdateCredits(credits - MARKETING_GEN_COST);
-            setLastResult(url);
+                await saveGenerationToHistory(user.uid, {
+                    original: productImage,
+                    generated: videoUrl,
+                    prompt: `[MARKETING VIDEO] ${videoPrompt.slice(0, 120)}`,
+                    source: 'marketing',
+                });
+                await deductCredits(user.uid, cost);
+                onUpdateCredits(credits - cost);
+                setLastVideoResult(videoUrl);
+                setError(null);
+            } else {
+                // Image generation via Gemini
+                const fullPrompt = `${prompt} Вертикальная 9:16, фотореализм, готово для соцсетей.`;
+
+                const refs: { data: string; mimeType: string; role?: 'reference' | 'character' }[] = [];
+                if (productImage) {
+                    refs.push({
+                        data: cleanBase64(productImage),
+                        mimeType: getMimeType(productImage),
+                        role: 'reference',
+                    });
+                }
+                if (avatarImage) {
+                    refs.push({
+                        data: cleanBase64(avatarImage),
+                        mimeType: getMimeType(avatarImage),
+                        role: 'character',
+                    });
+                }
+
+                const dataUrl = await generateImageWithGemini(fullPrompt, refs, '9:16');
+                const url = await uploadImageToStorage(user.uid, dataUrl, 'generated');
+                await saveGenerationToHistory(user.uid, {
+                    original: productImage,
+                    generated: url,
+                    prompt: `[MARKETING] ${prompt.slice(0, 120)}`,
+                    source: 'marketing',
+                });
+                await deductCredits(user.uid, cost);
+                onUpdateCredits(credits - cost);
+                setLastResult(url);
+            }
         } catch (e) {
             console.error(e);
             setError('Ошибка генерации. Попробуйте снова.');
@@ -266,12 +403,17 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
 
     const composerProps = {
         prompt,
-        onPromptChange: setPrompt,
+        onPromptChange: handlePromptChange,
+        videoPrompt,
+        onVideoPromptChange: handleVideoPromptChange,
+        genMode,
+        onGenModeChange: setGenMode,
         chipLabels,
         onChipClick: handleChipClick,
         productImage,
         avatarImage,
         lastResult,
+        lastVideoResult,
         mode,
         onModeChange: setMode,
         loading,
@@ -288,6 +430,7 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
             userPhoto={user?.photoURL}
             onExit={onExit}
             onOpenCredits={onOpenCredits}
+            onOpenAccount={onOpenAccount}
             onNav={handleNav}
             onSwitchStudio={handleSwitchStudio}
             onOpenTool={handleOpenTool}
@@ -389,10 +532,14 @@ function MarketingStudio({ credits, onUpdateCredits, onExit, onOpenCredits, onNa
             {showComposer && (
                 <MarketingMobileComposer
                     prompt={prompt}
-                    onPromptChange={setPrompt}
+                    onPromptChange={handlePromptChange}
+                    videoPrompt={videoPrompt}
+                    onVideoPromptChange={handleVideoPromptChange}
+                    genMode={genMode}
+                    onGenModeChange={setGenMode}
                     productImage={productImage}
                     avatarImage={avatarImage}
-                    previewImage={lastResult}
+                    previewImage={genMode === 'video' ? lastVideoResult : lastResult}
                     styleLabel={chipLabels.style}
                     onClose={() => setShowComposer(false)}
                     onPickProduct={() => fileRef.current?.click()}

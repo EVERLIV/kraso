@@ -36,6 +36,7 @@ const { telegramWebhookHandler } = require("./telegramWebhook");
 const { generateTemplateImageHandler, generateTemplateBatchHandler } = require("./generateTemplateImage");
 const { generateStudioImageHandler } = require("./generateStudioImage");
 const { enhancePromptHandler } = require("./enhancePrompt");
+const { generateAtlasVideoHandler } = require("./generateAtlasVideo");
 
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
@@ -48,6 +49,7 @@ exports.generateTemplateImage = generateTemplateImageHandler;
 exports.generateTemplateBatch = generateTemplateBatchHandler;
 exports.generateStudioImage = generateStudioImageHandler;
 exports.enhancePrompt = enhancePromptHandler;
+exports.generateAtlasVideo = generateAtlasVideoHandler;
 
 /**
  * Google Imagen / Gemini image generation (Nano Banana).
@@ -433,127 +435,6 @@ exports.generateFluxImage = onRequest({ timeoutSeconds: 300 }, async (req, res) 
  */
 exports.generateGigaChatImage = onRequest(async (req, res) => {
   res.status(501).send("GigaChat integration pending certificates.");
-});
-
-/**
- * Universal FAL AI Proxy
- * Proxies requests to FAL AI to handle CORS and Authentication securely (or semi-securely via passed key).
- */
-exports.generateFalProxy = onRequest({ timeoutSeconds: 300 }, async (req, res) => {
-  // CORS Headers
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST');
-  res.set('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
-  }
-
-  const { model, input, apiKey } = req.body;
-
-  // Use provided key or fallback to env. 
-  // NOTE: In production, store keys in Firebase Secrets.
-  const token = apiKey || process.env.FAL_KEY;
-
-  if (!token) {
-    res.status(401).send("Missing FAL API Key");
-    return;
-  }
-
-  if (!model) {
-    res.status(400).send("Missing model path");
-    return;
-  }
-
-  const FAL_QUEUE_URL = `https://queue.fal.run/${model}`;
-
-  try {
-    // 1. Submit Request to Queue
-    logger.info(`FAL Proxy: Submitting to ${model}`);
-    const submitResp = await fetch(FAL_QUEUE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(input)
-    });
-
-    if (!submitResp.ok) {
-      const errText = await submitResp.text();
-      logger.error(`FAL Submit Error (${submitResp.status}):`, errText);
-      throw new Error(`FAL Submit Failed: ${errText}`);
-    }
-
-    const submitData = await submitResp.json();
-    const requestId = submitData.request_id;
-
-    // If completed immediately (sync mode sometimes returns result direct, but queue usually returns request_id)
-    if (submitData.status === 'COMPLETED') {
-      // ... handled same as poll result
-    }
-
-    if (!requestId) {
-      // Fallback: maybe it returned result directly?
-      if (submitData.images && submitData.images.length > 0) {
-        res.status(200).json({ url: submitData.images[0].url });
-        return;
-      }
-      throw new Error("No request_id returned from FAL");
-    }
-
-    logger.info(`FAL Proxy: Request ID ${requestId}. Polling...`);
-
-    // 2. Poll for Result
-    const STATUS_URL = `${FAL_QUEUE_URL}/requests/${requestId}/status`;
-    let attempts = 0;
-    while (attempts < 60) { // Max 60 * 2s = 120s wait (Function timeout is 300s)
-      await new Promise(r => setTimeout(r, 2000)); // Wait 2s
-      attempts++;
-
-      const statusResp = await fetch(STATUS_URL, {
-        headers: {
-          'Authorization': `Key ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!statusResp.ok) {
-        const errText = await statusResp.text();
-        // 404 might mean not ready? usually 200.
-        logger.warn(`FAL Poll Error: ${errText}`);
-        continue;
-      }
-
-      const statusData = await statusResp.json();
-
-      if (statusData.status === 'COMPLETED') {
-        // Success
-        if (statusData.images && statusData.images.length > 0) {
-          res.status(200).json({ url: statusData.images[0].url });
-        } else if (statusData.image && statusData.image.url) {
-          res.status(200).json({ url: statusData.image.url });
-        } else {
-          throw new Error("FAL Completed but no image found in response");
-        }
-        return;
-      }
-
-      if (statusData.status === 'FAILED') {
-        throw new Error(`FAL Failed: ${statusData.error || 'Unknown Error'}`);
-      }
-
-      // otherwise IN_QUEUE or IN_PROGRESS, continue loop
-    }
-
-    throw new Error("FAL Timeout: Generation took too long");
-
-  } catch (error) {
-    logger.error("FAL Proxy Error", error);
-    res.status(500).send(error.message);
-  }
 });
 
 /**

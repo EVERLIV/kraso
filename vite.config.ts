@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => {
             p.includes('/public/marketing/pickers/') ||
             p.includes('/public/marketing/videos/') ||
             p.includes('/public/shorts/presets/') ||
-            p.includes('/public/video/how-it-works/')
+            p.includes('/public/video/how-it-works/') ||
+            p.includes('/public/video/demos/')
           );
         },
       },

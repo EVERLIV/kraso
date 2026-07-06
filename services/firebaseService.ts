@@ -178,6 +178,20 @@ export const saveGenerationToHistory = async (userId: string, item: GeneratedIma
 /**
  * Toggles the 'isSaved' status of a generation
  */
+/** Removes a generation record from Firestore history. */
+export const deleteGenerationFromHistory = async (docId: string): Promise<boolean> => {
+  if (!db || !docId) return false;
+  if (docId.startsWith('temp_') || docId.startsWith('local_')) return true;
+
+  try {
+    await db.collection(HISTORY_COLLECTION).doc(docId).delete();
+    return true;
+  } catch (error) {
+    console.error('Error deleting generation:', error);
+    return false;
+  }
+};
+
 export const toggleSavedStatus = async (docId: string, isSaved: boolean): Promise<boolean> => {
   if (!db || !docId) return false;
 

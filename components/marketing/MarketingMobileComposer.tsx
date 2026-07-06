@@ -1,14 +1,19 @@
 import React from 'react';
 import {
     X, Plus, User, Package, Pencil, ChevronRight, Sparkles,
-    Smartphone, Clock, Gem,
+    Smartphone, Clock, Gem, Image, Video,
 } from 'lucide-react';
-import { MARKETING_GEN_COST } from '../../lib/marketingPresets';
+import { MARKETING_GEN_COST, MARKETING_VIDEO_GEN_COST } from '../../lib/marketingPresets';
+import { MarketingGenMode } from '../MarketingStudio';
 import { PickerType } from '../../lib/marketingPickers';
 
 export interface MarketingMobileComposerProps {
     prompt: string;
     onPromptChange: (v: string) => void;
+    videoPrompt?: string;
+    onVideoPromptChange?: (v: string) => void;
+    genMode?: MarketingGenMode;
+    onGenModeChange?: (m: MarketingGenMode) => void;
     productImage: string | null;
     avatarImage: string | null;
     previewImage: string | null;
@@ -26,11 +31,15 @@ export interface MarketingMobileComposerProps {
 }
 
 function MarketingMobileComposer({
-    prompt, onPromptChange, productImage, avatarImage, previewImage, styleLabel,
+    prompt, onPromptChange, videoPrompt, onVideoPromptChange,
+    genMode = 'image', onGenModeChange,
+    productImage, avatarImage, previewImage, styleLabel,
     onClose, onPickProduct, onPickAvatar, onPickAsset, onRemoveProduct,
     onOpenPicker, loading, error, onGenerate, analysisNote,
 }: MarketingMobileComposerProps) {
+    const isVideo = genMode === 'video';
     const hero = previewImage ?? productImage ?? avatarImage;
+    const cost = isVideo ? MARKETING_VIDEO_GEN_COST : MARKETING_GEN_COST;
 
     return (
         <div className="md:hidden fixed inset-0 z-50 ms flex flex-col bg-[var(--ms-page)] overflow-y-auto custom-scrollbar">
@@ -151,12 +160,37 @@ function MarketingMobileComposer({
                     </div>
                 </button>
 
+                {/* Photo / Video mode toggle */}
+                {onGenModeChange && (
+                    <div className="flex gap-2">
+                        {(['image', 'video'] as const).map(m => (
+                            <button
+                                key={m}
+                                type="button"
+                                onClick={() => onGenModeChange(m)}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all duration-150 ${
+                                    genMode === m
+                                        ? 'bg-[var(--ms-lime)] text-black'
+                                        : 'ms-panel text-[var(--ms-muted)]'
+                                }`}
+                            >
+                                {m === 'image' ? <Image className="size-4" /> : <Video className="size-4" />}
+                                {m === 'image' ? 'Фото' : 'Видео'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <textarea
-                    value={prompt}
-                    onChange={e => onPromptChange(e.target.value)}
-                    rows={3}
-                    placeholder="Опишите, что происходит в рекламе"
+                    value={isVideo ? (videoPrompt ?? '') : prompt}
+                    onChange={e => isVideo
+                        ? onVideoPromptChange?.(e.target.value)
+                        : onPromptChange(e.target.value)
+                    }
+                    rows={isVideo ? 5 : 3}
+                    placeholder={isVideo ? 'Видео промт (Kling 3.0)…' : 'Опишите, что происходит в рекламе'}
                     className="w-full ms-panel p-4 text-sm text-[var(--ms-body)] placeholder:text-[var(--ms-dim)] bg-[var(--ms-panel)] outline-none resize-none rounded-2xl text-pretty"
+                    lang={isVideo ? 'en' : 'ru'}
                 />
 
                 {/* Video config pills */}
@@ -188,15 +222,15 @@ function MarketingMobileComposer({
                         color: 'var(--ms-on-lime)',
                     }}
                 >
-                    {loading ? 'Генерация…' : (
+                    {loading ? (isVideo ? 'Создаём видео…' : 'Генерация…') : (
                         <>
-                            Сгенерировать
+                            {isVideo ? 'Создать видео' : 'Сгенерировать'}
                             <Sparkles className="size-4" />
                         </>
                     )}
                 </button>
                 <p className="text-center text-[11px] text-[var(--ms-dim)] tabular-nums pb-2">
-                    ✦ {MARKETING_GEN_COST} кредитов
+                    ✦ {cost} кредитов
                 </p>
             </div>
         </div>

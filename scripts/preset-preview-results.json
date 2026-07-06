@@ -1,0 +1,37 @@
+[
+  {
+    "id": "sd_grocery_paparazzi",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_grocery_paparazzi.mp4"
+  },
+  {
+    "id": "sd_gym_mirror",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_gym_mirror.mp4"
+  },
+  {
+    "id": "sd_airport_sprint",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_airport_sprint.mp4"
+  },
+  {
+    "id": "sd_cafe_rain",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_cafe_rain.mp4"
+  },
+  {
+    "id": "sd_rooftop_wind",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_rooftop_wind.mp4"
+  },
+  {
+    "id": "sd_dino_sprint",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_dino_sprint.mp4"
+  },
+  {
+    "id": "sd_spire_banner",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\video\\presets\\sd_spire_banner.mp4"
+  }
+]

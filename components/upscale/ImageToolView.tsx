@@ -25,6 +25,7 @@ function ImageToolView({ config, credits, onUpdateCredits, initialImage }: Image
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<GeneratedImage[]>([]);
     const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+    const [bgType, setBgType] = useState<string>(config.bgTypeOptions?.[0]?.id ?? '');
 
     useEffect(() => {
         if (initialImage) setImage(initialImage);
@@ -76,7 +77,7 @@ function ImageToolView({ config, credits, onUpdateCredits, initialImage }: Image
         setError(null);
 
         try {
-            const prompt = config.buildPrompt();
+            const prompt = config.buildPrompt(config.bgTypeOptions ? bgType : undefined);
             const refs = [{ data: cleanBase64(image), mimeType: getMimeType(image) }];
             const generatedData = await generateImageWithGemini(prompt, refs, '1:1');
             setResult(generatedData);
@@ -181,6 +182,10 @@ function ImageToolView({ config, credits, onUpdateCredits, initialImage }: Image
                                         </div>
                                     )}
                                 </div>
+                            ) : config.singleDemo ? (
+                                <div className="it-preview it-preview--contain">
+                                    <img src={config.demoAfter} alt="" />
+                                </div>
                             ) : (
                                 <BeforeAfterCompare before={config.demoBefore} after={config.demoAfter} />
                             )}
@@ -192,6 +197,23 @@ function ImageToolView({ config, credits, onUpdateCredits, initialImage }: Image
                             <h1 className="it-title">{config.title}</h1>
                             <p className="it-desc">{config.description}</p>
                         </div>
+
+                        {config.bgTypeOptions && hasImage && (
+                            <div className="it-segment" role="radiogroup" aria-label="Тип фона">
+                                {config.bgTypeOptions.map(opt => (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={bgType === opt.id}
+                                        onClick={() => setBgType(opt.id)}
+                                        className={`it-segment__btn ${bgType === opt.id ? 'it-segment__btn--active' : ''}`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         <div className="it-actions">
                             {!hasImage ? (

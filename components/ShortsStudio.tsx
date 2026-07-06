@@ -129,7 +129,8 @@ function ShortsStudio({
             const videoUrl = await generateKlingVideo({
                 prompt: promptText,
                 image_url: cloudOriginal,
-                duration: '10',
+                durationSeconds: 10,
+                durationFormat: 'seconds',
                 aspect_ratio: aspect,
                 onProgress: setStatus,
             });

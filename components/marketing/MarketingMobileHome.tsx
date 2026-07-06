@@ -1,15 +1,31 @@
 import React from 'react';
-import { DollarSign, Clapperboard, Globe } from 'lucide-react';
+import { DollarSign, Clapperboard, Globe, Smartphone, Package, ShoppingBag, MessageCircle, Camera, ArrowLeftRight, Star, Zap, Video, Users, Lightbulb, Eye, Layers2, Wind } from 'lucide-react';
 import { MARKETING_FILTERS, MARKETING_TEMPLATES, MarketingFilter, MarketingTemplate } from '../../lib/marketingPresets';
+
+const TEMPLATE_ICON: Record<string, React.ReactNode> = {
+    'ugc':                <Smartphone className="size-[15px] text-white" />,
+    'unboxing-asmr':      <Package className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'unboxing-tryon':     <ShoppingBag className="size-[15px] text-white" />,
+    'selfie-testimonial': <MessageCircle className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'direct-to-camera':   <Camera className="size-[15px] text-white" />,
+    'before-after':       <ArrowLeftRight className="size-[15px] text-white" />,
+    'product-review':     <Star className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'gadget-saved-me':    <Zap className="size-[15px] text-white" />,
+    'couple-sharing':     <Users className="size-[15px] text-white" />,
+    'secret-hack':        <Lightbulb className="size-[15px] text-white" />,
+    'camera-pov':         <Eye className="size-[15px] text-white" />,
+    'classic-modern':     <Layers2 className="size-[15px] text-[var(--ms-on-lime)]" />,
+    'mess-to-fresh':      <Wind className="size-[15px] text-[var(--ms-on-lime)]" />,
+};
 import { MarketingTool } from './MarketingStudioShell';
 import MarketingIconTile from './MarketingIconTile';
 import MarketingPreviewMedia from './MarketingPreviewMedia';
 
-const HERO_IMAGES = MARKETING_TEMPLATES[3]?.previews ?? MARKETING_TEMPLATES[0].previews;
+const HERO_TPL = MARKETING_TEMPLATES[3] ?? MARKETING_TEMPLATES[0];
 
-function HeroFanImage({ src, className }: { src: string; className?: string }) {
+function HeroFanImage({ src, poster, className }: { src: string; poster: string; className?: string }) {
     return (
-        <MarketingPreviewMedia src={src} className={className} />
+        <MarketingPreviewMedia src={src} poster={poster} fallback={poster} className={className} />
     );
 }
 
@@ -36,15 +52,18 @@ function MarketingMobileHome({
             {/* Hero fan */}
             <div className="relative flex items-end justify-center h-[200px] mb-6">
                 <HeroFanImage
-                    src={HERO_IMAGES[0]}
+                    src={HERO_TPL.previews[0]}
+                    poster={HERO_TPL.previewPosters[0]}
                     className="absolute left-[12%] bottom-0 w-[72px] h-[108px] rounded-2xl object-cover opacity-80 -rotate-6 shadow-lg"
                 />
                 <HeroFanImage
-                    src={HERO_IMAGES[1]}
+                    src={HERO_TPL.previews[1]}
+                    poster={HERO_TPL.previewPosters[1]}
                     className="relative z-10 w-[100px] h-[150px] rounded-2xl object-cover shadow-xl"
                 />
                 <HeroFanImage
-                    src={HERO_IMAGES[2]}
+                    src={HERO_TPL.previews[2]}
+                    poster={HERO_TPL.previewPosters[2]}
                     className="absolute right-[12%] bottom-0 w-[72px] h-[108px] rounded-2xl object-cover opacity-80 rotate-6 shadow-lg"
                 />
             </div>
@@ -116,12 +135,15 @@ function MarketingMobileHome({
                                 <HeroFanImage
                                     key={i}
                                     src={src}
+                                    poster={tpl.previewPosters[i]}
                                     className="w-full aspect-[3/4] rounded-xl object-cover bg-[var(--ms-raised)]"
                                 />
                             ))}
                         </div>
                         <div className="flex items-center gap-3">
-                            <MarketingIconTile variant={tpl.tileVariant} size="card" />
+                            <MarketingIconTile variant={tpl.tileVariant} size="card">
+                                {TEMPLATE_ICON[tpl.id] ?? <Video className="size-[15px] text-white" />}
+                            </MarketingIconTile>
                             <div className="flex-1 min-w-0">
                                 <p className="text-[15px] font-bold">{tpl.title}</p>
                                 <p className="text-xs text-[var(--ms-muted)] truncate">{tpl.subtitle}</p>

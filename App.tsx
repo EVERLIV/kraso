@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './lib/firebase';
-import { compressImage, addWatermark } from './lib/imageUtils';
+import { compressImage, addWatermark, isEphemeralCdnUrl } from './lib/imageUtils';
 import Header from './components/Header';
 import { CategoryItem } from './components/Sidebar';
 import ImageUploader from './components/ImageUploader';
@@ -30,7 +30,7 @@ import { buildUserFacingPrompt, getDisplayPrompt } from './lib/promptUtils';
 import { calculateKrasoCost, applyKrasoModel, apiResolutionForKraso, KrasoModelId } from './lib/krasoModels';
 import { calculateVideoKrasoCost } from './lib/krasoVideoModels';
 import { getDefaultVariant, getVariant, type VideoVariantId } from './lib/videoModels';
-import { VideoMotionPreset, buildVideoPresetPrompt } from './lib/videoPresets';
+import { VideoMotionPreset, buildVideoPresetPrompt, getVideoPresetNegativePrompt } from './lib/videoPresets';
 import { fetchCommunityFeed, publishToCommunity, toggleCommunityLike, CommunityPost } from './services/communityService';
 import Footer from './components/Footer';
 import TermsPage from './components/pages/TermsPage';
@@ -40,7 +40,7 @@ import SEO from './components/SEO';
 import { CookieConsent } from './components/CookieConsent';
 import { useAuth } from './contexts/AuthContext';
 import { generateImageWithGemini, cleanBase64, getMimeType, ReferenceImage } from './services/geminiService';
-import { uploadImageToStorage, saveGenerationToHistory, getUserHistory, syncUserProfile, deductCredits, purchaseSubscription, toggleSavedStatus } from './services/firebaseService';
+import { uploadImageToStorage, saveGenerationToHistory, getUserHistory, syncUserProfile, deductCredits, purchaseSubscription, toggleSavedStatus, deleteGenerationFromHistory } from './services/firebaseService';
 import { createPaymentSession } from './services/paymentService';
 import { AppState, CategoryId, AspectRatio, Preset, ImageResolution, GenModelId, GeneratedImage, ViewMode, SubscriptionTier, SubscriptionPlan } from './types';
 import {
@@ -278,7 +278,8 @@ const App: React.FC = () => {
     const [videoKrasoModel, setVideoKrasoModel] = useState<KrasoModelId>('kraso-quality');
     const [videoVariant, setVideoVariant] = useState<VideoVariantId>(getDefaultVariant('kraso-quality').id);
     const [selectedVideoPreset, setSelectedVideoPreset] = useState<VideoMotionPreset | null>(null);
-    const [isVideoGenerating, setIsVideoGenerating] = useState(false);
+    const [videoGeneratingCount, setVideoGeneratingCount] = useState(0);
+    const isVideoGenerating = videoGeneratingCount > 0;
     const [videoStatus, setVideoStatus] = useState('Оживляем фото...');
 
     // Shorts Studio
@@ -597,7 +598,12 @@ const App: React.FC = () => {
         setIsEnhancingVideoPrompt(true);
         try {
             const { enhancePrompt } = await import('./services/promptEnhanceService');
-            return await enhancePrompt(trimmed, 'video', (s) => setVideoStatus(s));
+            const activeVariant = getVariant(videoKrasoModel, videoVariant);
+            return await enhancePrompt(trimmed, {
+                context: 'video',
+                modelId: activeVariant.atlasModelId,
+                onProgress: (s) => setVideoStatus(s),
+            });
         } finally {
             setIsEnhancingVideoPrompt(false);
         }
@@ -633,7 +639,7 @@ const App: React.FC = () => {
         const imageToUse = videoAttachedImage;
         const tempId = `temp-v-${Date.now()}`;
 
-        setIsVideoGenerating(true);
+        setVideoGeneratingCount(c => c + 1);
         setErrorMsg(null);
         setVideoStatus('Инициализация...');
         setCredits(c => Math.max(0, c - cost));
@@ -644,7 +650,7 @@ const App: React.FC = () => {
                 textToUse = await runVideoPromptEnhance(textToUseRaw);
                 setVideoPrompt(textToUse);
             } catch (err: any) {
-                setIsVideoGenerating(false);
+                setVideoGeneratingCount(c => Math.max(0, c - 1));
                 setCredits(c => c + cost);
                 setErrorMsg(err.message || 'Не удалось улучшить промпт');
                 return;
@@ -675,16 +681,17 @@ const App: React.FC = () => {
             const promptText = buildVideoPresetPrompt(selectedVideoPreset, textToUse);
 
             const { generateKlingVideo } = await import('./services/klingService');
+            const activeVariant = getVariant(videoKrasoModel, videoVariant);
             const videoUrl = await generateKlingVideo({
                 prompt: promptText,
                 image_url: cloudOriginal,
-                duration: String(videoDuration),
+                durationSeconds: videoDuration,
+                durationFormat: activeVariant.params.durationFormat ?? 'seconds',
                 aspect_ratio: videoAspectRatio,
                 resolution: videoQuality,
-                videoModelId: getVariant(videoKrasoModel, videoVariant).falModelId,
-                generateAudio: !!getVariant(videoKrasoModel, videoVariant).hasAudio && videoGenerateAudio,
-                negative_prompt: videoNegativePrompt,
-                cfg_scale: videoCfgScale,
+                videoModelId: activeVariant.atlasModelId,
+                negative_prompt: getVideoPresetNegativePrompt(selectedVideoPreset),
+                generateAudio: !!activeVariant.hasAudio && videoGenerateAudio,
                 onProgress: (status) => setVideoStatus(status)
             });
 
@@ -722,7 +729,7 @@ const App: React.FC = () => {
             ));
             setCredits(c => c + cost); // Refund
         } finally {
-            setIsVideoGenerating(false);
+            setVideoGeneratingCount(c => Math.max(0, c - 1));
         }
     };
 
@@ -827,6 +834,11 @@ const App: React.FC = () => {
 
     const handleTemplateSelect = (preset: Preset) => {
         setSelectedTemplate(preset);
+        // Photo templates → photorealistic tier (Nano Banana 2 Edit via Atlas)
+        setKrasoModel('kraso-realism');
+        const next = applyKrasoModel('kraso-realism', resolution);
+        setSelectedModel(next.model);
+        setResolution(next.resolution);
         // Documents have a fixed size — force the correct aspect ratio (ratio picker is locked in the UI).
         if (isDocumentPresetId(preset.id)) {
             setAspectRatio(documentAspectRatio(preset.id));
@@ -1089,15 +1101,18 @@ const App: React.FC = () => {
 
     const handleShare = async (imageUrl: string) => {
         try {
+            const looksLikeVideo = imageUrl.startsWith('data:video') || /\.mp4(\?|$)/i.test(imageUrl);
+            const fileName = looksLikeVideo ? 'generated-video.mp4' : 'generated-image.jpg';
+            const fallbackMime = looksLikeVideo ? 'video/mp4' : 'image/jpeg';
             let file: File;
             if (imageUrl.startsWith('data:')) {
                 const res = await fetch(imageUrl);
                 const blob = await res.blob();
-                file = new File([blob], "generated-image.jpg", { type: blob.type || "image/jpeg" });
+                file = new File([blob], fileName, { type: blob.type || fallbackMime });
             } else {
                 const response = await fetch(imageUrl, { mode: 'cors' });
                 const blob = await response.blob();
-                file = new File([blob], "generated-image.jpg", { type: blob.type || "image/jpeg" });
+                file = new File([blob], fileName, { type: blob.type || fallbackMime });
             }
 
             if (navigator.share && navigator.canShare?.({ files: [file] })) {
@@ -1148,19 +1163,29 @@ const App: React.FC = () => {
         }
     };
 
-    // Helper function to handle failed fal.media URLs by trying to re-persist them
+    const handleDeleteHistory = async (item: GeneratedImage) => {
+        if (!item.id) {
+            setHistory(prev => prev.filter(h => h !== item && h.generated !== item.generated));
+            return;
+        }
+        setHistory(prev => prev.filter(h => h.id !== item.id));
+        if (!item.id.startsWith('temp_') && !item.id.startsWith('local_')) {
+            const ok = await deleteGenerationFromHistory(item.id);
+            if (!ok) console.warn('Failed to delete generation from server');
+        }
+    };
+
+    // Re-persist failed ephemeral CDN URLs (Atlas, legacy FAL, etc.) to Firebase Storage
     const handleFailedImage = async (itemId: string, imageUrl: string) => {
-        // Only handle fal.media URLs
-        if (!imageUrl?.includes('fal.media')) {
+        if (!isEphemeralCdnUrl(imageUrl)) {
             return false;
         }
 
         if (!user) return false;
 
         try {
-            console.log("Attempting to re-persist failed fal.media URL:", imageUrl);
+            console.log("Attempting to re-persist ephemeral CDN URL:", imageUrl);
 
-            // For fal.media URLs, use Cloud Function directly to avoid CORS and permission issues
             const functionUrl = "https://us-central1-project-1285666415996898989.cloudfunctions.net/saveImageToHistory";
 
             try {
@@ -1402,6 +1427,7 @@ const App: React.FC = () => {
                     onUpdateCredits={setCredits}
                     onExit={() => setView('dashboard')}
                     onOpenCredits={() => openCreditsPage('upgrade')}
+                    onOpenAccount={() => setView('profile')}
                     onNavigateStudio={(studio) => {
                         if (studio === 'shorts' && SHORTS_STUDIO_ENABLED) setView('shorts');
                     }}
@@ -1850,8 +1876,8 @@ const App: React.FC = () => {
                                                                     const imageUrl = item.generated;
                                                                     console.warn("Failed to load history image:", item.id, imageUrl?.substring(0, 50));
 
-                                                                    // Try to re-persist fal.media URLs
-                                                                    if (imageUrl?.includes('fal.media') && item.id) {
+                                                                    // Try to re-persist ephemeral CDN URLs
+                                                                    if (isEphemeralCdnUrl(imageUrl) && item.id) {
                                                                         const success = await handleFailedImage(item.id, imageUrl);
                                                                         if (success) {
                                                                             // Image was re-persisted, the component will re-render with new URL
@@ -1968,8 +1994,8 @@ const App: React.FC = () => {
                                                                             const imageUrl = item.generated;
                                                                             console.warn("Failed to load saved image:", item.id, imageUrl?.substring(0, 50));
 
-                                                                            // Try to re-persist fal.media URLs
-                                                                            if (imageUrl?.includes('fal.media') && item.id) {
+                                                                            // Try to re-persist ephemeral CDN URLs
+                                                                            if (isEphemeralCdnUrl(imageUrl) && item.id) {
                                                                                 const success = await handleFailedImage(item.id, imageUrl);
                                                                                 if (success) {
                                                                                     // Image was re-persisted, the component will re-render with new URL
@@ -1983,7 +2009,7 @@ const App: React.FC = () => {
                                                                             if (parent) {
                                                                                 const placeholder = document.createElement('div');
                                                                                 placeholder.className = 'w-full h-full flex items-center justify-center text-[10px] text-brand-muted bg-gray-200';
-                                                                                placeholder.textContent = imageUrl?.includes('fal.media')
+                                                                                placeholder.textContent = isEphemeralCdnUrl(imageUrl)
                                                                                     ? 'Загрузка...'
                                                                                     : 'Ошибка загрузки';
                                                                                 parent.appendChild(placeholder);
@@ -2368,12 +2394,16 @@ const App: React.FC = () => {
                             onGenerateAudioChange={setVideoGenerateAudio}
                             selectedPreset={selectedVideoPreset}
                             onSelectPreset={setSelectedVideoPreset}
-                            isGenerating={isVideoGenerating}
+                            generatingCount={videoGeneratingCount}
                             status={videoStatus}
                             historyData={history.filter(h => h.source === 'video' || h.source === 'shorts')}
                             onGenerate={handleVideoGenerate}
                             cost={calculateVideoCost()}
                             error={view === 'video' ? errorMsg : null}
+                            onDownloadVideo={handleDownload}
+                            onShareVideo={handleShare}
+                            onDeleteVideo={handleDeleteHistory}
+                            onToggleVideoSave={handleToggleSave}
                         />
                     </div>
                 )}

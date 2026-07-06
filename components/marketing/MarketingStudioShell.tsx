@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
     Home, Layers, Heart, Globe, Clapperboard, Plus, FolderPlus, FolderHeart, ArrowLeft,
+    Zap, Coins, User, LogOut, Settings, ChevronUp,
 } from 'lucide-react';
 import MarketingIconTile from './MarketingIconTile';
 import MarketingStudioSwitcher, { StudioId } from './MarketingStudioSwitcher';
@@ -17,6 +18,7 @@ interface MarketingStudioShellProps {
     userPhoto?: string | null;
     onExit: () => void;
     onOpenCredits: () => void;
+    onOpenAccount?: () => void;
     onNav: (nav: MarketingNav) => void;
     onSwitchStudio: (studio: StudioId) => void;
     onOpenTool?: (tool: MarketingTool) => void;
@@ -25,9 +27,12 @@ interface MarketingStudioShellProps {
 }
 
 function MarketingStudioShell({
-    children, dockedComposer, mainRef, credits, userPhoto, onExit, onOpenCredits,
+    children, dockedComposer, mainRef, credits, userPhoto, onExit, onOpenCredits, onOpenAccount,
     onNav, onSwitchStudio, onOpenTool, activeNav = 'home', showComposerDock = true,
 }: MarketingStudioShellProps) {
+    const [profileOpen, setProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
     const navItem = (
         id: MarketingNav,
         tile: 'lime' | 'pink' | 'blue' | 'purple',
@@ -47,21 +52,27 @@ function MarketingStudioShell({
 
     return (
         <div className="ms h-dvh flex overflow-hidden">
-            <aside className="hidden md:flex w-[260px] shrink-0 flex-col p-4">
-                <div className="ms-panel p-[18px_14px] flex flex-col h-full shadow-[var(--ms-shadow-panel)]">
-                    <MarketingStudioSwitcher
-                        current="marketing"
-                        onSelect={onSwitchStudio}
-                    />
+            {/* Desktop sidebar */}
+            <aside className="hidden md:flex w-[240px] shrink-0 flex-col p-3">
+                <div className="ms-sidebar flex flex-col h-full">
+                    {/* Switcher */}
+                    <div className="px-1 pt-1 pb-3">
+                        <MarketingStudioSwitcher
+                            current="marketing"
+                            onSelect={onSwitchStudio}
+                        />
+                    </div>
 
-                    <nav className="flex flex-col gap-0.5">
+                    {/* Main nav */}
+                    <nav className="flex flex-col gap-0.5 px-1">
                         {navItem('home', 'lime', 'Главная', <Home className="size-3 text-[var(--ms-on-lime)]" />, () => onNav('home'))}
                         {navItem('generations', 'pink', 'Все генерации', <Layers className="size-3 text-white" />, () => onNav('generations'))}
                         {navItem('favorites', 'pink', 'Избранное', <Heart className="size-3 text-white" />, () => onNav('favorites'))}
                     </nav>
 
-                    <p className="ms-section-label">Инструменты</p>
-                    <div className="flex flex-col gap-0.5">
+                    {/* Tools */}
+                    <p className="ms-section-label px-2">Инструменты</p>
+                    <div className="flex flex-col gap-0.5 px-1">
                         <button type="button" className="ms-nav-item w-full" onClick={() => onOpenTool?.('url')}>
                             <MarketingIconTile variant="blue" size="nav">
                                 <Globe className="size-3 text-white" />
@@ -76,8 +87,9 @@ function MarketingStudioShell({
                         </button>
                     </div>
 
-                    <p className="ms-section-label">Проекты</p>
-                    <div className="flex flex-col gap-0.5 mt-auto">
+                    {/* Projects */}
+                    <p className="ms-section-label px-2">Проекты</p>
+                    <div className="flex flex-col gap-0.5 px-1">
                         <button type="button" className="ms-nav-item w-full">
                             <MarketingIconTile variant="empty" size="nav"><Plus className="size-3" /></MarketingIconTile>
                             Новый проект
@@ -87,6 +99,97 @@ function MarketingStudioShell({
                             Новая папка
                         </button>
                     </div>
+
+                    {/* Bottom — profile & upgrade */}
+                    <div className="mt-auto px-1 pt-4 flex flex-col gap-2">
+                        {/* Credits / Tariff CTA */}
+                        <button
+                            type="button"
+                            onClick={onOpenCredits}
+                            className="ms-sidebar-upgrade w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[12px]"
+                        >
+                            <span className="ms-sidebar-upgrade__icon flex items-center justify-center size-7 rounded-[8px] shrink-0">
+                                <Zap className="size-3.5" />
+                            </span>
+                            <span className="flex-1 text-left">
+                                <span className="block text-[11px] font-semibold leading-tight opacity-60 mb-0.5">Баланс</span>
+                                <span className="block text-[14px] font-bold leading-tight">
+                                    <Coins className="size-3 inline mr-1 opacity-70" />
+                                    {credits.toLocaleString()} кр.
+                                </span>
+                            </span>
+                            <span className="ms-badge-promo shrink-0">+</span>
+                        </button>
+
+                        {/* Profile row with dropdown */}
+                        <div className="relative" ref={profileRef}>
+                            {profileOpen && (
+                                <div
+                                    className="absolute bottom-full left-0 right-0 mb-1.5 rounded-[14px] overflow-hidden z-50"
+                                    style={{
+                                        background: 'var(--ms-panel-bg)',
+                                        border: '1px solid var(--ms-border)',
+                                        boxShadow: 'var(--ms-shadow-panel)',
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        className="ms-nav-item w-full !rounded-none"
+                                        onClick={() => { setProfileOpen(false); onOpenAccount?.(); }}
+                                    >
+                                        <User className="size-3.5 text-[var(--ms-dim)]" />
+                                        Профиль и аккаунт
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="ms-nav-item w-full !rounded-none"
+                                        onClick={() => { setProfileOpen(false); onOpenCredits(); }}
+                                    >
+                                        <Coins className="size-3.5 text-[var(--ms-dim)]" />
+                                        Тарифы и кредиты
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="ms-nav-item w-full !rounded-none"
+                                        onClick={() => { setProfileOpen(false); onNav('generations'); }}
+                                    >
+                                        <FolderHeart className="size-3.5 text-[var(--ms-dim)]" />
+                                        Мои генерации
+                                    </button>
+                                    <div style={{ height: 1, background: 'var(--ms-border)', margin: '2px 0' }} />
+                                    <button
+                                        type="button"
+                                        className="ms-nav-item w-full !rounded-none"
+                                        onClick={() => { setProfileOpen(false); onExit(); }}
+                                    >
+                                        <LogOut className="size-3.5 text-[var(--ms-dim)]" />
+                                        Выйти из студии
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                className="ms-nav-item w-full !py-2"
+                                onClick={() => setProfileOpen(v => !v)}
+                                aria-expanded={profileOpen}
+                            >
+                                {userPhoto ? (
+                                    <span className="size-6 rounded-full overflow-hidden shrink-0 flex-none">
+                                        <img src={userPhoto} alt="" className="size-full object-cover" />
+                                    </span>
+                                ) : (
+                                    <span className="ms-sidebar-avatar shrink-0 size-6 flex items-center justify-center">
+                                        <User className="size-3 text-[var(--ms-dim)]" />
+                                    </span>
+                                )}
+                                <span className="flex-1 text-left text-[13px] truncate">Аккаунт</span>
+                                <ChevronUp
+                                    className="size-3.5 text-[var(--ms-dim)] transition-transform"
+                                    style={{ transform: profileOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
@@ -94,50 +197,20 @@ function MarketingStudioShell({
                 <div className="ms-hero-glow" aria-hidden />
                 <div className="ms-grid-bg" aria-hidden />
 
-                <header className="relative z-10 flex items-center gap-3 px-4 md:px-10 h-14 shrink-0">
+                {/* Mobile-only top bar */}
+                <header className="md:hidden relative z-10 flex items-center gap-3 px-4 h-14 shrink-0">
                     <button
                         type="button"
                         onClick={onExit}
-                        className="md:hidden ms-btn-ghost flex items-center justify-center size-9 shrink-0"
+                        className="ms-btn-ghost flex items-center justify-center size-9 shrink-0"
                         aria-label="Назад"
                     >
                         <ArrowLeft className="size-5" />
                     </button>
-                    <p className="md:hidden flex-1 text-center text-xs font-bold uppercase tracking-widest truncate">
+                    <p className="flex-1 text-center text-xs font-bold uppercase tracking-widest truncate">
                         Маркетинг Студия
                     </p>
-                    <div className="md:hidden size-9 shrink-0" aria-hidden />
-
-                    <div className="hidden md:block flex-1" />
-
-                    <div className="hidden md:flex items-center gap-2 ml-auto">
-                        <button
-                            type="button"
-                            onClick={onOpenCredits}
-                            className="relative ms-btn-ghost inline-flex items-center gap-2 px-3 py-2 text-sm"
-                        >
-                            <span className="size-3.5 rounded bg-[var(--ms-pink)] shrink-0" />
-                            Улучшить
-                            <span className="ms-badge-promo absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                                −30%
-                            </span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onNav('generations')}
-                            className="hidden sm:inline-flex ms-btn-secondary items-center gap-2 px-4 py-2.5 text-sm"
-                        >
-                            <FolderHeart className="size-3.5" />
-                            Активы
-                        </button>
-                        <div className="size-9 rounded-full overflow-hidden border border-[var(--ms-hairline-strong)] bg-[var(--ms-raised)]">
-                            {userPhoto ? (
-                                <img src={userPhoto} alt="" className="size-full object-cover" />
-                            ) : (
-                                <div className="size-full flex items-center justify-center text-[11px] text-[var(--ms-dim)] tabular-nums">{credits}</div>
-                            )}
-                        </div>
-                    </div>
+                    <div className="size-9 shrink-0" aria-hidden />
                 </header>
 
                 <main ref={mainRef} className="relative z-10 flex-1 overflow-y-auto custom-scrollbar">

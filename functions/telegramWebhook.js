@@ -17,9 +17,9 @@ if (!token && typeof require("firebase-functions") !== "undefined") {
     token = require("firebase-functions").config().telegram?.bot_token;
   } catch (_) {}
 }
-const FAL_VEO_URL =
-  process.env.FAL_VEO_FUNCTION_URL ||
-  "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateFalVeoVideo";
+const VIDEO_FUNCTION_URL =
+  process.env.VIDEO_FUNCTION_URL ||
+  "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateAtlasVideo";
 const GOOGLE_IMAGE_URL =
   process.env.GOOGLE_IMAGE_FUNCTION_URL ||
   "https://us-central1-project-1285666415996898989.cloudfunctions.net/generateGoogleImage";
@@ -163,8 +163,9 @@ async function generateVideo(imageUrl, prompt) {
     resolution: "720p",
     generate_audio: true,
     auto_fix: true,
+    model_id: "google/veo-3.1/image-to-video",
   };
-  const { data } = await axios.post(FAL_VEO_URL, body, {
+  const { data } = await axios.post(VIDEO_FUNCTION_URL, body, {
     headers: { "Content-Type": "application/json" },
     timeout: 300000,
   });

@@ -152,6 +152,7 @@
   padding: 16px 2px 24px;
 }
 
+
 .video-studio .vs-preset-workspace__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
@@ -735,16 +736,6 @@
   padding: 6px 0;
 }
 
-.video-studio .vs-date-check {
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid var(--ink-faint);
-  border-radius: 4px;
-  flex-shrink: 0;
-  cursor: pointer;
-  accent-color: var(--primary);
-}
-
 .video-studio .vs-date-label {
   font-size: 15px;
   font-weight: 700;
@@ -820,28 +811,50 @@
   color: #fff;
 }
 
-.video-studio .vs-card-check {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  border-radius: 4px;
-  background: transparent;
-  cursor: pointer;
-}
-
 .video-studio .vs-card-menu {
   position: absolute;
   top: 8px;
   right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   color: #fff;
-  background: none;
-  border: none;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  padding: 0 2px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  padding: 0;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.video-studio .vs-card-menu:hover {
+  background: rgba(0, 0, 0, 0.72);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+.video-studio .vs-card-menu:active {
+  transform: scale(0.94);
+}
+
+.video-studio .vs-card-menu--list {
+  position: static;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  background: var(--surface-muted);
+  border-color: var(--border-soft);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.video-studio .vs-card-menu--list:hover {
+  color: var(--ink);
+  background: var(--surface-raised);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-soft));
 }
 
 .video-studio .vs-failed-card {

@@ -2,16 +2,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FolderHeart, LayoutGrid, List } from 'lucide-react';
 import { GeneratedImage } from '../types';
 import { KrasoModelId } from '../lib/krasoModels';
-import { VideoVariantId, VideoVariantOption } from '../lib/videoModels';
+import { VideoVariantId } from '../lib/videoModels';
 import { VideoMotionPreset, getDefaultPresetForModel, isPresetAvailableForModel } from '../lib/videoPresets';
 import { GEN_BAR_FORM, GEN_BAR_R } from './genbar/genBarStyles';
 import VideoStudioSidebar, { VideoQuality } from './video/VideoStudioSidebar';
 import VideoOnboarding from './video/VideoOnboarding';
 import VideoPresetPicker from './video/VideoPresetPicker';
 import VideoHistoryPanel, { VideoHistoryLayout } from './video/VideoHistoryPanel';
+import VideoResultViewer from './video/VideoResultViewer';
 import './video/videoTheme.css';
 
-type VideoRatio = '16:9' | '9:16';
+import type { VideoAspectRatio } from '../lib/videoModels';
+type VideoRatio = VideoAspectRatio;
 type MainTab = 'how' | 'history';
 
 interface VideoStudioProps {
@@ -36,17 +38,19 @@ interface VideoStudioProps {
     onEnhancePrompt: () => void;
     generateAudioEnabled: boolean;
     onGenerateAudioChange: (enabled: boolean) => void;
-    krasoModel: KrasoModelId;
-    variant: VideoVariantId;
     showModelInPanel?: boolean;
     selectedPreset: VideoMotionPreset | null;
     onSelectPreset: (preset: VideoMotionPreset | null) => void;
-    isGenerating: boolean;
+    generatingCount: number;
     status?: string;
     onGenerate: () => void;
     historyData: GeneratedImage[];
     cost: number;
     error?: string | null;
+    onDownloadVideo?: (url: string) => void;
+    onShareVideo?: (url: string) => void;
+    onDeleteVideo?: (item: GeneratedImage) => void;
+    onToggleVideoSave?: (id: string) => void;
 }
 
 function HistoryTabBtn({
@@ -79,7 +83,8 @@ function VideoStudio(props: VideoStudioProps) {
         duration, onDurationChange, quality, onQualityChange,
         promptEnhanceEnabled, onPromptEnhanceChange, isEnhancingPrompt, onEnhancePrompt,
         generateAudioEnabled, onGenerateAudioChange,
-        isGenerating, status, onGenerate, historyData, cost, error,
+        generatingCount, status, onGenerate, historyData, cost, error,
+        onDownloadVideo, onShareVideo, onDeleteVideo, onToggleVideoSave,
     } = props;
 
     const [mainTab, setMainTab] = useState<MainTab>('how');
@@ -87,6 +92,7 @@ function VideoStudio(props: VideoStudioProps) {
     const [presetPanelUsed, setPresetPanelUsed] = useState(false);
     const [historyLayout, setHistoryLayout] = useState<VideoHistoryLayout>('grid');
     const [gridCols, setGridCols] = useState(4);
+    const [viewerItem, setViewerItem] = useState<GeneratedImage | null>(null);
 
     const handleSelectPreset = useCallback((
         preset: VideoMotionPreset,
@@ -157,8 +163,9 @@ function VideoStudio(props: VideoStudioProps) {
                     items={historyData}
                     layout={historyLayout}
                     gridCols={gridCols}
-                    isGenerating={isGenerating}
+                    isGenerating={generatingCount > 0}
                     status={status}
+                    onItemClick={setViewerItem}
                 />
             ) : (
                 <VideoOnboarding
@@ -198,7 +205,7 @@ function VideoStudio(props: VideoStudioProps) {
                         variant={variant}
                         showModelInPanel={presetPanelUsed}
                         cost={cost}
-                        isGenerating={isGenerating}
+                        generatingCount={generatingCount}
                         onGenerate={() => {
                             onGenerate();
                             setMainTab('history');
@@ -222,6 +229,20 @@ function VideoStudio(props: VideoStudioProps) {
                     )}
                 </div>
             </div>
+
+            {viewerItem && (
+                <VideoResultViewer
+                    item={historyData.find((h) => h.id && h.id === viewerItem.id) ?? viewerItem}
+                    onClose={() => setViewerItem(null)}
+                    onDownload={onDownloadVideo ?? (() => {})}
+                    onShare={onShareVideo ?? (() => {})}
+                    onDelete={(item) => {
+                        (onDeleteVideo ?? (() => {}))(item);
+                        setViewerItem(null);
+                    }}
+                    onToggleSave={onToggleVideoSave}
+                />
+            )}
         </div>
     );
 }

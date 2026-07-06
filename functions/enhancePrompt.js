@@ -1,6 +1,7 @@
 const { onRequest } = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
-const { runFalQueue } = require("./lib/falQueueClient");
+const { runAtlasChat } = require("./lib/atlasCloudClient");
+const { ATLAS_ENHANCE_LLM } = require("./lib/atlasModelRegistry");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -8,40 +9,58 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-const VIDEO_SYSTEM_PROMPT =
-  "You are a prompt engineer for AI image-to-video generation. " +
-  "Enhance the user's prompt for cinematic motion: camera movement, lighting, mood, textures, and subtle motion. " +
-  "Keep the subject from the source image. Write in the same language as the input. " +
-  "Return ONLY the enhanced prompt, no quotes or commentary. Max 200 tokens.";
+const BANNED_WORDS =
+  "cinematic, masterpiece, epic, stunning, amazing, hyperrealistic 8k, beautiful lighting, professional quality";
+
+const VIDEO_BASE_RULES =
+  "You are an expert AI video prompt engineer (visual-skills methodology).\n" +
+  "Enhance the user's prompt for image-to-video generation.\n\n" +
+  "RULES:\n" +
+  "1. Details Law: each implied shot needs one environmental pressure, one physical micro-action, one sound anchor.\n" +
+  "2. Show don't tell — translate emotions into body (jaw locks, knuckles whiten, breath catches).\n" +
+  "3. One primary camera move per shot. Name lens (35mm, 50mm, 85mm).\n" +
+  "4. Continuity: preserve subject identity, wardrobe, background from source image. No background swap. No extra people.\n" +
+  "5. Hands: anatomically correct, exactly two hands when gripping objects. No extra fingers.\n" +
+  "6. Natural language prose — no tag spam. BAN these words: " + BANNED_WORDS + ".\n" +
+  "7. Keep the same language as user input unless context is marketing-video (then output English).\n" +
+  "Return ONLY the enhanced prompt. No quotes. Max 300 tokens.";
+
+const MODEL_HINTS = {
+  kling: "\nTarget: Kling. Single continuous take — no cuts, no Shot N structure. One smooth camera move. Describe concrete body actions and environment in plain prose.",
+  veo: "\nTarget: Veo 3.1. Single scene, lead with camera. One motivated move. Optional Audio: line. No montage, no scene changes.",
+  seedance: "\nTarget: Seedance 1.5. Scene-first: text paints a NEW location — reference photo = face/body likeness only, NOT the photo background or frozen portrait plate. Use gender-neutral \"the person/they\" in scene prose. Cinematic realism, natural film color grade, no AI slop. Exactly two hands, no third hand. Single take with camera arc wide→close.",
+  wan: "\nTarget: Wan 2.5. Keep simple — one subject, one action, 3-4 elements max.",
+  default: "",
+};
+
+const MARKETING_VIDEO_RULES =
+  VIDEO_BASE_RULES +
+  "\nContext: marketing UGC ad, 9:16 vertical.\n" +
+  "Structure: [Character A] + [Product A] tags, Continuity block, Master intent, Shot list with timings, Audio line.\n" +
+  "Output in English. Remove inline Negative: blocks from prose.";
 
 const IMAGE_SYSTEM_PROMPT =
   "You are a prompt engineer for AI image generation. " +
-  "Enhance the user's prompt with vivid composition, lighting, colors, textures, and mood. " +
-  "Write in the same language as the input. Return ONLY the enhanced prompt, no quotes. Max 200 tokens.";
+  "Enhance vivid composition, lighting, colors, textures. Show don't tell. " +
+  "Anatomically correct hands. Write in the same language as input. " +
+  "Return ONLY the enhanced prompt, no quotes. Max 200 tokens.";
 
-/**
- * @param {unknown} data
- * @returns {string | null}
- */
-function extractLlmOutput(data) {
-  if (!data || typeof data !== "object") return null;
-  const d = /** @type {Record<string, unknown>} */ (data);
-  if (typeof d.output === "string" && d.output.trim()) return d.output.trim();
-  if (typeof d.text === "string" && d.text.trim()) return d.text.trim();
-  if (typeof d.content === "string" && d.content.trim()) return d.content.trim();
-  if (Array.isArray(d.choices) && d.choices[0] && typeof d.choices[0] === "object") {
-    const choice = /** @type {Record<string, unknown>} */ (d.choices[0]);
-    const msg = choice.message;
-    if (msg && typeof msg === "object") {
-      const content = /** @type {Record<string, unknown>} */ (msg).content;
-      if (typeof content === "string" && content.trim()) return content.trim();
-    }
-  }
-  return null;
+function resolveVideoSystemPrompt(context, modelId) {
+  if (context === "image") return IMAGE_SYSTEM_PROMPT;
+  if (context === "marketing-video") return MARKETING_VIDEO_RULES;
+
+  const id = String(modelId || "").toLowerCase();
+  let hint = MODEL_HINTS.default;
+  if (id.includes("kling")) hint = MODEL_HINTS.kling;
+  else if (id.includes("veo")) hint = MODEL_HINTS.veo;
+  else if (id.includes("seedance")) hint = MODEL_HINTS.seedance;
+  else if (id.includes("wan")) hint = MODEL_HINTS.wan;
+
+  return VIDEO_BASE_RULES + hint;
 }
 
 /**
- * POST { prompt: string, context?: 'video' | 'image' }
+ * POST { prompt: string, context?: 'video' | 'image' | 'marketing-video', modelId?: string }
  * Returns { prompt: string }
  */
 const enhancePromptHandler = onRequest({ timeoutSeconds: 60, memory: "512MiB" }, async (req, res) => {
@@ -55,28 +74,27 @@ const enhancePromptHandler = onRequest({ timeoutSeconds: 60, memory: "512MiB" },
     return;
   }
 
-  const { prompt, context = "video" } = req.body || {};
+  const { prompt, context = "video", modelId } = req.body || {};
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
     res.status(400).json({ error: "Missing or invalid prompt" });
     return;
   }
 
-  const system_prompt = context === "image" ? IMAGE_SYSTEM_PROMPT : VIDEO_SYSTEM_PROMPT;
+  const system_prompt = resolveVideoSystemPrompt(context, modelId);
 
   try {
-    logger.info("enhancePrompt.start", { context, len: prompt.length });
+    logger.info("enhancePrompt.start", { context, modelId, len: prompt.length });
 
-    const { data } = await runFalQueue(
-      "fal-ai/any-llm",
-      {
-        model: "google/gemini-2.5-flash-lite",
-        prompt: prompt.trim(),
-        system_prompt,
-      },
-      { timeoutMs: 45_000 },
-    );
+    const data = await runAtlasChat({
+      model: ATLAS_ENHANCE_LLM,
+      messages: [
+        { role: "system", content: system_prompt },
+        { role: "user", content: prompt.trim() },
+      ],
+      max_tokens: 400,
+    });
 
-    const enhanced = extractLlmOutput(data);
+    const enhanced = data?.choices?.[0]?.message?.content?.trim();
     if (!enhanced) {
       logger.warn("enhancePrompt: empty LLM output", { data });
       res.status(200).json({ prompt: prompt.trim() });

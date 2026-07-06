@@ -1,0 +1,197 @@
+[
+  {
+    "id": "ugc-1.mp4",
+    "status": "skipped",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\ugc-1.mp4"
+  },
+  {
+    "id": "ugc-2.mp4",
+    "status": "skipped",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\ugc-2.mp4"
+  },
+  {
+    "id": "ugc-3.mp4",
+    "status": "skipped",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\ugc-3.mp4"
+  },
+  {
+    "id": "unboxing-asmr-1.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-asmr-1.mp4"
+  },
+  {
+    "id": "unboxing-asmr-2.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-asmr-2.mp4"
+  },
+  {
+    "id": "unboxing-asmr-3.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-asmr-3.mp4"
+  },
+  {
+    "id": "unboxing-tryon-1.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-tryon-1.mp4"
+  },
+  {
+    "id": "unboxing-tryon-2.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-tryon-2.mp4"
+  },
+  {
+    "id": "unboxing-tryon-3.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\unboxing-tryon-3.mp4"
+  },
+  {
+    "id": "selfie-testimonial-1.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\selfie-testimonial-1.mp4"
+  },
+  {
+    "id": "selfie-testimonial-2.mp4",
+    "status": "ok",
+    "dest": "D:\\Ru-Photo\\public\\marketing\\videos\\selfie-testimonial-2.mp4"
+  },
+  {
+    "id": "selfie-testimonial-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "direct-to-camera-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "direct-to-camera-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "direct-to-camera-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "before-after-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "before-after-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "before-after-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "product-review-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "product-review-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "product-review-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "couple-sharing-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "couple-sharing-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "couple-sharing-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "secret-hack-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "secret-hack-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "secret-hack-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "camera-pov-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "camera-pov-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "camera-pov-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "classic-modern-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "classic-modern-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "classic-modern-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "mess-to-fresh-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "mess-to-fresh-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "mess-to-fresh-3",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "gadget-saved-me-1",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "gadget-saved-me-2",
+    "status": "failed",
+    "error": "fetch failed"
+  },
+  {
+    "id": "gadget-saved-me-3",
+    "status": "failed",
+    "error": "fetch failed"
+  }
+]

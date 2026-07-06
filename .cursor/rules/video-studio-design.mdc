@@ -42,7 +42,7 @@ Styles: `components/video/videoTheme.css` (scoped under `.video-studio`)
 ## Presets
 
 - All models: «Обычная Генерация» (`DEFAULT_VIDEO_PRESET`)
-- Extra presets: Seedance models only (`getPresetsForModel`)
+- Extra presets: Seedance + Wan only (`getPresetsForModel`); Kling and Veo = default only
 - Picking preset in gallery sets preset **and** model tier/variant
 
 ## Forbidden

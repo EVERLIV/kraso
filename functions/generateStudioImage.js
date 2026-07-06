@@ -1,7 +1,8 @@
 const { onRequest } = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const { buildStudioInput } = require("./lib/studioModels");
-const { runFalQueue, extractImageUrl } = require("./lib/falQueueClient");
+const { runAtlasPrediction, extractImageUrl } = require("./lib/atlasCloudClient");
+const { buildAtlasImageInput } = require("./lib/atlasInputAdapter");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -10,20 +11,7 @@ const CORS = {
 };
 
 /**
- * User studio / chat image generation via fal.ai.
- *
- * POST body:
- * {
- *   prompt: string,
- *   krasoTier?: 'kraso-fast'|'kraso-quality'|'kraso-realism',
- *   modelId?: string,
- *   aspectRatio?: '1:1'|'16:9'|...,
- *   resolution?: '1K'|'2K'|'4K',
- *   referenceImages?: [{ data: base64, mimeType?: string }],
- *   seed?: number
- * }
- *
- * Returns: { image: { base64, mimeType }, modelId, mode, url? }
+ * User studio / chat image generation via Atlas Cloud.
  */
 const generateStudioImageHandler = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
   Object.entries(CORS).forEach(([k, v]) => res.set(k, v));
@@ -78,11 +66,12 @@ const generateStudioImageHandler = onRequest({ timeoutSeconds: 300, memory: "1Gi
       refCount: refs.length,
     });
 
-    const { data } = await runFalQueue(modelId, input);
+    const atlasInput = buildAtlasImageInput(modelId, input);
+    const { data } = await runAtlasPrediction("image", modelId, atlasInput);
     const image = extractImageUrl(data);
 
     if (!image?.url) {
-      logger.error("generateStudioImage: no image in fal response", { modelId, data });
+      logger.error("generateStudioImage: no image in Atlas response", { modelId, data });
       res.status(500).json({ error: "Model did not return an image URL" });
       return;
     }
@@ -93,7 +82,7 @@ const generateStudioImageHandler = onRequest({ timeoutSeconds: 300, memory: "1Gi
     }
 
     const buffer = Buffer.from(await fetchResp.arrayBuffer());
-    const contentType = fetchResp.headers.get("content-type") || image.content_type || "image/png";
+    const contentType = fetchResp.headers.get("content-type") || "image/png";
 
     res.status(200).json({
       image: {

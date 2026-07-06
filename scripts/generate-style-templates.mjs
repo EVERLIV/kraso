@@ -4,7 +4,7 @@
  *   node scripts/generate-all-templates.mjs
  *
  * Usage:
- *   cd functions && cp .env.example .env   # fill FAL_KEY + TEMPLATE_BATCH_SECRET
+ *   cd functions && cp .env.example .env   # fill ATLASCLOUD_API_KEY + TEMPLATE_BATCH_SECRET
  *   firebase deploy --only functions:generateTemplateBatch
  *   node ../scripts/generate-style-templates.mjs
  *

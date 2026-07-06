@@ -90,13 +90,20 @@
   background: var(--ms-panel);
   border: 1px solid var(--ms-hairline);
   border-radius: var(--ms-radius-panel);
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.ms-panel:has(.ms-btn-primary:hover),
+.ms-panel:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 52px -24px rgba(0, 0, 0, 0.95);
 }
 
 .ms-composer {
   background: var(--ms-panel);
   border: 1px solid var(--ms-hairline-strong);
   border-radius: var(--ms-radius-panel);
-  box-shadow: var(--ms-shadow-composer);
+  box-shadow: var(--ms-shadow-composer), 0 0 0 0.5px rgba(198, 240, 23, 0.08) inset;
 }
 
 .ms-composer--docked {
@@ -115,6 +122,35 @@
 
 .ms-btn-primary:hover {
   background: var(--ms-lime-glow);
+}
+
+/* 3D bevel generate button — matches GEN_BAR_GENERATE from design system */
+.ms-btn-generate {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ms-radius-btn);
+  background: linear-gradient(to bottom, #d4ff3a, #9bdd04);
+  color: var(--ms-on-lime);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 3px 0 0 #6fa000, 0 5px 10px -3px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 100ms ease-out, box-shadow 100ms ease-out;
+}
+
+.ms-btn-generate:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 #6fa000, 0 2px 5px -2px rgba(0, 0, 0, 0.4);
+}
+
+.ms-btn-generate:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #dcff5c, #a7e806);
+}
+
+.ms-btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .ms-btn-secondary {
@@ -158,18 +194,28 @@
   color: var(--ms-text);
 }
 
+.ms-chip--active {
+  border-color: color-mix(in srgb, var(--ms-lime) 40%, transparent);
+  color: var(--ms-lime);
+}
+
+.ms-chip--active:hover {
+  background: color-mix(in srgb, var(--ms-lime) 8%, var(--ms-chip-hover));
+}
+
 .ms-chip-plus {
   color: var(--ms-lime);
   font-weight: 700;
 }
 
 .ms-filter-active {
-  background: #fff;
+  background: var(--ms-lime);
   color: var(--ms-on-lime);
   font-weight: 700;
   border-radius: 999px;
   padding: 9px 18px;
   font-size: 13px;
+  box-shadow: 0 3px 12px -4px rgba(198, 240, 23, 0.55);
 }
 
 .ms-filter-inactive {
@@ -179,11 +225,13 @@
   border-radius: 999px;
   padding: 9px 16px;
   font-size: 13px;
-  transition: background-color 100ms ease-out;
+  border: 1px solid var(--ms-hairline);
+  transition: background-color 100ms ease-out, border-color 100ms ease-out;
 }
 
 .ms-filter-inactive:hover {
   background: var(--ms-chip-hover);
+  border-color: var(--ms-hairline-strong);
 }
 
 .ms-badge-new {
@@ -209,20 +257,31 @@
   padding: 3px 7px;
 }
 
+/* Sidebar container (replaces .ms-panel for the sidebar) */
+.ms-sidebar {
+  background: var(--ms-panel);
+  border: 1px solid var(--ms-hairline);
+  border-radius: var(--ms-radius-panel);
+  box-shadow: var(--ms-shadow-panel);
+  padding: 14px 10px;
+  overflow: hidden;
+}
+
 .ms-nav-item {
   display: flex;
   align-items: center;
   gap: 11px;
   padding: 9px 10px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--ms-body);
   font-weight: 500;
-  transition: background-color 100ms ease-out;
+  transition: background-color 100ms ease-out, color 100ms ease-out;
 }
 
 .ms-nav-item:hover {
   background: var(--ms-raised);
+  color: var(--ms-text);
 }
 
 .ms-nav-item--active {
@@ -232,12 +291,51 @@
 }
 
 .ms-section-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ms-dim);
-  padding: 20px 10px 10px;
+  padding: 18px 0 8px;
+}
+
+/* Upgrade CTA button in sidebar */
+.ms-sidebar-upgrade {
+  background: color-mix(in srgb, var(--ms-lime) 8%, var(--ms-raised));
+  border: 1px solid color-mix(in srgb, var(--ms-lime) 20%, var(--ms-hairline));
+  color: var(--ms-text);
+  transition: background-color 100ms ease-out, border-color 100ms ease-out;
+  cursor: pointer;
+}
+
+.ms-sidebar-upgrade:hover {
+  background: color-mix(in srgb, var(--ms-lime) 14%, var(--ms-raised));
+  border-color: color-mix(in srgb, var(--ms-lime) 32%, var(--ms-hairline));
+}
+
+.ms-sidebar-upgrade__icon {
+  background: color-mix(in srgb, var(--ms-lime) 18%, transparent);
+  color: var(--ms-lime);
+}
+
+/* Avatar circle at bottom of sidebar */
+.ms-sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--ms-hairline-strong);
+  background: var(--ms-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 100ms ease-out;
+}
+
+.ms-sidebar-avatar:hover {
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 .ms-tile-lime { background: linear-gradient(145deg, #C6F017, #8EA62E); }
@@ -245,6 +343,24 @@
 .ms-tile-blue { background: linear-gradient(145deg, #4DA3FF, #1E5FB3); }
 .ms-tile-purple { background: linear-gradient(145deg, #A96BFF, #5B2E9E); }
 .ms-tile-amber { background: linear-gradient(145deg, #FFB020, #B37400); }
+
+/* "Try" button on template cards */
+.ms-btn-try {
+  background: var(--ms-raised);
+  color: var(--ms-text);
+  border: 1px solid var(--ms-hairline-strong);
+  border-radius: var(--ms-radius-btn);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 20px;
+  transition: background-color 100ms ease-out, border-color 100ms ease-out, color 100ms ease-out;
+}
+
+.ms-btn-try:hover {
+  background: var(--ms-lime);
+  border-color: var(--ms-lime);
+  color: var(--ms-on-lime);
+}
 
 .ms-slot {
   background: var(--ms-raised);

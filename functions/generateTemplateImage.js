@@ -2,7 +2,8 @@ const { onRequest } = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const { buildTemplateInput } = require("./lib/templateModels");
-const { runFalQueue, extractImageUrl } = require("./lib/falQueueClient");
+const { runAtlasPrediction, extractImageUrl } = require("./lib/atlasCloudClient");
+const { buildAtlasImageInput } = require("./lib/atlasInputAdapter");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -10,24 +11,6 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-/**
- * Generate a single template preview image via fal queue.
- *
- * POST body:
- * {
- *   prompt: string,           // required
- *   tier?: 'fast'|'standard'|'pro',
- *   modelId?: string,           // override tier primary — must be in falModelRegistry
- *   category?: 'style'|'palette'|'avatar'|'preset',
- *   aspectRatio?: '1:1'|'3:4'|...,
- *   seed?: number,
- *   templateId?: string,      // e.g. studio-beauty — for logging / storage path
- *   saveToStorage?: boolean,  // upload to Firebase Storage, return public URL
- *   storagePath?: string      // optional override, default templates/{category}/{id}.webp
- * }
- *
- * Returns: { url, tier, modelId, category?, templateId?, storageUrl? }
- */
 const generateTemplateImageHandler = onRequest({ timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
   Object.entries(CORS).forEach(([k, v]) => res.set(k, v));
   if (req.method === "OPTIONS") {
@@ -64,18 +47,19 @@ const generateTemplateImageHandler = onRequest({ timeoutSeconds: 300, memory: "1
       aspectRatio,
       seed,
     });
-    const { data } = await runFalQueue(modelId, input);
+    const atlasInput = buildAtlasImageInput(modelId, input);
+    const { data } = await runAtlasPrediction("image", modelId, atlasInput);
     const image = extractImageUrl(data);
 
     if (!image?.url) {
-      logger.error("generateTemplateImage: no image in fal response", { modelId, data });
+      logger.error("generateTemplateImage: no image in Atlas response", { modelId, data });
       res.status(500).json({ error: "Model did not return an image URL" });
       return;
     }
 
     let storageUrl = null;
     if (saveToStorage) {
-      storageUrl = await persistFalImageToStorage(image.url, {
+      storageUrl = await persistImageToStorage(image.url, {
         category,
         templateId,
         storagePath,
@@ -99,10 +83,6 @@ const generateTemplateImageHandler = onRequest({ timeoutSeconds: 300, memory: "1
   }
 });
 
-/**
- * Batch-generate template previews (admin / CI script).
- * POST { items: [{ prompt, templateId, tier? }], category?, aspectRatio?, saveToStorage? }
- */
 const generateTemplateBatchHandler = onRequest({ timeoutSeconds: 540, memory: "1GiB" }, async (req, res) => {
   Object.entries(CORS).forEach(([k, v]) => res.set(k, v));
   if (req.method === "OPTIONS") {
@@ -135,13 +115,14 @@ const generateTemplateBatchHandler = onRequest({ timeoutSeconds: 540, memory: "1
         aspectRatio,
         seed: item.seed,
       });
-      const { data } = await runFalQueue(modelId, input);
+      const atlasInput = buildAtlasImageInput(modelId, input);
+      const { data } = await runAtlasPrediction("image", modelId, atlasInput);
       const image = extractImageUrl(data);
       if (!image?.url) throw new Error("No image URL");
 
       let storageUrl = null;
       if (saveToStorage) {
-        storageUrl = await persistFalImageToStorage(image.url, {
+        storageUrl = await persistImageToStorage(image.url, {
           category: item.category || category,
           templateId: item.templateId || item.id,
           storagePath: item.storagePath,
@@ -172,9 +153,9 @@ const generateTemplateBatchHandler = onRequest({ timeoutSeconds: 540, memory: "1
   });
 });
 
-async function persistFalImageToStorage(falUrl, { category, templateId, storagePath }) {
-  const fetchResp = await fetch(falUrl);
-  if (!fetchResp.ok) throw new Error(`Failed to download fal image: ${fetchResp.statusText}`);
+async function persistImageToStorage(sourceUrl, { category, templateId, storagePath }) {
+  const fetchResp = await fetch(sourceUrl);
+  if (!fetchResp.ok) throw new Error(`Failed to download image: ${fetchResp.statusText}`);
   const buffer = Buffer.from(await fetchResp.arrayBuffer());
 
   const bucket = admin.storage().bucket();

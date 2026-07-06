@@ -4,6 +4,11 @@ export interface PickerItem {
     id: string;
     title: string;
     description: string;
+    /**
+     * For hook/setting pickers: a short phrase intended to be embedded in the
+     * middle of a sentence via {{HOOK}} / {{SCENE}} substitution.
+     * No leading capital, no trailing period.
+     */
     prompt: string;
     image: string;
     category: string;
@@ -32,84 +37,116 @@ export const HOOK_PICKER: PickerConfig = {
         { id: 'stunt', label: 'Эффектные' },
         { id: 'subtle', label: 'Тонкие' },
     ],
-    heroImages: [p('hook', 'hero-1'), p('hook', 'hero-2'), p('hook', 'hero-3')],
+    heroImages: [p('hook', 'spicy'), p('hook', 'interview'), p('hook', 'whisper')],
     items: [
         {
             id: 'spicy',
             title: 'Острый кадр',
-            description: 'Экстремальный крупный план ключицы и шеи, мягкий свет, интригующий первый кадр.',
-            prompt: 'Экстремальный крупный план ключицы и шеи, мягкий рассеянный свет, интригующий первый кадр UGC-рекламы, вертикальный 9:16.',
+            description: 'Экстремальный крупный план ключицы и шеи — интригующий первый кадр.',
+            prompt: 'экстремальный крупный план ключицы и шеи, мягкий рассеянный свет, интригующий первый кадр',
             image: p('hook', 'spicy'),
             category: 'subtle',
         },
         {
             id: 'interview',
             title: 'Интервью',
-            description: 'Креатор смотрит в камеру и говорит «подождите, это реально работает» — доверительный тон.',
-            prompt: 'Креатор смотрит прямо в камеру смартфона и говорит с удивлением, доверительный UGC-тон, крупный план лица, вертикальный 9:16.',
+            description: 'Человек смотрит в камеру и говорит «подождите, это реально работает».',
+            prompt: 'человек смотрит прямо в камеру смартфона с удивлёнными глазами, открытый рот, доверительный UGC-тон, крупный план лица',
             image: p('hook', 'interview'),
             category: 'subtle',
         },
         {
             id: 'crash',
             title: 'Товар в кадре',
-            description: 'Резкий вход: товар падает на стол или появляется в руках — мгновенное внимание.',
-            prompt: 'Динамичный вход: товар резко появляется в кадре на столе, быстрый зум, энергичный хук для TikTok, вертикальный 9:16.',
+            description: 'Товар резко появляется в руках — мгновенное внимание.',
+            prompt: 'товар резко появляется в кадре на столе или в руках, динамичный вход, быстрый зум',
             image: p('hook', 'crash'),
             category: 'stunt',
         },
         {
             id: 'whisper',
             title: 'Шёпот ASMR',
-            description: 'Креатор шепчет «смотри, что пришло» — идеально для распаковки.',
-            prompt: 'Креатор шепчет в камеру «смотри, что пришло», ASMR-атмосфера, близкий микрофон, интимный первый кадр, вертикальный 9:16.',
+            description: 'Человек шепчет «смотри, что пришло» — идеально для распаковки.',
+            prompt: 'человек шепчет в камеру «смотри, что пришло», ASMR-атмосфера, близкий микрофон, интимный первый кадр',
             image: p('hook', 'whisper'),
             category: 'subtle',
+        },
+        {
+            id: 'point',
+            title: 'Указывает на товар',
+            description: 'Уверенный жест — палец указывает на товар рядом с лицом.',
+            prompt: 'человек указывает пальцем на товар рядом с собой, широко открытые глаза, восторженная мимика',
+            image: p('hook', 'point'),
+            category: 'stunt',
+        },
+        {
+            id: 'double-take',
+            title: 'Double Take',
+            description: 'Реакция «не может поверить глазам своим».',
+            prompt: 'человек делает двойной взгляд на товар — сначала мимо, потом резко назад с удивлённым лицом',
+            image: p('hook', 'double-take'),
+            category: 'stunt',
         },
     ],
 };
 
 export const SETTING_PICKER: PickerConfig = {
     type: 'setting',
-    title: 'Настройки',
-    headline: 'Настройки, которые задают сцену',
-    subtitle: 'Локация и атмосфера определяют настроение ролика. Выберите окружение для вашего товара.',
+    title: 'Сеттинг',
+    headline: 'Сеттинг, который задаёт атмосферу',
+    subtitle: 'Локация и освещение определяют настроение ролика. Выберите окружение для вашего товара.',
     filters: [
         { id: 'all', label: 'Все' },
         { id: 'realistic', label: 'Реалистичные' },
         { id: 'unrealistic', label: 'Сюрреалистичные' },
     ],
-    heroImages: [p('setting', 'hero-1'), p('setting', 'hero-2'), p('setting', 'hero-3')],
+    heroImages: [p('setting', 'bedroom'), p('setting', 'airplane'), p('setting', 'loft')],
     items: [
         {
             id: 'bedroom',
             title: 'Спальня',
-            description: 'На кровати или с подушками — уютный домашний UGC без студийного ощущения.',
-            prompt: 'Уютная спальня: креатор на кровати с подушками, мягкий утренний свет из окна, домашний UGC-стиль, вертикальный 9:16.',
+            description: 'Уютная спальня — домашний UGC без студийного ощущения.',
+            prompt: 'уютная спальня, мягкий утренний свет из окна, постельные подушки на фоне, домашний UGC-стиль',
             image: p('setting', 'bedroom'),
             category: 'realistic',
         },
         {
             id: 'airplane',
             title: 'Крыло самолёта',
-            description: 'Драматичный закат за иллюминатором — премиальный lifestyle-кадр.',
-            prompt: 'Вид из иллюминатора самолёта на закатное небо, креатор держит товар у окна, кинематографичный lifestyle, вертикальный 9:16.',
+            description: 'Драматичный закат за иллюминатором — премиальный lifestyle.',
+            prompt: 'вид из иллюминатора самолёта на закатное небо, тёплые оранжевые оттенки, кинематографичный lifestyle',
             image: p('setting', 'airplane'),
             category: 'realistic',
         },
         {
             id: 'loft',
             title: 'Яркий лофт',
-            description: 'Цветной лофт с постерами — энергичная молодёжная эстетика.',
-            prompt: 'Яркий лофт с цветными постерами на стенах, креатор за столом, насыщенные цвета, молодёжная эстетика TikTok, вертикальный 9:16.',
+            description: 'Цветной лофт с постерами — молодёжная TikTok-эстетика.',
+            prompt: 'яркий лофт с цветными постерами на стенах, насыщенные цвета, молодёжная TikTok-эстетика',
             image: p('setting', 'loft'),
+            category: 'realistic',
+        },
+        {
+            id: 'kitchen',
+            title: 'Современная кухня',
+            description: 'Чистая светлая кухня — лучший фон для товаров FMCG.',
+            prompt: 'современная светлая кухня, белые столешницы, мягкий дневной свет из окна, чистая минималистичная атмосфера',
+            image: p('setting', 'kitchen'),
+            category: 'realistic',
+        },
+        {
+            id: 'studio-white',
+            title: 'Белая студия',
+            description: 'Минималистичный белый фон — товар в центре внимания.',
+            prompt: 'чистый белый студийный фон, мягкий рассеянный свет, нет теней, профессиональная продуктовая съёмка',
+            image: p('setting', 'studio-white'),
             category: 'realistic',
         },
         {
             id: 'volcano',
             title: 'Вулкан',
-            description: 'Сюрреалистичный фон с дымящимся вулканом — wow-эффект для соцсетей.',
-            prompt: 'Сюрреалистичная сцена: креатор на фоне дымящегося вулкана, драматичное небо, scroll-stopping визуал, вертикальный 9:16.',
+            description: 'Сюрреалистичный фон с дымящимся вулканом — wow-эффект.',
+            prompt: 'сюрреалистичная сцена с дымящимся вулканом на фоне, драматичное небо, scroll-stopping визуал',
             image: p('setting', 'volcano'),
             category: 'unrealistic',
         },
@@ -120,46 +157,78 @@ export const STYLE_PICKER: PickerConfig = {
     type: 'style',
     title: 'Стиль',
     headline: 'Выберите стиль, который цепляет',
-    subtitle: 'От распаковки до UGC — выберите тип видео, который подходит вашему товару и аудитории.',
+    subtitle: 'От UGC до вирусных обзоров — выберите формат, который работает для вашего товара.',
     filters: [
         { id: 'all', label: 'Все' },
         { id: 'tiktok', label: 'TikTok', badge: 'NEW' },
         { id: 'ugc', label: 'UGC' },
         { id: 'commercial', label: 'Коммерческое' },
     ],
-    heroImages: [p('style', 'hero-1'), p('style', 'hero-2'), p('style', 'hero-3')],
+    heroImages: [p('style', 'ugc-bathroom'), p('style', 'gadget'), p('style', 'giant')],
     items: [
         {
-            id: 'unboxing-asmr',
-            title: 'Распаковка ASMR',
-            description: 'Аутентичная тихая распаковка с шёпотом и крупными планами рук.',
-            prompt: 'Аутентичная ASMR-распаковка: спокойный креатор шепчет в микрофон, крупный план рук, мягкий свет, вертикальный 9:16.',
-            image: p('style', 'unboxing-asmr'),
-            category: 'tiktok',
-        },
-        {
-            id: 'ugc-bathroom',
-            title: 'UGC в ванной',
-            description: 'Реалистичное видео для соцсетей — креатор в домашней обстановке.',
-            prompt: 'Реалистичное UGC-видео: креатор в ванной комнате демонстрирует косметику, естественный свет, смартфонная эстетика, вертикальный 9:16.',
+            id: 'ugc',
+            title: 'UGC — Соцсети',
+            description: 'Реалистичное видео от лица обычного пользователя.',
+            prompt: 'ugc',
             image: p('style', 'ugc-bathroom'),
             category: 'ugc',
         },
         {
-            id: 'gadget-saved',
-            title: 'Этот гаджет спас меня',
-            description: 'Креатор с энтузиазмом рекомендует товар — формат вирусного обзора.',
-            prompt: 'Креатор с восторгом демонстрирует гаджет, энергичная рекомендация, чистый фон, вирусный формат обзора, вертикальный 9:16.',
-            image: p('style', 'gadget'),
+            id: 'unboxing-asmr',
+            title: 'Распаковка ASMR',
+            description: 'Тихая распаковка с крупным планом рук.',
+            prompt: 'unboxing-asmr',
+            image: p('style', 'unboxing-asmr'),
             category: 'tiktok',
         },
         {
-            id: 'giant-figure',
-            title: 'Гигантская фигура',
-            description: 'Огромный товар рядом с человеком — останавливает скролл.',
-            prompt: 'Гигантская фигура товара рядом с человеком в городе, кинематографичный масштаб, коммерческий wow-кадр, вертикальный 9:16.',
-            image: p('style', 'giant'),
+            id: 'unboxing-tryon',
+            title: 'Распаковка и Примерка',
+            description: 'Распаковка и мгновенная примерка в одном кадре.',
+            prompt: 'unboxing-tryon',
+            image: p('style', 'unboxing-tryon'),
+            category: 'tiktok',
+        },
+        {
+            id: 'selfie-testimonial',
+            title: 'Selfie Testimonial',
+            description: 'Честный отзыв в стиле селфи.',
+            prompt: 'selfie-testimonial',
+            image: p('style', 'selfie-testimonial'),
+            category: 'ugc',
+        },
+        {
+            id: 'direct-to-camera',
+            title: 'Direct to Camera',
+            description: 'Уверенная подача прямо в объектив.',
+            prompt: 'direct-to-camera',
+            image: p('style', 'direct-to-camera'),
+            category: 'ugc',
+        },
+        {
+            id: 'before-after',
+            title: 'До и После',
+            description: 'Трансформация результата в одном кадре.',
+            prompt: 'before-after',
+            image: p('style', 'before-after'),
             category: 'commercial',
+        },
+        {
+            id: 'product-review',
+            title: 'Обзор Товара',
+            description: 'Детальная демонстрация с вовлечённым разбором.',
+            prompt: 'product-review',
+            image: p('style', 'product-review'),
+            category: 'tiktok',
+        },
+        {
+            id: 'gadget-saved-me',
+            title: 'Этот гаджет спас меня',
+            description: 'Восторженная рекомендация — вирусный формат.',
+            prompt: 'gadget-saved-me',
+            image: p('style', 'gadget'),
+            category: 'tiktok',
         },
     ],
 };
@@ -170,7 +239,7 @@ export const PICKER_BY_TYPE: Record<PickerType, PickerConfig> = {
     style: STYLE_PICKER,
 };
 
-/** Чипы композера — клик открывает попап */
+/** Chips shown in the composer — clicking opens the corresponding picker */
 export const COMPOSER_CHIP_DEFS = [
     { id: 'style', label: 'Распаковка ASMR', picker: 'style' as PickerType },
     { id: 'hook', label: 'Хук', picker: 'hook' as PickerType },
@@ -179,4 +248,4 @@ export const COMPOSER_CHIP_DEFS = [
 
 export type ComposerChipId = typeof COMPOSER_CHIP_DEFS[number]['id'];
 
-export const PICKER_FALLBACK = t('market-tech-neon');
+export const PICKER_FALLBACK = '/marketing/pickers/style/ugc-bathroom.png';

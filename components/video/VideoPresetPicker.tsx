@@ -36,6 +36,7 @@ function VideoPresetPicker({
 
   const browseEntry = allModels.find((m) => m.variant.id === browseVariant) ?? allModels[0];
   const browseTier = browseEntry.tier;
+  const demoVideoUrl = browseEntry.variant.demoVideoUrl;
 
   const presets = useMemo(() => {
     let list = getPresetsForModel(browseVariant);
@@ -111,15 +112,36 @@ function VideoPresetPicker({
           {presets.map((preset) => {
             const active = selectedId === preset.id && krasoModel === browseTier && variant === browseVariant;
             const isGeneral = preset.id === 'general';
+            const showDemo = isGeneral && !!demoVideoUrl;
             return (
               <button
                 key={preset.id}
                 type="button"
                 onClick={() => handlePresetPick(preset)}
-                className={`vs-preset-card-btn ${active ? 'vs-preset-card-btn--active' : ''}`}
+                className={`vs-preset-card-btn ${active ? 'vs-preset-card-btn--active' : ''} ${isGeneral ? 'vs-preset-card-btn--general' : ''}`}
               >
                 <div className="vs-preset-card-btn__media">
-                  {preset.thumb ? (
+                  {showDemo ? (
+                    <video
+                      key={demoVideoUrl}
+                      src={demoVideoUrl}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      className="size-full object-cover"
+                    />
+                  ) : preset.previewVideo ? (
+                    <video
+                      key={preset.previewVideo}
+                      src={preset.previewVideo}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      className="size-full object-cover"
+                    />
+                  ) : preset.thumb ? (
                     <img src={preset.thumb} alt="" className="size-full object-cover" loading="lazy" />
                   ) : (
                     <div className={`vs-preset-card-btn__placeholder ${isGeneral ? 'vs-preset-card-btn__placeholder--general' : ''}`} />

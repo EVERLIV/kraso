@@ -44,6 +44,7 @@ const MAIN_NAV: { view: ViewMode; label: string }[] = [
     { view: 'shorts', label: 'Shorts' },
     { view: 'video', label: 'Видео' },
     { view: 'upscale', label: 'Upscale' },
+    { view: 'remove-bg', label: 'Удаление фона' },
     { view: 'recolor', label: 'Палитра' },
     { view: 'restore', label: 'Реставрация' },
     { view: 'marketing', label: 'Маркетинг' },
