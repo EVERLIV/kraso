@@ -1,20 +1,58 @@
-import { db, firebase } from '../lib/firebase';
-import { GeneratedImage } from '../types';
+import { auth } from '../lib/firebase';
+import { CommunityPreferences, GeneratedImage } from '../types';
 
-const COMMUNITY_COLLECTION = 'community';
+const COMMUNITY_FUNCTION_URL =
+    import.meta.env.VITE_COMMUNITY_FUNCTION_URL ||
+    'https://us-central1-project-1285666415996898989.cloudfunctions.net/communityApi';
+
+export interface CommunityPostSettings {
+    source?: GeneratedImage['source'];
+    mediaType: 'image' | 'video';
+}
 
 export interface CommunityPost {
     id?: string;
     userId: string;
     userName: string;
-    userPhoto?: string | null;
+    authorNickname: string;
+    authorPhoto?: string | null;
     mediaUrl: string;
     mediaType: 'image' | 'video';
     prompt?: string;
+    settings?: CommunityPostSettings | null;
+    showPromptSettings: boolean;
     likes: number;
     likedBy: string[];
+    status: 'active' | 'hidden';
     createdAt?: { seconds?: number } | null;
-    sourceGenerationId?: string;
+    sourceGenerationId?: string | null;
+    publishedAt?: { seconds?: number } | null;
+}
+
+async function callCommunityFunction(payload: Record<string, unknown>) {
+    const token = auth?.currentUser ? await auth.currentUser.getIdToken() : null;
+    const resp = await fetch(COMMUNITY_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const text = await resp.text();
+    let data: any = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        data = { error: text };
+    }
+
+    if (!resp.ok) {
+        throw new Error(data?.error || data?.message || `Community API error (${resp.status})`);
+    }
+
+    return data;
 }
 
 export async function publishToCommunity(
@@ -22,32 +60,23 @@ export async function publishToCommunity(
     userName: string,
     userPhoto: string | null | undefined,
     item: GeneratedImage,
+    preferences: CommunityPreferences,
 ): Promise<string | null> {
-    if (!db) return null;
-    const isVideo = item.source === 'video' || /\.mp4(\?|$)/i.test(item.generated || '');
-    const docRef = await db.collection(COMMUNITY_COLLECTION).add({
+    const data = await callCommunityFunction({
+        action: 'publish',
+        item,
+        preferences,
         userId,
-        userName: userName || 'Пользователь',
-        userPhoto: userPhoto || null,
-        mediaUrl: item.generated,
-        mediaType: isVideo ? 'video' : 'image',
-        prompt: item.prompt || '',
-        likes: 0,
-        likedBy: [],
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        sourceGenerationId: item.id || null,
+        userName,
+        userPhoto,
     });
-    return docRef.id;
+    return data?.postId || null;
 }
 
 export async function fetchCommunityFeed(limit = 48): Promise<CommunityPost[]> {
-    if (!db) return [];
     try {
-        const snap = await db.collection(COMMUNITY_COLLECTION)
-            .orderBy('createdAt', 'desc')
-            .limit(limit)
-            .get();
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as CommunityPost));
+        const data = await callCommunityFunction({ action: 'feed', limit });
+        return Array.isArray(data?.posts) ? data.posts as CommunityPost[] : [];
     } catch (e) {
         console.error('Community feed error:', e);
         return [];
@@ -55,17 +84,14 @@ export async function fetchCommunityFeed(limit = 48): Promise<CommunityPost[]> {
 }
 
 export async function toggleCommunityLike(postId: string, userId: string): Promise<{ likes: number; liked: boolean }> {
-    if (!db) return { likes: 0, liked: false };
-    const ref = db.collection(COMMUNITY_COLLECTION).doc(postId);
-    return db.runTransaction(async tx => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) throw new Error('Post not found');
-        const data = snap.data() as CommunityPost;
-        const likedBy = data.likedBy || [];
-        const already = likedBy.includes(userId);
-        const nextLikedBy = already ? likedBy.filter(id => id !== userId) : [...likedBy, userId];
-        const likes = Math.max(0, nextLikedBy.length);
-        tx.update(ref, { likedBy: nextLikedBy, likes });
-        return { likes, liked: !already };
-    });
+    const data = await callCommunityFunction({ action: 'like', postId, userId });
+    return {
+        likes: typeof data?.likes === 'number' ? data.likes : 0,
+        liked: Boolean(data?.liked),
+    };
+}
+
+export async function hideCommunityPostsByUser(userId: string): Promise<number> {
+    const data = await callCommunityFunction({ action: 'hideAll', userId });
+    return typeof data?.hiddenCount === 'number' ? data.hiddenCount : 0;
 }

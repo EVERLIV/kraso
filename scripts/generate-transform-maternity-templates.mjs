@@ -1,5 +1,5 @@
 /**
- * Generate preview thumbnails for transform_viral + maternity template categories.
+ * Generate preview thumbnails for curated template categories.
  * Uses Atlas Flux Schnell (fast, affordable tier).
  *
  * Usage:
@@ -18,7 +18,7 @@ const OUT_DIR = path.join(__dirname, '..', 'public', 'templates');
 const categoryFilter = process.env.CATEGORY || null;
 const SKIP_EXISTING = process.env.SKIP_EXISTING !== '0';
 
-const DEFAULT_CATEGORIES = ['transform_viral', 'maternity', 'portraits_pro'];
+const DEFAULT_CATEGORIES = ['transform_viral', 'maternity', 'portraits_pro', 'business_print', 'family', 'ecommerce'];
 
 const STYLIZED = new Set([
   'viral-anime-manga',
@@ -36,6 +36,12 @@ function buildPreviewPrompt(preset) {
     prefix += 'Fine art maternity photography with a pregnant woman. ';
   } else if (preset.category === 'portraits_pro') {
     prefix += 'Professional portrait headshot of one person. ';
+  } else if (preset.category === 'business_print') {
+    prefix += 'Professional print product mockup on a clean white background. ';
+  } else if (preset.category === 'family') {
+    prefix += 'Photorealistic family portrait scene with multiple people. ';
+  } else if (preset.category === 'ecommerce') {
+    prefix += 'Photorealistic commercial product placement mockup. ';
   } else {
     prefix += 'Photorealistic portrait scene with one person. ';
   }

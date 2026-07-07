@@ -6,7 +6,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     server: {
-      port: 3000,
+      port: 4700,
+      strictPort: true,
       host: '0.0.0.0',
       watch: {
         // Windows EBUSY при больших .webp в public — игнорируем через функцию (надёжнее glob на Win)

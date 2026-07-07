@@ -22,6 +22,7 @@ import UpscaleView from './components/UpscaleView';
 import RecolorView from './components/RecolorView';
 import RestoreView from './components/RestoreView';
 import RemoveBgView from './components/RemoveBgView';
+import ShotsView from './components/ShotsView';
 import ShortsStudio from './components/ShortsStudio';
 import MarketingStudio from './components/MarketingStudio';
 import { isDocumentPresetId, documentAspectRatio } from './lib/documentSpecs';
@@ -31,7 +32,7 @@ import { calculateKrasoCost, applyKrasoModel, apiResolutionForKraso, KrasoModelI
 import { calculateVideoKrasoCost } from './lib/krasoVideoModels';
 import { getDefaultVariant, getVariant, type VideoVariantId } from './lib/videoModels';
 import { VideoMotionPreset, buildVideoPresetPrompt, getVideoPresetNegativePrompt } from './lib/videoPresets';
-import { fetchCommunityFeed, publishToCommunity, toggleCommunityLike, CommunityPost } from './services/communityService';
+import { fetchCommunityFeed, hideCommunityPostsByUser, publishToCommunity, toggleCommunityLike, CommunityPost } from './services/communityService';
 import Footer from './components/Footer';
 import TermsPage from './components/pages/TermsPage';
 import PrivacyPage from './components/pages/PrivacyPage';
@@ -40,9 +41,9 @@ import SEO from './components/SEO';
 import { CookieConsent } from './components/CookieConsent';
 import { useAuth } from './contexts/AuthContext';
 import { generateImageWithGemini, cleanBase64, getMimeType, ReferenceImage } from './services/geminiService';
-import { uploadImageToStorage, saveGenerationToHistory, getUserHistory, syncUserProfile, deductCredits, purchaseSubscription, toggleSavedStatus, deleteGenerationFromHistory } from './services/firebaseService';
+import { uploadImageToStorage, saveGenerationToHistory, getUserHistory, syncUserProfile, deductCredits, purchaseSubscription, toggleSavedStatus, deleteGenerationFromHistory, getCommunityPreferences, markGenerationCommunityShare, clearCommunityShareStateForUser } from './services/firebaseService';
 import { createPaymentSession } from './services/paymentService';
-import { AppState, CategoryId, AspectRatio, Preset, ImageResolution, GenModelId, GeneratedImage, ViewMode, SubscriptionTier, SubscriptionPlan } from './types';
+import { AppState, CategoryId, AspectRatio, Preset, ImageResolution, GenModelId, GeneratedImage, ViewMode, SubscriptionTier, SubscriptionPlan, CommunityPreferences } from './types';
 import {
     Loader2, Zap, Download, Square, RectangleHorizontal, RectangleVertical,
     LayoutGrid, Users, FileText, Baby, ShoppingBag, Shirt,
@@ -112,28 +113,36 @@ type MobileTab = 'canvas' | 'settings';
 // Featured templates for the Hero Slider
 const FEATURED_SLIDES = [
     {
-        id: 'retro-classic',
-        title: 'Ретро Стиль',
-        subtitle: 'Оживите воспоминания в стиле пленочной фотографии',
-        bg: 'from-amber-900 via-stone-800 to-slate-900',
-        accent: 'text-amber-200',
-        image: 'https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=800&q=80'
+        id: 'viral-vogue-cover',
+        title: 'Вирусные трансформации',
+        subtitle: 'Vogue, Barbie, Yearbook и другие трендовые образы',
+        bg: 'from-fuchsia-900 via-rose-700 to-orange-500',
+        accent: 'text-pink-100',
+        image: '/templates/viral-vogue-cover.webp'
     },
     {
-        id: 'tet-traditional-yellow',
-        title: 'Лунный Новый Год',
-        subtitle: 'Создайте волшебную атмосферу праздника',
-        bg: 'from-red-900 to-red-600',
-        accent: 'text-yellow-400',
-        image: 'https://images.unsplash.com/photo-1548625361-1eb84c9f6d1d?auto=format&fit=crop&w=800&q=80'
+        id: 'product-water-splash',
+        title: 'Реклама товаров',
+        subtitle: 'Яркие мокапы для косметики, еды, tech и lifestyle-брендов',
+        bg: 'from-cyan-900 via-sky-700 to-blue-500',
+        accent: 'text-cyan-100',
+        image: '/templates/product-water-splash.webp'
     },
     {
-        id: 'market-shopee-hero',
-        title: 'Карточки Товаров',
-        subtitle: 'Увеличьте продажи с 3D фонами',
-        bg: 'from-orange-600 to-yellow-600',
-        accent: 'text-white',
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'
+        id: 'pro-corporate-headshot',
+        title: 'Портреты, которые продают',
+        subtitle: 'LinkedIn, корпоративные headshot и профессиональные образы',
+        bg: 'from-slate-900 via-indigo-800 to-violet-700',
+        accent: 'text-indigo-100',
+        image: '/templates/pro-corporate-headshot.webp'
+    },
+    {
+        id: 'family-bali-beach',
+        title: 'Семейные фотосессии',
+        subtitle: 'Студия, пляж, дом, Новый год и тёплые lifestyle-сцены',
+        bg: 'from-orange-900 via-amber-700 to-pink-500',
+        accent: 'text-orange-100',
+        image: '/templates/family-bali-beach.webp'
     }
 ];
 
@@ -297,7 +306,7 @@ const App: React.FC = () => {
     // Community
     const [communityFeed, setCommunityFeed] = useState<CommunityPost[]>([]);
     const [communityLoading, setCommunityLoading] = useState(false);
-    const [publishedIds, setPublishedIds] = useState<Set<string>>(new Set());
+    const [communityPreferences, setCommunityPreferences] = useState<CommunityPreferences | null>(null);
 
     const videoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -386,6 +395,11 @@ const App: React.FC = () => {
 
                         const tier = (data?.subscriptionTier || 'free').toLowerCase() as SubscriptionTier;
                         setUserTier(tier);
+                        setCommunityPreferences({
+                            publicNickname: data?.publicNickname || user.displayName || user.email?.split('@')[0] || 'Пользователь',
+                            communityHidden: Boolean(data?.communityHidden),
+                            communityShowPromptSettings: Boolean(data?.communityShowPromptSettings),
+                        });
                     }
                 }, (err) => {
                     console.error("User profile listener error:", err);
@@ -780,22 +794,49 @@ const App: React.FC = () => {
     };
 
     const handlePublishToCommunity = async (item: GeneratedImage) => {
-        if (!user || !item.id || publishedIds.has(item.id)) return;
+        if (!user || !item.id || item.sharedToCommunity) return;
         try {
-            await publishToCommunity(
+            const preferences = await getCommunityPreferences(user.uid, {
+                displayName: user.displayName,
+                email: user.email,
+            });
+            const postId = await publishToCommunity(
                 user.uid,
                 user.displayName || user.email || 'Пользователь',
                 user.photoURL,
                 item,
+                preferences,
             );
-            setPublishedIds(prev => new Set(prev).add(item.id!));
+            if (!postId) throw new Error('Не удалось создать пост');
+            const communitySharedAt = { seconds: Math.floor(Date.now() / 1000) } as GeneratedImage['communitySharedAt'];
+            const persisted = await markGenerationCommunityShare(item.id, {
+                sharedToCommunity: true,
+                communityPostId: postId,
+                communitySharedAt,
+            });
+            if (!persisted) {
+                console.warn('Community post created, but local generation status was not persisted.');
+            }
+            setHistory(prev => prev.map((entry) => (
+                entry.id === item.id
+                    ? { ...entry, sharedToCommunity: true, communityPostId: postId, communitySharedAt }
+                    : entry
+            )));
+            setHistoryViewerItem(prev => (
+                prev?.id === item.id
+                    ? { ...prev, sharedToCommunity: true, communityPostId: postId, communitySharedAt }
+                    : prev
+            ));
             if (historyTab === 'community') {
                 const posts = await fetchCommunityFeed();
                 setCommunityFeed(posts);
             }
+            alert('Фото опубликовано в сообществе.');
         } catch (e) {
             console.error(e);
-            setErrorMsg('Не удалось опубликовать');
+            const message = e instanceof Error && e.message ? e.message : 'Не удалось опубликовать';
+            setErrorMsg(message);
+            alert(message);
         }
     };
 
@@ -1493,7 +1534,7 @@ const App: React.FC = () => {
                 onOpenAccountTab={(tab) => { setAccountTab(tab); setView('profile'); }}
                 onOpenCredits={() => openCreditsPage('upgrade')}
                 userTier={userTier}
-                showBackOnMobile={view === 'chat' || view === 'video' || view === 'templates' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg'}
+                showBackOnMobile={view === 'chat' || view === 'video' || view === 'templates' || view === 'shots' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg'}
                 onBack={() => setView('dashboard')}
                 currentView={view}
                 onChangeView={setView}
@@ -1517,6 +1558,28 @@ const App: React.FC = () => {
                         userTier={userTier}
                         generatedCount={history.length}
                         history={history}
+                        communityPreferences={communityPreferences}
+                        onCommunityPreferencesChange={setCommunityPreferences}
+                        onHideCommunityPosts={async () => {
+                            if (!user) return 0;
+                            const hidden = await hideCommunityPostsByUser(user.uid);
+                            await clearCommunityShareStateForUser(user.uid);
+                            setHistory(prev => prev.map((entry) => (
+                                entry.sharedToCommunity
+                                    ? { ...entry, sharedToCommunity: false, communityPostId: null, communitySharedAt: null }
+                                    : entry
+                            )));
+                            setHistoryViewerItem(prev => (
+                                prev?.sharedToCommunity
+                                    ? { ...prev, sharedToCommunity: false, communityPostId: null, communitySharedAt: null }
+                                    : prev
+                            ));
+                            if (hidden > 0 && historyTab === 'community') {
+                                const posts = await fetchCommunityFeed();
+                                setCommunityFeed(posts);
+                            }
+                            return hidden;
+                        }}
                         initialTab={accountTab}
                         onBack={() => setView('dashboard')}
                     />
@@ -1546,10 +1609,22 @@ const App: React.FC = () => {
                                                     {post.mediaType === 'video' ? (
                                                         <video src={post.mediaUrl} className="size-full object-cover" muted loop playsInline preload="metadata" />
                                                     ) : (
-                                                        <img src={post.mediaUrl} alt="" className="size-full object-cover" loading="lazy" />
+                                                        <img
+                                                            src={post.mediaUrl}
+                                                            alt={post.prompt || `Публикация автора ${post.authorNickname || post.userName}`}
+                                                            className="size-full object-cover"
+                                                            loading="lazy"
+                                                        />
                                                     )}
                                                     <div className="absolute inset-x-0 bottom-0 p-2 bg-black/55 flex items-center justify-between gap-2">
-                                                        <span className="text-[10px] text-white truncate">{post.userName}</span>
+                                                        <div className="min-w-0 flex flex-col">
+                                                            <span className="text-[10px] text-white truncate">{post.authorNickname || post.userName}</span>
+                                                            {post.showPromptSettings && (post.prompt || post.settings?.source) ? (
+                                                                <span className="text-[9px] text-white/70 truncate">
+                                                                    {post.prompt || `Инструмент: ${post.settings?.source}`}
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => post.id && handleCommunityLike(post.id)}
@@ -1640,7 +1715,7 @@ const App: React.FC = () => {
                                 onUpscale={openUpscaleWithImage}
                                 onRemoveBg={openRemoveBgWithImage}
                                 onPublish={handlePublishToCommunity}
-                                isPublished={!!(historyViewerItem?.id && publishedIds.has(historyViewerItem.id))}
+                                isPublished={Boolean((history.find(h => h.id && h.id === historyViewerItem.id) ?? historyViewerItem).sharedToCommunity)}
                                 onUseInTemplates={(url) => {
                                     setHistoryViewerItem(null);
                                     setOriginalImage(url);
@@ -1661,6 +1736,7 @@ const App: React.FC = () => {
                         onOpenVideo={() => setView('video')}
                         {...(SHORTS_STUDIO_ENABLED ? { onOpenShorts: () => setView('shorts') } : {})}
                         onOpenMarketing={() => setView('marketing')}
+                        onOpenShots={() => { setToolInitialImage(null); setView('shots'); }}
                         onOpenUpscale={() => { setToolInitialImage(null); setView('upscale'); }}
                         onOpenRecolor={() => { setToolInitialImage(null); setView('recolor'); }}
                         onOpenRestore={() => { setToolInitialImage(null); setView('restore'); }}
@@ -2165,7 +2241,7 @@ const App: React.FC = () => {
                                                             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === heroIndex ? 'opacity-100' : 'opacity-0'}`}
                                                         >
                                                             <div className="absolute inset-0">
-                                                                <img src={slide.image} className="w-full h-full object-cover" alt="Hero" />
+                                                                <img src={slide.image} className="w-full h-full object-cover" alt={slide.title} />
                                                                 <div className={`absolute inset-0 bg-gradient-to-r ${slide.bg} opacity-90 mix-blend-multiply`}></div>
                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
                                                             </div>
@@ -2196,6 +2272,7 @@ const App: React.FC = () => {
                                                             <button
                                                                 key={idx}
                                                                 onClick={() => setHeroIndex(idx)}
+                                                                aria-label={`Слайд ${idx + 1}: ${FEATURED_SLIDES[idx].title}`}
                                                                 className={`w-2 h-2 rounded-full transition-all ${idx === heroIndex ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'}`}
                                                             />
                                                         ))}
@@ -2420,6 +2497,14 @@ const App: React.FC = () => {
                     />
                 )}
 
+                {view === 'shots' && (
+                    <ShotsView
+                        credits={credits || 0}
+                        onUpdateCredits={setCredits}
+                        initialImage={toolInitialImage}
+                    />
+                )}
+
                 {view === 'recolor' && (
                     <RecolorView
                         credits={credits || 0}
@@ -2458,7 +2543,7 @@ const App: React.FC = () => {
             <input type="file" ref={videoFileInputRef} className="hidden" accept="image/*" onChange={handleVideoFileUpload} />
 
             {/* Mobile Navigation (Higgsfield-style) — Главная · Библиотека · Создать · Pro · Профиль */}
-            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-background-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video' || view === 'templates' || view === 'marketing' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg') ? 'hidden' : ''}`}>
+            <nav className={`lg:hidden fixed bottom-0 inset-x-0 bg-background-light border-t border-[var(--border-strong)] px-1 pt-1.5 pb-[calc(0.3rem+env(safe-area-inset-bottom))] grid grid-cols-5 items-center z-50 ${(view === 'chat' || view === 'video' || view === 'templates' || view === 'marketing' || view === 'shots' || view === 'upscale' || view === 'recolor' || view === 'restore' || view === 'remove-bg') ? 'hidden' : ''}`}>
                 <button
                     onClick={() => setView('dashboard')}
                     className={`flex flex-col items-center gap-1 py-1 transition-colors ${view === 'dashboard' ? 'text-ink' : 'text-ink-faint'}`}
@@ -2512,6 +2597,7 @@ const App: React.FC = () => {
                 onOpenVideo={() => setView('video')}
                 {...(SHORTS_STUDIO_ENABLED ? { onOpenShorts: () => setView('shorts') } : {})}
                 onOpenMarketing={() => setView('marketing')}
+                onOpenShots={() => { setToolInitialImage(null); setView('shots'); }}
                 onOpenUpscale={() => { setToolInitialImage(null); setView('upscale'); }}
                 onOpenRecolor={() => { setToolInitialImage(null); setView('recolor'); }}
                 onOpenRestore={() => { setToolInitialImage(null); setView('restore'); }}

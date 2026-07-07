@@ -120,7 +120,6 @@ function HistoryMediaViewer({
                         onClick={() => setMoreOpen(v => !v)}
                         className={railBtn}
                         aria-label="Ещё"
-                        aria-expanded={moreOpen}
                     >
                         <MoreHorizontal className="size-4" />
                     </button>
@@ -135,7 +134,7 @@ function HistoryMediaViewer({
                                     <Share2 className="size-4 text-ink-muted" /> Поделиться
                                 </button>
                                 <button
-                                    onClick={() => { window.open(url, '_blank'); setMoreOpen(false); }}
+                                    onClick={() => { window.open(url, '_blank', 'noopener,noreferrer'); setMoreOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-muted transition-colors text-left"
                                 >
                                     <ExternalLink className="size-4 text-ink-muted" /> Открыть
@@ -162,7 +161,7 @@ function HistoryMediaViewer({
                                         disabled={isPublished}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-muted transition-colors text-left disabled:opacity-50"
                                     >
-                                        <Globe className="size-4 text-ink-muted" /> {isPublished ? 'Опубликовано' : 'В сообщество'}
+                                        <Globe className="size-4 text-ink-muted" /> {isPublished ? 'Опубликовано' : 'Поделиться в сообществе'}
                                     </button>
                                 )}
                                 {!isVideo && (
@@ -199,13 +198,15 @@ function HistoryMediaViewer({
                         </button>
                     </>
                 )}
-                <button
-                    onClick={() => onUseInTemplates(url)}
-                    className={pillBtn}
-                >
-                    <LayoutGrid className="size-4 text-primary" />
-                    Шаблоны
-                </button>
+                {!isVideo && (
+                    <button
+                        onClick={() => onUseInTemplates(url)}
+                        className={pillBtn}
+                    >
+                        <LayoutGrid className="size-4 text-primary" />
+                        Шаблоны
+                    </button>
+                )}
             </div>
 
             {copied && (

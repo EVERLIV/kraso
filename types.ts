@@ -27,7 +27,10 @@ export interface GeneratedImage {
   prompt: string;
   isSaved?: boolean;
   createdAt?: any;
-  source?: 'chat' | 'studio' | 'video' | 'shorts' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'marketing';
+  source?: 'chat' | 'studio' | 'video' | 'shorts' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'marketing' | 'shots';
+  sharedToCommunity?: boolean;
+  communityPostId?: string | null;
+  communitySharedAt?: any;
 }
 
 export enum AppState {
@@ -48,7 +51,7 @@ export interface ChatMessage {
   isError?: boolean;
 }
 
-export type ViewMode = 'dashboard' | 'templates' | 'chat' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'profile' | 'video' | 'shorts' | 'marketing' | 'design-system' | 'history';
+export type ViewMode = 'dashboard' | 'templates' | 'chat' | 'upscale' | 'recolor' | 'restore' | 'remove-bg' | 'profile' | 'video' | 'shorts' | 'marketing' | 'shots' | 'design-system' | 'history';
 
 export type SubscriptionTier = 'free' | 'creator' | 'pro' | 'business';
 
@@ -64,6 +67,15 @@ export interface UserProfile {
   createdAt: any;
   lastLogin: any;
   apiKey?: string; // New: For external API integration
+  publicNickname?: string;
+  communityHidden?: boolean;
+  communityShowPromptSettings?: boolean;
+}
+
+export interface CommunityPreferences {
+  publicNickname: string;
+  communityHidden: boolean;
+  communityShowPromptSettings: boolean;
 }
 
 export interface SubscriptionPlan {

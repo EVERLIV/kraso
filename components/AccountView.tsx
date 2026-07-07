@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Check, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { SubscriptionPlan, SubscriptionTier, GeneratedImage } from '../types';
+import { SubscriptionPlan, SubscriptionTier, GeneratedImage, CommunityPreferences } from '../types';
 import { createPaymentSession } from '../services/paymentService';
+import { updateCommunityPreferences } from '../services/firebaseService';
 
 type AccountTab = 'profile' | 'subscription' | 'usage' | 'promocode';
 
@@ -11,6 +12,9 @@ interface AccountViewProps {
     userTier: SubscriptionTier;
     generatedCount: number;
     history?: GeneratedImage[];
+    communityPreferences?: CommunityPreferences | null;
+    onCommunityPreferencesChange?: (value: CommunityPreferences) => void;
+    onHideCommunityPosts?: () => Promise<number>;
     initialTab?: AccountTab;
     onBack: () => void;
 }
@@ -51,7 +55,17 @@ const NAV: { id: AccountTab; label: string }[] = [
 ];
 
 /** Strict, compact enterprise-style account page. No oversized cards or bold display type. */
-function AccountView({ credits, userTier, generatedCount, history = [], initialTab = 'profile', onBack }: AccountViewProps) {
+function AccountView({
+    credits,
+    userTier,
+    generatedCount,
+    history = [],
+    communityPreferences,
+    onCommunityPreferencesChange,
+    onHideCommunityPosts,
+    initialTab = 'profile',
+    onBack,
+}: AccountViewProps) {
     const { user, logout } = useAuth();
     const [tab, setTab] = useState<AccountTab>(initialTab);
 
@@ -61,6 +75,12 @@ function AccountView({ credits, userTier, generatedCount, history = [], initialT
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [promocodeError, setPromocodeError] = useState<string | null>(null);
     const [promocode, setPromocode] = useState('');
+    const [publicNickname, setPublicNickname] = useState(communityPreferences?.publicNickname || '');
+    const [communityHidden, setCommunityHidden] = useState(Boolean(communityPreferences?.communityHidden));
+    const [communityShowPromptSettings, setCommunityShowPromptSettings] = useState(Boolean(communityPreferences?.communityShowPromptSettings));
+    const [communitySaving, setCommunitySaving] = useState(false);
+    const [communityMessage, setCommunityMessage] = useState<string | null>(null);
+    const [communityDirty, setCommunityDirty] = useState(false);
 
     const handleSubscribe = async (plan: SubscriptionPlan) => {
         if (!user || plan.id === 'free') return;
@@ -77,6 +97,47 @@ function AccountView({ credits, userTier, generatedCount, history = [], initialT
     };
 
     const displayName = user?.displayName || user?.email?.split('@')[0] || 'Пользователь';
+
+    React.useEffect(() => {
+        if (communityDirty) return;
+        setPublicNickname(communityPreferences?.publicNickname || user?.displayName || user?.email?.split('@')[0] || 'Пользователь');
+        setCommunityHidden(Boolean(communityPreferences?.communityHidden));
+        setCommunityShowPromptSettings(Boolean(communityPreferences?.communityShowPromptSettings));
+    }, [communityPreferences, communityDirty, user?.displayName, user?.email]);
+
+    const handleSaveCommunitySettings = async () => {
+        if (!user) return;
+        setCommunitySaving(true);
+        setCommunityMessage(null);
+        try {
+            const trimmedNickname = publicNickname.trim() || displayName;
+            const next = await updateCommunityPreferences(user.uid, {
+                publicNickname: trimmedNickname,
+                communityHidden,
+                communityShowPromptSettings,
+            });
+            if (!next) {
+                throw new Error('save-failed');
+            }
+            onCommunityPreferencesChange?.(next);
+            if (communityHidden) {
+                const hiddenCount = await onHideCommunityPosts?.();
+                setCommunityMessage(
+                    typeof hiddenCount === 'number' && hiddenCount > 0
+                        ? `Настройки сохранены. Скрыто публикаций: ${hiddenCount}.`
+                        : 'Настройки сохранены. Новые фото будут скрыты, старые уже убраны из сообщества.'
+                );
+            } else {
+                setCommunityMessage('Настройки сообщества сохранены.');
+            }
+            setCommunityDirty(false);
+        } catch (error) {
+            console.error(error);
+            setCommunityMessage('Не удалось сохранить настройки сообщества.');
+        } finally {
+            setCommunitySaving(false);
+        }
+    };
 
     // Compact key/value row.
     const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
@@ -196,6 +257,83 @@ function AccountView({ credits, userTier, generatedCount, history = [], initialT
                                 <button onClick={() => setTab('subscription')} className="px-3 py-1.5 text-sm font-medium rounded-md border border-primary text-primary hover:bg-primary/10 transition-colors">
                                     Пополнить кредиты
                                 </button>
+                            </div>
+
+                            <div className="mt-6 border border-[var(--border-color)] rounded-lg p-4 space-y-4">
+                                <div>
+                                    <h2 className="text-sm font-semibold text-ink">Сообщество</h2>
+                                    <p className="text-sm text-ink-muted mt-1 text-pretty">
+                                        Управляйте публичным никнеймом, видимостью публикаций и тем, что увидят другие пользователи.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label htmlFor="publicNickname" className="text-xs font-medium text-ink-muted">Публичный никнейм</label>
+                                    <input
+                                        id="publicNickname"
+                                        value={publicNickname}
+                                        onChange={(e) => {
+                                            setPublicNickname(e.target.value);
+                                            setCommunityDirty(true);
+                                        }}
+                                        placeholder={displayName}
+                                        className="w-full bg-card-light border border-[var(--border-color)] rounded-md px-3 py-2 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-primary/60"
+                                    />
+                                    <p className="text-xs text-ink-faint">Этот никнейм будет виден под фото в сообществе.</p>
+                                </div>
+
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={communityHidden}
+                                        onChange={(e) => {
+                                            setCommunityHidden(e.target.checked);
+                                            setCommunityDirty(true);
+                                        }}
+                                        className="mt-1 size-4 rounded border-[var(--border-color)] text-primary focus:ring-primary/30"
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block text-sm font-medium text-ink">Скрыть все фото из сообщества</span>
+                                        <span className="block text-xs text-ink-muted mt-1 text-pretty">
+                                            Уже опубликованные фото будут скрыты. Новые фото не попадут в общий пул, пока вы сами не поделитесь ими из истории.
+                                        </span>
+                                    </span>
+                                </label>
+
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={communityShowPromptSettings}
+                                        onChange={(e) => {
+                                            setCommunityShowPromptSettings(e.target.checked);
+                                            setCommunityDirty(true);
+                                        }}
+                                        className="mt-1 size-4 rounded border-[var(--border-color)] text-primary focus:ring-primary/30"
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block text-sm font-medium text-ink">Показывать промт и настройки</span>
+                                        <span className="block text-xs text-ink-muted mt-1 text-pretty">
+                                            Разрешите другим видеть ваш промт и краткую информацию об инструменте, которым было создано фото.
+                                        </span>
+                                    </span>
+                                </label>
+
+                                {communityMessage && (
+                                    <p className={`text-sm text-pretty ${communityMessage.includes('Не удалось') ? 'text-red-600' : 'text-primary'}`}>
+                                        {communityMessage}
+                                    </p>
+                                )}
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleSaveCommunitySettings}
+                                        disabled={communitySaving}
+                                        className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-on-primary hover:bg-primary-hover transition-colors disabled:opacity-60 inline-flex items-center gap-2"
+                                    >
+                                        {communitySaving ? <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> : null}
+                                        Сохранить настройки сообщества
+                                    </button>
+                                </div>
                             </div>
                         </section>
                     )}

@@ -9,6 +9,7 @@ interface GenerationSheetProps {
     onOpenVideo: () => void;
     onOpenShorts?: () => void;
     onOpenMarketing?: () => void;
+    onOpenShots?: () => void;
     onOpenUpscale?: () => void;
     onOpenRecolor?: () => void;
     onOpenRestore?: () => void;
@@ -20,7 +21,7 @@ interface GenerationSheetProps {
  * and simply routes to the same screens the home dashboard cards use — Templates / Photo / Video —
  * so the destination is identical no matter which entry point was tapped.
  */
-function GenerationSheet({ open, onClose, onOpenTemplates, onOpenPhoto, onOpenVideo, onOpenShorts, onOpenMarketing, onOpenUpscale, onOpenRecolor, onOpenRestore, onOpenRemoveBg }: GenerationSheetProps) {
+function GenerationSheet({ open, onClose, onOpenTemplates, onOpenPhoto, onOpenVideo, onOpenShorts, onOpenMarketing, onOpenShots, onOpenUpscale, onOpenRecolor, onOpenRestore, onOpenRemoveBg }: GenerationSheetProps) {
     if (!open) return null;
 
     const CHOICES = [
@@ -29,6 +30,7 @@ function GenerationSheet({ open, onClose, onOpenTemplates, onOpenPhoto, onOpenVi
         { id: 'shorts', label: 'Shorts Studio', sub: 'Вертикальное видео 9:16', icon: VideoIcon, img: '/templates/f1-cockpit.webp', onClick: () => { onClose(); onOpenShorts!(); }, hidden: !onOpenShorts },
         { id: 'video', label: 'Генерация видео', sub: 'Оживите фото в видео', icon: VideoIcon, img: '/templates/f1-cockpit.webp', onClick: () => { onClose(); onOpenVideo(); }, hidden: !!onOpenShorts },
         { id: 'marketing', label: 'Marketing Studio', sub: 'Карточки для маркетплейсов', icon: LayoutGrid, img: '/templates/market-tech-neon.webp', onClick: () => { onClose(); onOpenMarketing?.(); }, hidden: !onOpenMarketing },
+        { id: 'shots', label: 'Снимки', sub: 'Серия кадров из одного фото', icon: ImageIcon, img: '/templates/pro-corporate-headshot.webp', onClick: () => { onClose(); onOpenShots?.(); }, hidden: !onOpenShots },
         { id: 'upscale', label: 'Upscale 4K', sub: 'Детализация и чёткость', icon: ImageIcon, img: '/landing/family-after.webp', onClick: () => { onClose(); onOpenUpscale?.(); }, hidden: !onOpenUpscale },
         { id: 'recolor', label: 'Палитра', sub: 'Moodboard и цвет', icon: ImageIcon, img: '/landing/kids-after.webp', onClick: () => { onClose(); onOpenRecolor?.(); }, hidden: !onOpenRecolor },
         { id: 'restore', label: 'Реставрация', sub: 'Старые и повреждённые фото', icon: ImageIcon, img: '/landing/docs-after.webp', onClick: () => { onClose(); onOpenRestore?.(); }, hidden: !onOpenRestore },

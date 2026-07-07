@@ -33,7 +33,7 @@ const GALLERY = [
     'rich-penthouse', 'f1-cockpit', 'family-addams',
     'sports-olympia', 'restaurant-chef', 'style-y2k',
     'retro-polaroid-classic', 'watercolor-art', 'pop-art',
-    'blogger-fashion', 'print-billboard', 'cyberpunk-city',
+    'blogger-fashion', 'print-brochure-trifold', 'cyberpunk-city',
     'dating-restaurant', 'business-startup', 'kids-explorer',
 ];
 
@@ -99,7 +99,7 @@ function HiggsHome({ onStart }: HiggsHomeProps) {
             {/* Masonry gallery */}
             <div className="mt-6 [column-gap:12px] [columns:160px] sm:[columns:200px] md:[columns:236px]">
                 {GALLERY.map((g, i) => (
-                    <button key={g + i} onClick={onStart} className="group relative w-full mb-3 break-inside-avoid rounded-xl overflow-hidden border border-[var(--border-color)] hover:border-primary transition-colors">
+                    <button key={g + i} onClick={onStart} aria-label="Открыть шаблоны" className="group relative w-full mb-3 break-inside-avoid rounded-xl overflow-hidden border border-[var(--border-color)] hover:border-primary transition-colors">
                         <img src={tpl(g)} alt="" loading="lazy" className="w-full h-auto object-cover group-hover:scale-[1.04] transition-transform duration-500" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>

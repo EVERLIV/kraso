@@ -1,0 +1,72 @@
+/** @typedef {'hero_wide'|'medium_3q'|'close_portrait'|'side_profile'|'hands_detail'|'over_shoulder'} ShotsShotId */
+
+const SHOTS_PRESETS = [
+  {
+    id: "hero_wide",
+    title: "Wide",
+    description: "Общий план",
+    promptSuffix:
+      "Shot type: full-body or three-quarter environmental portrait. Camera slightly farther away. Show the whole seated or standing composition and enough of the room to anchor the space.",
+  },
+  {
+    id: "medium_3q",
+    title: "3/4",
+    description: "Средний ракурс",
+    promptSuffix:
+      "Shot type: medium three-quarter angle portrait. Camera slightly off-center. Keep the same posture logic and same room, but tighten framing to the torso and chair or surrounding furniture.",
+  },
+  {
+    id: "close_portrait",
+    title: "Close",
+    description: "Крупный портрет",
+    promptSuffix:
+      "Shot type: close portrait. Focus on face, hair, upper shoulders, and soft background blur. Keep expression natural and keep lighting direction exactly consistent with the reference photo.",
+  },
+  {
+    id: "side_profile",
+    title: "Profile",
+    description: "Боковой ракурс",
+    promptSuffix:
+      "Shot type: clean side-angle or profile portrait. Keep the subject in the same seat or same place in the room, with a side-facing camera view that reveals the window or interior depth.",
+  },
+  {
+    id: "hands_detail",
+    title: "Detail",
+    description: "Детали рук и сцены",
+    promptSuffix:
+      "Shot type: tasteful detail shot. Focus on hands, lap, sleeves, chair arm, coffee cup, or nearby interior detail while keeping enough of the subject visible to remain clearly the same person and scene. Do not invent new props.",
+  },
+  {
+    id: "over_shoulder",
+    title: "Back",
+    description: "Сзади / over-shoulder",
+    promptSuffix:
+      "Shot type: over-shoulder or back-angle composition. Show the same hairstyle, shoulders, chair, and room perspective from behind or behind-side, while preserving the exact environment and keeping the subject recognizably the same person.",
+  },
+];
+
+function buildShotsMasterPrompt() {
+  return [
+    "Use the uploaded photo as the only source of truth.",
+    "Keep the exact same person identity, face, hairstyle, skin tone, outfit, proportions, room, furniture, window placement, lighting direction, time of day, color palette, and overall mood.",
+    "Do not redesign the location.",
+    "Do not change clothes.",
+    "Do not change hairstyle, makeup, or accessories.",
+    "Do not add new props, people, or animals.",
+    "Do not move to another room or another background.",
+    "Do not make the person younger, older, thinner, more glamorous, or differently styled.",
+    "The result must feel like the same real photoshoot captured seconds later in the same interior.",
+    "Only vary camera angle, framing, lens distance, crop, and safe editorial detail composition.",
+    "Keep realism high and avoid AI artifacts, duplicate limbs, extra fingers, warped furniture, or background drift.",
+  ].join(" ");
+}
+
+function buildShotPrompt(preset) {
+  return `${buildShotsMasterPrompt()} ${preset.promptSuffix}`;
+}
+
+module.exports = {
+  SHOTS_PRESETS,
+  buildShotsMasterPrompt,
+  buildShotPrompt,
+};

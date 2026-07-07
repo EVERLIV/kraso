@@ -35,8 +35,10 @@ admin.initializeApp();
 const { telegramWebhookHandler } = require("./telegramWebhook");
 const { generateTemplateImageHandler, generateTemplateBatchHandler } = require("./generateTemplateImage");
 const { generateStudioImageHandler } = require("./generateStudioImage");
+const { generateShotsGridHandler } = require("./generateShotsGrid");
 const { enhancePromptHandler } = require("./enhancePrompt");
 const { generateAtlasVideoHandler } = require("./generateAtlasVideo");
+const { communityApiHandler } = require("./communityApi");
 
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
@@ -48,8 +50,10 @@ exports.telegramWebhook = onRequest(telegramWebhookHandler);
 exports.generateTemplateImage = generateTemplateImageHandler;
 exports.generateTemplateBatch = generateTemplateBatchHandler;
 exports.generateStudioImage = generateStudioImageHandler;
+exports.generateShotsGrid = generateShotsGridHandler;
 exports.enhancePrompt = enhancePromptHandler;
 exports.generateAtlasVideo = generateAtlasVideoHandler;
+exports.communityApi = communityApiHandler;
 
 /**
  * Google Imagen / Gemini image generation (Nano Banana).

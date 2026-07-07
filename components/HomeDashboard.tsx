@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ImageIcon, Video, LayoutGrid, Camera, Sparkles, Briefcase, ShoppingBag, Baby, Users, FileText, ScanEye, Eraser, Clapperboard, Palette, RefreshCcw } from 'lucide-react';
+import { ArrowRight, ImageIcon, Video, LayoutGrid, Camera, Sparkles, Briefcase, ShoppingBag, Baby, Users, FileText, ScanEye, Eraser, Clapperboard, Palette, RefreshCcw, Images } from 'lucide-react';
 import { CategoryId } from '../types';
 import Footer from './Footer';
 
@@ -9,6 +9,7 @@ interface HomeDashboardProps {
     onOpenVideo: () => void;
     onOpenShorts?: () => void;
     onOpenMarketing?: () => void;
+    onOpenShots?: () => void;
     onOpenUpscale?: () => void;
     onOpenRecolor?: () => void;
     onOpenRestore?: () => void;
@@ -31,7 +32,7 @@ const CATEGORIES: { id: CategoryId; label: string; img: string; icon: React.Elem
     { id: 'family', label: 'Семья', img: 'family-addams', icon: Users },
 ];
 
-function HomeDashboard({ onOpenTemplates, onOpenPhoto, onOpenVideo, onOpenShorts, onOpenMarketing, onOpenUpscale, onOpenRecolor, onOpenRestore, onOpenRemoveBg, userName, onFooterNavigate, onFooterProductClick }: HomeDashboardProps) {
+function HomeDashboard({ onOpenTemplates, onOpenPhoto, onOpenVideo, onOpenShorts, onOpenMarketing, onOpenShots, onOpenUpscale, onOpenRecolor, onOpenRestore, onOpenRemoveBg, userName, onFooterNavigate, onFooterProductClick }: HomeDashboardProps) {
     return (
         <div className="flex-1 overflow-y-auto custom-scrollbar bg-background-light">
             <div className="max-w-shell mx-auto px-4 md:px-6 pt-5 pb-28 lg:pb-10">
@@ -82,6 +83,12 @@ function HomeDashboard({ onOpenTemplates, onOpenPhoto, onOpenVideo, onOpenShorts
                         <button type="button" onClick={onOpenUpscale} className="flex items-center gap-2 p-3 rounded-xl border border-[var(--border-color)] bg-card-light hover:bg-surface-muted transition-colors duration-100 text-left">
                             <ScanEye className="size-4 text-ink-muted shrink-0" />
                             <span className="text-sm font-semibold text-ink">Upscale 4K</span>
+                        </button>
+                    )}
+                    {onOpenShots && (
+                        <button type="button" onClick={onOpenShots} className="flex items-center gap-2 p-3 rounded-xl border border-[var(--border-color)] bg-card-light hover:bg-surface-muted transition-colors duration-100 text-left">
+                            <Images className="size-4 text-ink-muted shrink-0" />
+                            <span className="text-sm font-semibold text-ink">Снимки</span>
                         </button>
                     )}
                     {onOpenRecolor && (

@@ -378,84 +378,84 @@ export const ALL_PRESETS: Preset[] = [
 
   // --- BUSINESS PRINT CATEGORY ---
   {
-    id: 'print-menu',
+    id: 'print-business-card-duo',
     category: 'business_print',
-    title: 'Меню Ресторана',
-    description: 'Премиум дизайн',
-    prompt: 'Create a high-end restaurant menu background design. Dark marble texture, elegant gold lines, soft ambient lighting. Leave empty space in the center for text. Place a gourmet dish on the bottom corner. Photorealistic style.',
-    image: '/templates/print-menu.webp'
+    title: 'Визитка 2 стороны',
+    description: 'Front + back на белом фоне',
+    prompt: 'Create a premium business card presentation on a pure white studio background. Show BOTH sides of one business card in the same frame: front side and back side, slightly angled, clean realistic shadows, luxury minimal branding style, no readable text. Elegant print design with generous blank areas reserved for future contact details. High-end print mockup, photorealistic.',
+    image: '/templates/print-business-card-duo.webp'
   },
   {
-    id: 'print-spa-pricelist',
+    id: 'print-brochure-trifold',
     category: 'business_print',
-    title: 'Прайс SPA',
-    description: 'Релакс и стиль',
-    prompt: 'Create a luxury spa price list background. Soft beige tones, orchid flowers, white stones, and bamboo. Zen atmosphere. Clean space for service list text. Photorealistic.',
-    image: '/templates/print-spa-pricelist.webp'
+    title: 'Буклет трифолд',
+    description: 'Под текст и фото',
+    prompt: 'Create a realistic trifold brochure design mockup laid flat on a clean white background. Corporate modern print design, clearly structured panels, strong visual hierarchy, bold cover panel, neat empty content zones for headlines, body text, icons and photos. No readable text. Print-ready brochure aesthetic, photorealistic.',
+    image: '/templates/print-brochure-trifold.webp'
   },
   {
-    id: 'print-coffee-poster',
+    id: 'print-booklet-spread',
     category: 'business_print',
-    title: 'Постер Кофейни',
-    description: 'Реклама напитков',
-    prompt: 'Create a coffee shop promotional poster background. Close-up of coffee beans and a steaming cup. Warm, cozy lighting. Text space at the top. Photorealistic.',
-    image: '/templates/print-coffee-poster.webp'
+    title: 'Буклет / каталог',
+    description: 'Разворот под контент',
+    prompt: 'Create an open booklet or catalog spread mockup, wide horizontal layout on a pure white background. Editorial print design with image blocks, headline areas, text columns, margin system and clean empty placeholders, but no readable text. Premium corporate brochure look, photorealistic printed paper.',
+    image: '/templates/print-booklet-spread.webp'
   },
   {
-    id: 'print-sale-flyer',
+    id: 'print-award-certificate',
     category: 'business_print',
-    title: 'Флаер Распродажи',
-    description: 'Яркое промо',
-    prompt: 'Create a dynamic sale flyer background. Vibrant red and yellow geometric shapes, confetti, "Big Sale" energy. Space for product images and text. Photorealistic.',
-    image: '/templates/print-sale-flyer.webp'
+    title: 'Награда / сертификат',
+    description: 'Торжественный дизайн',
+    prompt: 'Create a premium award certificate sheet in landscape orientation on a clean white background. Elegant border, subtle gold foil accents, seal area, signature area, decorative lines and a large central blank zone for recipient text. No readable text. Formal prestigious printed certificate design, photorealistic.',
+    image: '/templates/print-award-certificate.webp'
   },
   {
-    id: 'print-business-card',
+    id: 'print-diploma-classic',
     category: 'business_print',
-    title: 'Визитка',
-    description: 'Деловой стиль',
-    prompt: 'Create a minimalist modern business card background design. Dark blue and silver gradient. Abstract geometric lines. Professional look. Photorealistic.',
-    image: '/templates/print-business-card.webp'
+    title: 'Диплом',
+    description: 'Официальный бланк',
+    prompt: 'Create a classic diploma sheet design in horizontal format, photographed flat on a pure white background. Refined ornamental frame, academy or institution style, signature area, badge medallion zone and large blank center for later text insertion. No readable text. Official printed diploma aesthetic, photorealistic.',
+    image: '/templates/print-diploma-classic.webp'
   },
   {
-    id: 'print-billboard',
+    id: 'print-menu-sheet',
     category: 'business_print',
-    title: 'Билборд',
-    description: 'Наружная реклама',
-    prompt: 'Create a mockup of a large outdoor billboard on a city building. The billboard surface is blank white for your design. Blue sky background. Photorealistic.',
-    image: '/templates/print-billboard.webp'
+    title: 'Меню-лист',
+    description: 'Оформление без текста',
+    prompt: 'Create a restaurant menu sheet design as a single printed page lying on a white studio background. Beautiful menu frame, tasteful decorative accents, food-inspired visual details at the edges, and a large clean central area for future menu text. No readable text at all. Premium menu print layout, photorealistic.',
+    image: '/templates/print-menu-sheet.webp'
   },
   {
-    id: 'print-event-banner',
+    id: 'print-spa-pricelist-sheet',
     category: 'business_print',
-    title: 'Баннер События',
-    description: 'Конференция / Гала',
-    prompt: 'Create a corporate event banner background. Blue stage curtains, spotlights, gold sparkles. Celebration atmosphere. Space for event title. Photorealistic.',
-    image: '/templates/print-event-banner.webp'
+    title: 'Прайс-лист',
+    description: 'Чистая листовая верстка',
+    prompt: 'Create a beauty or spa price list page as a printed sheet on a clean white background. Soft premium design, elegant section dividers, icon areas, subtle botanical accents and spacious blank blocks reserved for service names and prices. No readable text. Print layout only, photorealistic.',
+    image: '/templates/print-spa-pricelist-sheet.webp'
   },
   {
-    id: 'print-voucher',
+    id: 'print-flyer-promo',
     category: 'business_print',
-    title: 'Ваучер',
-    description: 'Подарочный сертификат',
-    prompt: 'Create a luxury gift voucher background design. Gold ribbon, silky texture background, elegant typography elements. Photorealistic.',
-    image: '/templates/print-voucher.webp'
+    title: 'Флаер / листовка',
+    description: 'Промо под акцию',
+    prompt: 'Create a modern promotional flyer sheet in portrait orientation on a pure white background. Bold headline zone, product or photo block areas, strong callout shapes, neat grid and generous empty spaces for text placement. No readable text. Realistic print flyer design, photorealistic.',
+    image: '/templates/print-flyer-promo.webp'
   },
   {
-    id: 'print-real-estate',
+    id: 'print-gift-certificate',
     category: 'business_print',
-    title: 'Недвижимость',
-    description: 'Листовка риелтора',
-    prompt: 'Create a real estate flyer background. Modern home interior in background (blurred), bright airy lighting. Blue and white color scheme. Space for property details. Photorealistic.',
-    image: '/templates/print-real-estate.webp'
+    title: 'Подарочный сертификат',
+    description: 'Премиум оформление',
+    prompt: 'Create a luxury gift certificate print design in wide horizontal format on a clean white background. Elegant frame, ribbon motif, subtle metallic accents, logo placeholder zone and spacious blank area for recipient and amount details. No readable text. Premium printed voucher aesthetic, photorealistic.',
+    image: '/templates/print-gift-certificate.webp'
   },
   {
-    id: 'print-roll-up',
+    id: 'print-postcard-invite',
     category: 'business_print',
-    title: 'Ролл-ап',
-    description: 'Стенд для офиса',
-    prompt: 'Create a blank roll-up standee mockup standing in a modern office lobby. Clean canvas for your design. Professional lighting. Photorealistic.',
-    image: '/templates/print-roll-up.webp'
+    title: 'Открытка / приглашение',
+    description: 'Горизонтальный макет',
+    prompt: 'Create a premium postcard or invitation card in horizontal format on a white studio background. Sophisticated printed design with border system, decorative illustration accents, photo zone and clean blank space for future headline and event details. No readable text. Elegant print stationery mockup, photorealistic.',
+    image: '/templates/print-postcard-invite.webp'
   },
 
   // --- TET (LUNAR NEW YEAR) VIETNAMESE CATEGORY ---
@@ -1491,86 +1491,70 @@ export const ALL_PRESETS: Preset[] = [
     image: '/templates/rich-watch.webp'
   },
 
-  // --- FAMILY CATEGORY (REFINED PROMPTS) ---
+  // --- FAMILY CATEGORY ---
   {
-    id: 'family-addams',
+    id: 'family-bali-beach',
     category: 'family',
-    title: 'Семейка Аддамс',
-    description: 'Готический стиль',
-    prompt: 'Transform the specific family/group from the uploaded photo into a dark, elegant gothic masterpiece. High-contrast cinematic lighting. Everyone dressed in high-quality black velvet and lace formal wear. CRUCIAL: Each person in the output must have a 100% identical face to their counterpart in the original photo. No AI face genericizing. Detailed skin texture, photorealistic, professional dark studio atmosphere. Maintain individual heights and positions.',
-    image: '/templates/family-addams.webp'
+    title: 'Семья на Бали / пляже',
+    description: 'Тропическая фотосессия',
+    prompt: 'Professional family photoshoot on a Bali beach at golden hour. The family from the uploaded photo standing together barefoot near the shoreline, soft tropical sunset, palm silhouettes, elegant resort-style clothing, natural affectionate poses. CRUCIAL: Each person must keep their exact facial identity from the original image. Maintain the same family members, approximate ages, body proportions and natural family chemistry. Photorealistic, warm premium travel photography.',
+    image: '/templates/family-bali-beach.webp'
   },
   {
-    id: 'family-wild-west',
+    id: 'family-studio-neutral',
     category: 'family',
-    title: 'Дикий Запад',
-    description: 'Ковбои',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress the group as cowboys and sheriffs. Hats, leather vests, boots. Background: old western saloon. Photorealistic style.',
-    image: '/templates/family-wild-west.webp'
+    title: 'Семейный портрет в студии',
+    description: 'Нейтральный фон',
+    prompt: 'Professional family portrait in a photo studio with a neutral beige or light gray backdrop. Soft flattering studio lighting, coordinated elegant casual outfits, relaxed confident poses, everyone looking polished and natural. CRUCIAL: Preserve the exact face identity of every family member from the uploaded photo. Maintain group composition and age differences. Photorealistic, premium studio photography.',
+    image: '/templates/family-studio-neutral.webp'
   },
   {
-    id: 'family-vikings',
+    id: 'family-home-lifestyle',
     category: 'family',
-    title: 'Викинги',
-    description: 'Воины севера',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress everyone as fierce vikings with furs, leather armor, and horned helmets. Background: misty fjord. Photorealistic style.',
-    image: '/templates/family-vikings.webp'
+    title: 'Семья дома',
+    description: 'Уютный лайфстайл',
+    prompt: 'Cozy at-home family lifestyle photoshoot. The family from the uploaded photo gathered naturally in a warm living room with a plaid blanket, fireplace glow, and soft window light. Relaxed candid interaction, gentle smiles, intimate authentic home atmosphere. CRUCIAL: Keep every person exactly recognizable with identical facial identity. Photorealistic, warm editorial family photography.',
+    image: '/templates/family-home-lifestyle.webp'
   },
   {
-    id: 'family-royal',
+    id: 'family-christmas',
     category: 'family',
-    title: 'Королевская семья',
-    description: 'Ренессанс',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress everyone in luxurious renaissance royal clothes, velvet robes, crowns. Background: palace throne room. Photorealistic style.',
-    image: '/templates/family-royal.webp'
+    title: 'Новогодняя семья',
+    description: 'Ёлка и свитера',
+    prompt: 'Festive Christmas family photoshoot indoors. Decorated Christmas tree, cozy knit sweaters, wrapped gifts, warm fairy lights, joyful family mood. The group should feel real and affectionate, posed naturally around the tree. CRUCIAL: Preserve exact facial identity for every family member from the uploaded photo. Photorealistic, premium holiday card photography.',
+    image: '/templates/family-christmas.webp'
   },
   {
-    id: 'family-pajamas',
+    id: 'family-with-pet',
     category: 'family',
-    title: 'Пижамная вечеринка',
-    description: 'Кигуруми',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress everyone in matching funny colorful animal onesies (kigurumi). Background: cozy bedroom. Photorealistic style.',
-    image: '/templates/family-pajamas.webp'
+    title: 'Семья с питомцем',
+    description: 'Домашний любимец',
+    prompt: 'Heartwarming family portrait with a pet. The family from the uploaded photo posed together with a beloved dog or cat, natural smiles, soft daylight, clean lifestyle setting. CRUCIAL: Preserve exact facial identity for each family member and keep the pet integrated naturally into the group. Photorealistic, warm family photography.',
+    image: '/templates/family-with-pet.webp'
   },
   {
-    id: 'family-space',
+    id: 'family-autumn-park',
     category: 'family',
-    title: 'Космос',
-    description: 'Экипаж корабля',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress everyone in futuristic sci-fi space uniforms. Background: spaceship bridge with stars. Photorealistic style.',
-    image: '/templates/family-space.webp'
+    title: 'Осенняя прогулка',
+    description: 'Парк и листва',
+    prompt: 'Outdoor family walk in an autumn park. Golden leaves, soft overcast light, coordinated seasonal outfits, candid walking and laughing moments, natural affectionate body language. CRUCIAL: Keep the exact facial identity of every person from the uploaded family photo. Photorealistic, rich autumn colors, premium lifestyle photography.',
+    image: '/templates/family-autumn-park.webp'
   },
   {
-    id: 'family-cavemen',
+    id: 'family-generations',
     category: 'family',
-    title: 'Пещерные люди',
-    description: 'Каменный век',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Dress everyone in leopard prints and animal furs, holding wooden clubs. Background: stone cave. Photorealistic style.',
-    image: '/templates/family-cavemen.webp'
+    title: 'Поколения',
+    description: 'Бабушки, дедушки и внуки',
+    prompt: 'Multi-generational family portrait featuring grandparents and grandchildren together. Elegant but warm family posing, soft natural light, timeless emotional atmosphere, clear visual hierarchy that celebrates the whole family. CRUCIAL: Preserve the exact facial identity of each person from the uploaded image, especially age differences and family resemblance. Photorealistic, premium family portraiture.',
+    image: '/templates/family-generations.webp'
   },
   {
-    id: 'family-classic',
+    id: 'family-dress-code',
     category: 'family',
-    title: 'Классика',
-    description: 'Семейная студия',
-    prompt: 'Professional classic family portrait in a studio setting. Neutral background, elegant but casual attire, warm smiles, soft lighting. CRUCIAL: All individuals must retain 100% identical facial features and expressions from the original photo. Photorealistic 8k.',
-    image: '/templates/family-classic.webp'
-  },
-  {
-    id: 'family-zombies',
-    category: 'family',
-    title: 'Зомби',
-    description: 'Апокалипсис',
-    prompt: 'CRUCIAL: Preserve facial identity exactly. Turn the family into funny green zombies. Background: abandoned city.',
-    image: '/templates/family-zombies.webp'
-  },
-  {
-    id: 'family-cartoon',
-    category: 'family',
-    title: 'Симпсоны',
-    description: 'Мультфильм',
-    prompt: 'Transform the image into a famous 2D cartoon style with yellow skin. Background: suburban living room.',
-    image: '/templates/family-cartoon.webp'
+    title: 'Единый дресс-код',
+    description: 'Белый верх и джинсы',
+    prompt: 'Clean coordinated family portrait with a unified dress code: white tops and blue jeans. Bright airy setting, simple neutral background, cohesive styling, natural smiles and balanced group composition. CRUCIAL: Preserve exact facial identity for every family member from the uploaded photo. Photorealistic, modern catalog-quality family portrait.',
+    image: '/templates/family-dress-code.webp'
   },
 
   // --- DOCUMENTS CATEGORY ---
@@ -1849,30 +1833,101 @@ export const ALL_PRESETS: Preset[] = [
 
   // --- ECOMMERCE CATEGORY ---
   {
-    id: 'product-podium',
+    id: 'product-studio-podium',
     category: 'ecommerce',
-    title: '3D Подиум',
-    description: 'Минимализм',
-    prompt: 'Place product on stylish minimalist 3D podium. Pastel colors, soft shadows. Photorealistic product photography.',
-    image: '/templates/product-podium.webp'
+    title: 'Студийный подиум',
+    description: 'Чистый студийный мокап',
+    prompt: 'Premium product placement mockup in a clean studio. Product centered on a minimal podium, seamless pastel or beige background, soft directional shadows, elegant commercial lighting, lots of clean space around the product. Designed for cosmetics, gadgets, jars, supplements, candles, and premium packaging. Photorealistic product advertising shot.',
+    image: '/templates/product-studio-podium.webp'
   },
   {
-    id: 'product-nature',
+    id: 'product-water-splash',
     category: 'ecommerce',
-    title: 'Природа',
-    description: 'Камни и мох',
-    prompt: 'Product photography on nature. Mossy stones, sunlight, bokeh. Organic vibe. Photorealistic.',
-    image: '/templates/product-nature.webp'
+    title: 'Брызги воды',
+    description: 'Свежесть и энергия',
+    prompt: 'Dynamic product placement mockup with dramatic water splashes frozen in motion around the product. High-speed studio photography look, glossy reflective surface, crisp highlights, energetic freshness. Perfect for skincare, shampoo, perfume, drinks, and wellness products. Photorealistic commercial ad shot.',
+    image: '/templates/product-water-splash.webp'
   },
   {
-    id: 'product-luxury',
+    id: 'product-kitchen-counter',
     category: 'ecommerce',
-    title: 'Премиум',
-    description: 'Черное и золото',
-    prompt: 'Luxury product photography. Black background with golden accents and dramatic lighting, premium look. Photorealistic.',
-    image: '/templates/product-luxury.webp'
+    title: 'Кухонный стол',
+    description: 'Домашняя lifestyle-сцена',
+    prompt: 'Lifestyle product placement on a stylish kitchen countertop or dining table. Natural daylight, marble or wood surface, soft background blur, realistic home atmosphere, tasteful props kept minimal. Designed for food, kitchen goods, supplements, tableware, coffee, candles, and household products. Photorealistic advertising photography.',
+    image: '/templates/product-kitchen-counter.webp'
   },
-
+  {
+    id: 'product-bathroom-spa',
+    category: 'ecommerce',
+    title: 'Ванная / SPA',
+    description: 'Чистота и уход',
+    prompt: 'Luxury bathroom or spa product placement mockup. Product styled beside sink, stone tray, soft towels, mirror reflections, natural daylight and moisture glow. Calm wellness mood, clean premium setting. Perfect for skincare, soap, shampoo, body care, and beauty products. Photorealistic commercial photography.',
+    image: '/templates/product-bathroom-spa.webp'
+  },
+  {
+    id: 'product-natural-stone',
+    category: 'ecommerce',
+    title: 'Камень и природа',
+    description: 'Органика и texture',
+    prompt: 'Organic product mockup on natural stone, moss, sand, or textured rock surfaces. Soft sunlight, earthy palette, crisp material detail, elevated eco-luxury advertising look. Great for natural cosmetics, oils, wellness, perfume, and eco packaging. Photorealistic product shot.',
+    image: '/templates/product-natural-stone.webp'
+  },
+  {
+    id: 'product-luxury-black-gold',
+    category: 'ecommerce',
+    title: 'Чёрный luxury',
+    description: 'Премиум и драматичный свет',
+    prompt: 'High-end luxury product placement on a dark glossy surface with black background, gold accents, dramatic rim lighting, premium reflections, and cinematic contrast. Ideal for perfume, jewelry boxes, watches, premium alcohol, and exclusive packaging. Photorealistic luxury advertising.',
+    image: '/templates/product-luxury-black-gold.webp'
+  },
+  {
+    id: 'product-glass-reflection',
+    category: 'ecommerce',
+    title: 'Стекло и отражения',
+    description: 'Чистый modern look',
+    prompt: 'Modern product placement mockup using glass panels, transparent acrylic blocks, reflections, refractions, and clean cool-toned studio light. Sleek futuristic ad style. Best for tech, skincare, medical products, and minimalist premium packaging. Photorealistic commercial setup.',
+    image: '/templates/product-glass-reflection.webp'
+  },
+  {
+    id: 'product-fabric-soft',
+    category: 'ecommerce',
+    title: 'Ткань и мягкий фон',
+    description: 'Нежная premium-подача',
+    prompt: 'Elegant product styling on soft draped fabric such as satin, linen, or silk. Delicate folds, diffused light, refined feminine aesthetic, premium editorial product photography. Suitable for cosmetics, candles, jewelry boxes, perfume, and boutique products. Photorealistic mockup.',
+    image: '/templates/product-fabric-soft.webp'
+  },
+  {
+    id: 'product-fruit-ingredient',
+    category: 'ecommerce',
+    title: 'Ингредиенты вокруг',
+    description: 'Фрукты, травы, состав',
+    prompt: 'Product placement mockup surrounded by fresh ingredients related to the product: citrus slices, herbs, flowers, spices, oats, honey, or botanical elements. Clean ad composition, bright natural light, ingredient storytelling. Ideal for skincare, food, tea, wellness, and beverage products. Photorealistic commercial photography.',
+    image: '/templates/product-fruit-ingredient.webp'
+  },
+  {
+    id: 'product-tech-desk',
+    category: 'ecommerce',
+    title: 'Tech desk',
+    description: 'Гаджеты и аксессуары',
+    prompt: 'Modern tech product mockup on a sleek desk setup. Matte surfaces, monitor glow, keyboard, subtle LED accents, organized workspace, premium clean composition. Designed for electronics, headphones, chargers, smart devices, and office accessories. Photorealistic ad shot.',
+    image: '/templates/product-tech-desk.webp'
+  },
+  {
+    id: 'product-travel-resort',
+    category: 'ecommerce',
+    title: 'Travel / Resort',
+    description: 'Путешествия и отпуск',
+    prompt: 'Aspirational travel resort product placement mockup. Product styled near poolside, sunbed, woven bag, sunglasses, or tropical hotel terrace with bright natural sunlight. Relaxed vacation luxury mood. Great for sunscreen, summer cosmetics, drinks, fashion accessories, and travel goods. Photorealistic advertising image.',
+    image: '/templates/product-travel-resort.webp'
+  },
+  {
+    id: 'product-food-splash',
+    category: 'ecommerce',
+    title: 'Еда / splash',
+    description: 'Яркий food-рекламный кадр',
+    prompt: 'Dynamic food product advertising mockup with appetizing splash or ingredient motion. Sauce, milk, coffee, or juice movement around the product, high-speed commercial look, rich texture detail, vivid appetite appeal. Perfect for beverages, snacks, sauces, dairy, and packaged food. Photorealistic food advertising shot.',
+    image: '/templates/product-food-splash.webp'
+  },
   // --- BUSINESS CATEGORY ---
   {
     id: 'business-startup',

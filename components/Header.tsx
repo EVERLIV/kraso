@@ -43,6 +43,7 @@ const MAIN_NAV: { view: ViewMode; label: string }[] = [
     { view: 'chat', label: 'Фото' },
     { view: 'shorts', label: 'Shorts' },
     { view: 'video', label: 'Видео' },
+    { view: 'shots', label: 'Снимки' },
     { view: 'upscale', label: 'Upscale' },
     { view: 'remove-bg', label: 'Удаление фона' },
     { view: 'recolor', label: 'Палитра' },

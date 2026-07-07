@@ -1,10 +1,30 @@
 
 import { db, storage, firebase } from "../lib/firebase";
-import { GeneratedImage, UserProfile, SubscriptionTier } from "../types";
+import { CommunityPreferences, GeneratedImage, UserProfile, SubscriptionTier } from "../types";
 
 // Collection reference
 const HISTORY_COLLECTION = "generations";
 const USERS_COLLECTION = "users";
+
+const DEFAULT_COMMUNITY_PREFERENCES: CommunityPreferences = {
+  publicNickname: "",
+  communityHidden: false,
+  communityShowPromptSettings: false,
+};
+
+const buildDefaultNickname = (user: any): string =>
+  user?.displayName?.trim() || user?.email?.split("@")[0] || "Пользователь";
+
+const normalizeCommunityPreferences = (
+  data: Partial<CommunityPreferences> | undefined,
+  fallbackNickname = "Пользователь"
+): CommunityPreferences => ({
+  publicNickname: typeof data?.publicNickname === "string" && data.publicNickname.trim()
+    ? data.publicNickname.trim()
+    : fallbackNickname,
+  communityHidden: Boolean(data?.communityHidden),
+  communityShowPromptSettings: Boolean(data?.communityShowPromptSettings),
+});
 
 /**
  * Uploads a Base64 image string to Firebase Storage
@@ -160,6 +180,9 @@ export const saveGenerationToHistory = async (userId: string, item: GeneratedIma
       prompt: item.prompt,
       source: item.source || 'studio',
       isSaved: true, // Auto-save all generations by default
+      sharedToCommunity: Boolean(item.sharedToCommunity),
+      communityPostId: item.communityPostId || null,
+      communitySharedAt: item.communitySharedAt || null,
       createdAt: firebase.firestore.Timestamp.now()
     });
     
@@ -256,7 +279,10 @@ export const getUserHistory = async (userId: string): Promise<GeneratedImage[]> 
         prompt: data.prompt || 'Без описания',
         source: data.source || 'studio',
         isSaved: data.isSaved || false,
-        createdAt: data.createdAt
+        createdAt: data.createdAt,
+        sharedToCommunity: Boolean(data.sharedToCommunity),
+        communityPostId: data.communityPostId || null,
+        communitySharedAt: data.communitySharedAt || null,
       });
     });
     
@@ -286,6 +312,7 @@ export const getUserHistory = async (userId: string): Promise<GeneratedImage[]> 
 export const syncUserProfile = async (user: any): Promise<UserProfile> => {
   // Default values
   const defaultCredits = 45;
+  const defaultNickname = buildDefaultNickname(user);
 
   // Mock profile fallback
   const mockProfile: UserProfile = {
@@ -298,7 +325,8 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
     subscriptionStatus: 'active',
     subscriptionEndDate: null,
     createdAt: new Date(),
-    lastLogin: new Date()
+    lastLogin: new Date(),
+    ...normalizeCommunityPreferences(undefined, defaultNickname),
   };
 
   if (!db) return mockProfile;
@@ -309,16 +337,19 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
 
     if (userSnap.exists) {
       const data = userSnap.data();
+      const normalizedPreferences = normalizeCommunityPreferences(data as Partial<CommunityPreferences>, defaultNickname);
 
       // Update last login
-      await userRef.update({
-        lastLogin: firebase.firestore.Timestamp.now()
-      });
+      await userRef.set({
+        lastLogin: firebase.firestore.Timestamp.now(),
+        ...normalizedPreferences,
+      }, { merge: true });
 
       // Safely merge existing data with defaults to avoid undefined/NaN
       return {
         ...mockProfile, // Start with safe defaults
         ...data,        // Overwrite with DB data
+        ...normalizedPreferences,
         credits: typeof data?.credits === 'number' ? data.credits : defaultCredits // Ensure credits is a number
       } as UserProfile;
 
@@ -342,6 +373,118 @@ export const syncUserProfile = async (user: any): Promise<UserProfile> => {
   }
 };
 
+export const getCommunityPreferences = async (userId: string, fallback?: { displayName?: string | null; email?: string | null }): Promise<CommunityPreferences> => {
+  const fallbackNickname = fallback?.displayName?.trim() || fallback?.email?.split("@")[0] || "Пользователь";
+  if (!db) {
+    return normalizeCommunityPreferences(undefined, fallbackNickname);
+  }
+
+  try {
+    const snap = await db.collection(USERS_COLLECTION).doc(userId).get();
+    if (!snap.exists) {
+      return normalizeCommunityPreferences(undefined, fallbackNickname);
+    }
+    return normalizeCommunityPreferences(snap.data() as Partial<CommunityPreferences>, fallbackNickname);
+  } catch (error) {
+    console.error("Error fetching community preferences:", error);
+    return normalizeCommunityPreferences(undefined, fallbackNickname);
+  }
+};
+
+export const updateCommunityPreferences = async (
+  userId: string,
+  preferences: Partial<CommunityPreferences>
+): Promise<CommunityPreferences | null> => {
+  if (!db) {
+    return {
+      ...DEFAULT_COMMUNITY_PREFERENCES,
+      ...preferences,
+      publicNickname: preferences.publicNickname?.trim() || "Пользователь",
+    };
+  }
+
+  try {
+    const userRef = db.collection(USERS_COLLECTION).doc(userId);
+    const existing = await userRef.get();
+    const fallbackNickname =
+      existing.data()?.displayName?.trim() ||
+      existing.data()?.email?.split("@")[0] ||
+      "Пользователь";
+    const next = normalizeCommunityPreferences({
+      ...existing.data(),
+      ...preferences,
+    } as Partial<CommunityPreferences>, fallbackNickname);
+    await userRef.set(next, { merge: true });
+    return next;
+  } catch (error) {
+    console.error("Error updating community preferences:", error);
+    return null;
+  }
+};
+
+export const markGenerationCommunityShare = async (
+  generationId: string,
+  payload: { sharedToCommunity: boolean; communityPostId?: string | null; communitySharedAt?: any }
+): Promise<boolean> => {
+  if (!db || !generationId) return false;
+  if (generationId.startsWith("temp_") || generationId.startsWith("local_")) return true;
+
+  try {
+    await db.collection(HISTORY_COLLECTION).doc(generationId).set({
+      sharedToCommunity: payload.sharedToCommunity,
+      communityPostId: payload.communityPostId ?? null,
+      communitySharedAt: payload.communitySharedAt ?? null,
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("Error updating generation community state:", error);
+    return false;
+  }
+};
+
+export const clearCommunityShareStateForUser = async (userId: string): Promise<number> => {
+  if (!db || !userId) return 0;
+
+  try {
+    let clearedCount = 0;
+    let lastDoc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData> | null = null;
+
+    while (true) {
+      let query = db.collection(HISTORY_COLLECTION)
+        .where("userId", "==", userId)
+        .where("sharedToCommunity", "==", true)
+        .limit(200);
+
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+
+      const snap = await query.get();
+      if (snap.empty) break;
+
+      const batch = db.batch();
+      snap.docs.forEach((doc) => {
+        batch.set(doc.ref, {
+          sharedToCommunity: false,
+          communityPostId: null,
+          communitySharedAt: null,
+        }, { merge: true });
+      });
+      await batch.commit();
+
+      clearedCount += snap.size;
+      lastDoc = snap.docs[snap.docs.length - 1];
+
+      if (snap.size < 200) break;
+    }
+
+    return clearedCount;
+  } catch (error) {
+    console.error("Error clearing community share state:", error);
+    return 0;
+  }
+};
+
 /**
  * Deducts credits from user
  */
@@ -350,22 +493,35 @@ export const deductCredits = async (userId: string, amount: number): Promise<boo
 
   const userRef = db.collection(USERS_COLLECTION).doc(userId);
   try {
-    const userSnap = await userRef.get();
-    if (userSnap.exists) {
+    return await db.runTransaction(async (tx) => {
+      const userSnap = await tx.get(userRef);
+      if (!userSnap.exists) return false;
       const data = userSnap.data();
       const currentCredits = typeof data?.credits === 'number' ? data.credits : 0;
-
-      if (currentCredits >= amount) {
-        await userRef.update({
-          credits: firebase.firestore.FieldValue.increment(-amount)
-        });
-        return true;
-      }
-    }
-    return false;
+      if (currentCredits < amount) return false;
+      tx.update(userRef, {
+        credits: currentCredits - amount
+      });
+      return true;
+    });
   } catch (e: any) {
     if (e.code === 'permission-denied') return true; // Allow in demo
     console.error("Error deducting credits:", e);
+    return false;
+  }
+};
+
+export const addCredits = async (userId: string, amount: number): Promise<boolean> => {
+  if (!db) return true;
+  const userRef = db.collection(USERS_COLLECTION).doc(userId);
+  try {
+    await userRef.set({
+      credits: firebase.firestore.FieldValue.increment(amount)
+    }, { merge: true });
+    return true;
+  } catch (e: any) {
+    if (e.code === 'permission-denied') return true;
+    console.error("Error adding credits:", e);
     return false;
   }
 };
